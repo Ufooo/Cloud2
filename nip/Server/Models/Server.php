@@ -23,9 +23,7 @@ class Server extends Model
 {
     use HasFactory, HasSlug, SoftDeletes;
 
-    protected $appends = [
-        'provisioning_steps',
-    ];
+    protected $appends = [];
 
     protected static function newFactory(): ServerFactory
     {

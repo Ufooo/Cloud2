@@ -50,12 +50,7 @@ class ServerController extends Controller
     {
         Gate::authorize('view', $server);
 
-        $user = request()->user();
-        $server->can = ServerPermissionsData::from([
-            'view' => $user->can('view', $server),
-            'update' => $user->can('update', $server),
-            'delete' => $user->can('delete', $server),
-        ]);
+        $this->prepareServerForResponse($server);
 
         return Inertia::render('servers/Show', [
             'server' => ServerData::from($server),
@@ -84,5 +79,42 @@ class ServerController extends Controller
         return redirect()
             ->route('servers.index')
             ->with('success', 'Server deleted successfully.');
+    }
+
+    public function settings(Server $server): Response
+    {
+        Gate::authorize('view', $server);
+
+        abort_unless($server->status === ServerStatus::Connected, 403);
+
+        $this->loadServerPermissions($server);
+
+        return Inertia::render('servers/Settings', [
+            'server' => ServerData::from($server),
+        ]);
+    }
+
+    private function prepareServerForResponse(Server $server): void
+    {
+        $user = request()->user();
+        $server->can = ServerPermissionsData::from([
+            'view' => $user->can('view', $server),
+            'update' => $user->can('update', $server),
+            'delete' => $user->can('delete', $server),
+        ]);
+
+        if ($server->status === ServerStatus::Provisioning) {
+            $server->provisioning_steps = $server->getProvisioningSteps();
+        }
+    }
+
+    private function loadServerPermissions(Server $server): void
+    {
+        $user = request()->user();
+        $server->can = ServerPermissionsData::from([
+            'view' => $user->can('view', $server),
+            'update' => $user->can('update', $server),
+            'delete' => $user->can('delete', $server),
+        ]);
     }
 }

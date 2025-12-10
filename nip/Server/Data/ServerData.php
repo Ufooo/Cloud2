@@ -29,8 +29,8 @@ class ServerData extends Data
         public ServerStatus $status,
         public ?string $provisioningCommand,
         public int $provisionStep,
-        /** @var ProvisioningStepData[] */
-        public array $provisioningSteps,
+        /** @var ProvisioningStepData[]|null */
+        public ?array $provisioningSteps,
         public ?string $ipAddress,
         public ?string $privateIpAddress,
         public string $sshPort,
