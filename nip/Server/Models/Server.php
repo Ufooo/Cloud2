@@ -105,6 +105,14 @@ class Server extends Model
         return $this->hasMany(UnixUser::class);
     }
 
+    /**
+     * @return HasMany<\Nip\SshKey\Models\SshKey, $this>
+     */
+    public function sshKeys(): HasMany
+    {
+        return $this->hasMany(\Nip\SshKey\Models\SshKey::class);
+    }
+
     protected function displayableType(): Attribute
     {
         return Attribute::get(fn () => $this->type?->label());
