@@ -1,6 +1,6 @@
 <?php
 
-namespace Nip\UserSshKey\Data;
+namespace Nip\SshKey\Data;
 
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;

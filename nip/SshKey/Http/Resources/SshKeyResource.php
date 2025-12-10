@@ -2,19 +2,29 @@
 
 namespace Nip\SshKey\Http\Resources;
 
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Nip\UnixUser\Http\Resources\UnixUserResource;
+use Nip\SshKey\Models\SshKey;
 
+/**
+ * @mixin SshKey
+ */
 class SshKeyResource extends JsonResource
 {
-    public function toArray($request): array
+    /**
+     * @return array<string, mixed>
+     */
+    public function toArray(Request $request): array
     {
         return [
             'id' => $this->id,
             'name' => $this->name,
             'fingerprint' => $this->fingerprint,
-            'createdAt' => $this->created_at->format('Y-m-d H:i:s'),
-            'unixUser' => $this->whenLoaded('unixUser', fn () => $this->unixUser ? UnixUserResource::make($this->unixUser) : null),
+            'createdAt' => $this->created_at?->format('M j, Y'),
+            'unixUser' => $this->whenLoaded('unixUser', fn () => [
+                'id' => $this->unixUser->id,
+                'username' => $this->unixUser->username,
+            ]),
             'can' => [
                 'delete' => $request->user()->can('update', $this->server),
             ],

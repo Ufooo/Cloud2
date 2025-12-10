@@ -18,7 +18,7 @@ class SshKeyFactory extends Factory
 
         return [
             'server_id' => Server::factory(),
-            'unix_user_id' => null,
+            'unix_user_id' => UnixUser::factory(),
             'name' => fake()->randomElement(['Deploy Key', 'CI/CD Key', 'GitHub Actions', 'GitLab Runner', 'Production Key']),
             'public_key' => 'ssh-ed25519 '.$keyData.' '.fake()->email(),
         ];

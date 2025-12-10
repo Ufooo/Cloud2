@@ -3,7 +3,7 @@ import {
     destroy,
     index,
     store,
-} from '@/actions/Nip/UserSshKey/Http/Controllers/UserSshKeyController';
+} from '@/actions/Nip/SshKey/Http/Controllers/UserSshKeyController';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';

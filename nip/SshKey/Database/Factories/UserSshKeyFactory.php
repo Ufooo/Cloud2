@@ -1,10 +1,10 @@
 <?php
 
-namespace Nip\UserSshKey\Database\Factories;
+namespace Nip\SshKey\Database\Factories;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Nip\UserSshKey\Models\UserSshKey;
+use Nip\SshKey\Models\UserSshKey;
 
 class UserSshKeyFactory extends Factory
 {

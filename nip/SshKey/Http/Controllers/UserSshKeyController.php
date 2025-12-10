@@ -1,14 +1,14 @@
 <?php
 
-namespace Nip\UserSshKey\Http\Controllers;
+namespace Nip\SshKey\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
-use Nip\UserSshKey\Http\Requests\StoreUserSshKeyRequest;
-use Nip\UserSshKey\Http\Resources\UserSshKeyResource;
-use Nip\UserSshKey\Models\UserSshKey;
+use Nip\SshKey\Http\Requests\StoreUserSshKeyRequest;
+use Nip\SshKey\Http\Resources\UserSshKeyResource;
+use Nip\SshKey\Models\UserSshKey;
 
 class UserSshKeyController extends Controller
 {

@@ -1,10 +1,10 @@
 <?php
 
-namespace Nip\UserSshKey\Http\Resources;
+namespace Nip\SshKey\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Nip\UserSshKey\Models\UserSshKey;
+use Nip\SshKey\Models\UserSshKey;
 
 /**
  * @mixin UserSshKey

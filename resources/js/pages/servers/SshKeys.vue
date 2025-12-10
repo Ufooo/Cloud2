@@ -57,7 +57,7 @@ interface SshKey {
     unixUser: {
         id: number;
         username: string;
-    } | null;
+    };
     can: {
         delete: boolean;
     };
@@ -167,10 +167,7 @@ async function deleteKey(key: SshKey) {
                             <div class="flex-1">
                                 <div class="flex items-center gap-2">
                                     <p class="font-medium">{{ key.name }}</p>
-                                    <Badge
-                                        v-if="key.unixUser"
-                                        variant="secondary"
-                                    >
+                                    <Badge variant="secondary">
                                         {{ key.unixUser.username }}
                                     </Badge>
                                 </div>
@@ -217,8 +214,8 @@ async function deleteKey(key: SshKey) {
                 <DialogHeader>
                     <DialogTitle>Add SSH key</DialogTitle>
                     <DialogDescription>
-                        Add a new SSH key to your server. You can optionally
-                        assign it to a specific Unix user.
+                        Add a new SSH key to your server. Select which Unix
+                        user this key should be authorized for.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -256,10 +253,10 @@ async function deleteKey(key: SshKey) {
                     </div>
 
                     <div class="space-y-2">
-                        <Label for="unix-user">Unix user (optional)</Label>
-                        <Select name="unix_user_id">
+                        <Label for="unix-user">Unix user</Label>
+                        <Select name="unix_user_id" required>
                             <SelectTrigger id="unix-user">
-                                <SelectValue placeholder="None" />
+                                <SelectValue placeholder="Select a user" />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem
@@ -272,8 +269,7 @@ async function deleteKey(key: SshKey) {
                             </SelectContent>
                         </Select>
                         <p class="text-sm text-muted-foreground">
-                            Optionally assign this key to a specific Unix user
-                            on the server.
+                            The Unix user this key will be authorized for.
                         </p>
                         <InputError :message="errors.unix_user_id" />
                     </div>

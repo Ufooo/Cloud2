@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Nip\UserSshKey\Models\UserSshKey;
+use Nip\SshKey\Models\UserSshKey;
 
 class User extends Authenticatable
 {

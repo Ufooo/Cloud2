@@ -14,9 +14,8 @@ return new class extends Migration
                 ->constrained()
                 ->cascadeOnDelete();
             $table->foreignId('unix_user_id')
-                ->nullable()
                 ->constrained()
-                ->nullOnDelete();
+                ->cascadeOnDelete();
             $table->string('name');
             $table->text('public_key');
             $table->string('fingerprint');

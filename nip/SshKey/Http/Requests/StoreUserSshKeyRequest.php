@@ -4,10 +4,10 @@ namespace Nip\SshKey\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
-use Nip\SshKey\Models\SshKey;
+use Nip\SshKey\Models\UserSshKey;
 use Nip\SshKey\Rules\SshPublicKeyRule;
 
-class StoreSshKeyRequest extends FormRequest
+class StoreUserSshKeyRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -22,7 +22,6 @@ class StoreSshKeyRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'public_key' => ['required', new SshPublicKeyRule],
-            'unix_user_id' => ['required', 'exists:unix_users,id'],
         ];
     }
 
@@ -30,17 +29,17 @@ class StoreSshKeyRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             $publicKey = $this->input('public_key');
-            $serverId = $this->route('server')->id;
+            $userId = auth()->id();
 
-            if ($publicKey && $serverId) {
-                $fingerprint = SshKey::generateFingerprint($publicKey);
+            if ($publicKey && $userId) {
+                $fingerprint = UserSshKey::generateFingerprint($publicKey);
 
-                $exists = SshKey::where('server_id', $serverId)
+                $exists = UserSshKey::where('user_id', $userId)
                     ->where('fingerprint', $fingerprint)
                     ->exists();
 
                 if ($exists) {
-                    $validator->errors()->add('public_key', 'This SSH key already exists on this server.');
+                    $validator->errors()->add('public_key', 'This SSH key already exists on your account.');
                 }
             }
         });

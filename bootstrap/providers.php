@@ -10,5 +10,4 @@ return [
     Nip\Server\Providers\ServerServiceProvider::class,
     Nip\SshKey\Providers\SshKeyServiceProvider::class,
     Nip\UnixUser\Providers\UnixUserServiceProvider::class,
-    Nip\UserSshKey\Providers\UserSshKeyServiceProvider::class,
 ];
