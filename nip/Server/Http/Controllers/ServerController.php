@@ -11,6 +11,7 @@ use Inertia\Response;
 use Nip\Server\Data\ServerData;
 use Nip\Server\Data\ServerPermissionsData;
 use Nip\Server\Enums\DatabaseType;
+use Nip\Server\Enums\IdentityColor;
 use Nip\Server\Enums\PhpVersion;
 use Nip\Server\Enums\ServerProvider;
 use Nip\Server\Enums\ServerStatus;
@@ -18,6 +19,7 @@ use Nip\Server\Enums\ServerType;
 use Nip\Server\Enums\Timezone;
 use Nip\Server\Enums\UbuntuVersion;
 use Nip\Server\Http\Requests\StoreServerRequest;
+use Nip\Server\Http\Requests\UpdateServerSettingsRequest;
 use Nip\Server\Http\Resources\ServerListResource;
 use Nip\Server\Models\Server;
 
@@ -91,7 +93,20 @@ class ServerController extends Controller
 
         return Inertia::render('servers/Settings', [
             'server' => ServerData::from($server),
+            'timezones' => Timezone::options(),
+            'colors' => IdentityColor::options(),
         ]);
+    }
+
+    public function update(UpdateServerSettingsRequest $request, Server $server): RedirectResponse
+    {
+        abort_unless($server->status === ServerStatus::Connected, 403);
+
+        $server->update($request->validated());
+
+        return redirect()
+            ->route('servers.settings', $server)
+            ->with('success', 'Server settings updated successfully.');
     }
 
     private function prepareServerForResponse(Server $server): void

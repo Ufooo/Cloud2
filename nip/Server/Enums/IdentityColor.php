@@ -15,4 +15,18 @@ enum IdentityColor: string
     case Yellow = 'yellow';
     case Cyan = 'cyan';
     case Gray = 'gray';
+
+    /**
+     * @return array<int, array{value: string, label: string}>
+     */
+    public static function options(): array
+    {
+        return array_map(
+            fn (self $color) => [
+                'value' => $color->value,
+                'label' => ucfirst($color->value),
+            ],
+            self::cases()
+        );
+    }
 }

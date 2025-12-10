@@ -21,5 +21,6 @@ Route::middleware(['web', 'auth'])->group(function () {
         Route::get('/', [ServerController::class, 'show'])->name('servers.show');
         Route::delete('/', [ServerController::class, 'destroy'])->name('servers.destroy');
         Route::get('/settings', [ServerController::class, 'settings'])->name('servers.settings');
+        Route::patch('/settings', [ServerController::class, 'update'])->name('servers.update');
     });
 });
