@@ -131,9 +131,9 @@ class Server extends Model
                 return null;
             }
 
-            $url = config('app.url')."/servers/{$this->id}/provision?token={$this->provisioning_token}";
+            $url = route('provisioning.script', ['server' => $this->id, 'token' => $this->provisioning_token]);
 
-            return "wget -O- {$url} | bash";
+            return "wget -O- '{$url}' | bash";
         });
     }
 

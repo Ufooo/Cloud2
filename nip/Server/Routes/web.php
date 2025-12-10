@@ -1,7 +1,16 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Nip\Server\Http\Controllers\ProvisioningController;
 use Nip\Server\Http\Controllers\ServerController;
+
+// Public provisioning routes (no auth required, token-based)
+Route::middleware(['web'])->group(function () {
+    Route::get('/servers/{server:id}/provision', [ProvisioningController::class, 'script'])
+        ->name('provisioning.script');
+    Route::post('/provisioning/callback', [ProvisioningController::class, 'callback'])
+        ->name('provisioning.callback');
+});
 
 Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/servers', [ServerController::class, 'index'])->name('servers.index');
