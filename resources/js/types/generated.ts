@@ -1,4 +1,14 @@
 export enum DatabaseType { Mysql = 'mysql', Mariadb = 'mariadb', Postgresql = 'postgresql' };
+export type FirewallRuleData = {
+id: number;
+name: string;
+port: string | null;
+ipAddress: string | null;
+type: RuleType;
+status: RuleStatus;
+displayableType: string;
+displayableStatus: string;
+};
 export enum IdentityColor { Blue = 'blue', Green = 'green', Orange = 'orange', Purple = 'purple', Red = 'red', Yellow = 'yellow', Cyan = 'cyan', Gray = 'gray' };
 export enum PhpVersion { Php84 = 'php84', Php83 = 'php83', Php82 = 'php82', Php81 = 'php81' };
 export enum ProvisioningStep { WaitingForServer = 0, PreparingServer = 1, ConfiguringSwap = 2, InstallingBaseDependencies = 3, InstallingPhp = 4, InstallingNginx = 5, InstallingDatabase = 6, InstallingRedis = 7, MakingFinalTouches = 10 };
@@ -7,6 +17,8 @@ value: number;
 label: string;
 description: string;
 };
+export enum RuleStatus { Pending = 'pending', Installing = 'installing', Installed = 'installed', Failed = 'failed' };
+export enum RuleType { Allow = 'allow', Deny = 'deny' };
 export type ServerCreateData = {
 name: string;
 provider: ServerProvider;
@@ -34,7 +46,7 @@ displayableType: string | null;
 status: ServerStatus;
 provisioningCommand: string | null;
 provisionStep: number;
-provisioningSteps: Array<ProvisioningStepData>;
+provisioningSteps: Array<ProvisioningStepData> | null;
 ipAddress: string | null;
 privateIpAddress: string | null;
 sshPort: string;

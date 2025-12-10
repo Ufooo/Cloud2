@@ -5,7 +5,9 @@ namespace Nip\Server\Models;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Nip\Network\Models\FirewallRule;
 use Nip\Server\Data\ProvisioningStepData;
 use Nip\Server\Database\Factories\ServerFactory;
 use Nip\Server\Enums\DatabaseType;
@@ -84,6 +86,14 @@ class Server extends Model
     public function getRouteKeyName(): string
     {
         return 'slug';
+    }
+
+    /**
+     * @return HasMany<FirewallRule, $this>
+     */
+    public function firewallRules(): HasMany
+    {
+        return $this->hasMany(FirewallRule::class);
     }
 
     protected function displayableType(): Attribute
