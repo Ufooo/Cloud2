@@ -88,3 +88,10 @@ description: string;
 };
 export enum Timezone { UTC = 'UTC', EuropeLondon = 'Europe/London', EuropeParis = 'Europe/Paris', EuropeBerlin = 'Europe/Berlin', EuropeBudapest = 'Europe/Budapest', EuropeMoscow = 'Europe/Moscow', AmericaNewYork = 'America/New_York', AmericaChicago = 'America/Chicago', AmericaDenver = 'America/Denver', AmericaLosAngeles = 'America/Los_Angeles', AsiaTokyo = 'Asia/Tokyo', AsiaShanghai = 'Asia/Shanghai', AsiaSingapore = 'Asia/Singapore', AustraliaSydney = 'Australia/Sydney' };
 export enum UbuntuVersion { V2404 = '24.04', V2204 = '22.04', V2004 = '20.04' };
+export type UnixUserData = {
+id: number;
+username: string;
+status: UserStatus;
+displayableStatus: string;
+};
+export enum UserStatus { Pending = 'pending', Installing = 'installing', Installed = 'installed', Failed = 'failed' };

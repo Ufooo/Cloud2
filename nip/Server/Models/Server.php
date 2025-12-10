@@ -18,6 +18,7 @@ use Nip\Server\Enums\ServerProvider;
 use Nip\Server\Enums\ServerStatus;
 use Nip\Server\Enums\ServerType;
 use Nip\Server\Enums\Timezone;
+use Nip\UnixUser\Models\UnixUser;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 
@@ -94,6 +95,14 @@ class Server extends Model
     public function firewallRules(): HasMany
     {
         return $this->hasMany(FirewallRule::class);
+    }
+
+    /**
+     * @return HasMany<UnixUser, $this>
+     */
+    public function unixUsers(): HasMany
+    {
+        return $this->hasMany(UnixUser::class);
     }
 
     protected function displayableType(): Attribute
