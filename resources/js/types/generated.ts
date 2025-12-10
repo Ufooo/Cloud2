@@ -1,6 +1,12 @@
 export enum DatabaseType { Mysql = 'mysql', Mariadb = 'mariadb', Postgresql = 'postgresql' };
 export enum IdentityColor { Blue = 'blue', Green = 'green', Orange = 'orange', Purple = 'purple', Red = 'red', Yellow = 'yellow', Cyan = 'cyan', Gray = 'gray' };
 export enum PhpVersion { Php84 = 'php84', Php83 = 'php83', Php82 = 'php82', Php81 = 'php81' };
+export enum ProvisioningStep { WaitingForServer = 0, PreparingServer = 1, ConfiguringSwap = 2, InstallingBaseDependencies = 3, InstallingPhp = 4, InstallingNginx = 5, InstallingDatabase = 6, InstallingRedis = 7, MakingFinalTouches = 10 };
+export type ProvisioningStepData = {
+value: number;
+label: string;
+description: string;
+};
 export type ServerCreateData = {
 name: string;
 provider: ServerProvider;
@@ -26,6 +32,9 @@ providerServerId: string | null;
 type: ServerType;
 displayableType: string | null;
 status: ServerStatus;
+provisioningCommand: string | null;
+provisionStep: number;
+provisioningSteps: Array<ProvisioningStepData>;
 ipAddress: string | null;
 privateIpAddress: string | null;
 sshPort: string;

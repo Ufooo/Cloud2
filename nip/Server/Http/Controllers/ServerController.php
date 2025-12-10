@@ -5,6 +5,7 @@ namespace Nip\Server\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use Nip\Server\Data\ServerData;
@@ -66,6 +67,7 @@ class ServerController extends Controller
         $server = Server::create([
             ...$request->validated(),
             'status' => ServerStatus::Provisioning,
+            'provisioning_token' => Str::random(64),
         ]);
 
         return redirect()

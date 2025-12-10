@@ -19,6 +19,8 @@ return new class extends Migration
             $table->string('provider_server_id')->nullable();
             $table->string('type')->default('app');
             $table->string('status')->default('provisioning');
+            $table->string('provisioning_token', 64)->nullable();
+            $table->unsignedTinyInteger('provision_step')->default(0);
             $table->string('ip_address')->nullable();
             $table->string('private_ip_address')->nullable();
             $table->string('ssh_port')->default('22');

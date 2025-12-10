@@ -10,7 +10,15 @@ export function urlIsActive(
     urlToCheck: NonNullable<InertiaLinkProps['href']>,
     currentUrl: string,
 ) {
-    return toUrl(urlToCheck) === currentUrl;
+    const url = toUrl(urlToCheck);
+
+    // Root paths need exact match
+    if (url === '/' || url === '/dashboard') {
+        return url === currentUrl;
+    }
+
+    // Other paths use prefix match (Inertia recommended approach)
+    return currentUrl.startsWith(url);
 }
 
 export function toUrl(href: NonNullable<InertiaLinkProps['href']>) {

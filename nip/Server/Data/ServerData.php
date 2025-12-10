@@ -27,6 +27,10 @@ class ServerData extends Data
         public ServerType $type,
         public ?string $displayableType,
         public ServerStatus $status,
+        public ?string $provisioningCommand,
+        public int $provisionStep,
+        /** @var ProvisioningStepData[] */
+        public array $provisioningSteps,
         public ?string $ipAddress,
         public ?string $privateIpAddress,
         public string $sshPort,
