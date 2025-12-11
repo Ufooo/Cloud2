@@ -3,21 +3,20 @@
 namespace Nip\Server\Providers;
 
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\ServiceProvider;
 use Nip\Server\Models\Server;
 use Nip\Server\Policies\ServerPolicy;
+use Nip\Support\Providers\NipServiceProvider;
 
-class ServerServiceProvider extends ServiceProvider
+class ServerServiceProvider extends NipServiceProvider
 {
-    public function register(): void
+    protected function modulePath(): string
     {
-        //
+        return __DIR__.'/..';
     }
 
     public function boot(): void
     {
-        $this->loadMigrationsFrom(__DIR__.'/../Database/Migrations');
-        $this->loadRoutesFrom(__DIR__.'/../Routes/web.php');
+        parent::boot();
 
         Gate::policy(Server::class, ServerPolicy::class);
     }

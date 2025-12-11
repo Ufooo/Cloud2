@@ -2,18 +2,12 @@
 
 namespace Nip\UnixUser\Providers;
 
-use Illuminate\Support\ServiceProvider;
+use Nip\Support\Providers\NipServiceProvider;
 
-class UnixUserServiceProvider extends ServiceProvider
+class UnixUserServiceProvider extends NipServiceProvider
 {
-    public function register(): void
+    protected function modulePath(): string
     {
-        //
-    }
-
-    public function boot(): void
-    {
-        $this->loadRoutesFrom(__DIR__.'/../Routes/web.php');
-        $this->loadMigrationsFrom(__DIR__.'/../Database/Migrations');
+        return __DIR__.'/..';
     }
 }

@@ -39,6 +39,7 @@ import {
 import { useConfirmation } from '@/composables/useConfirmation';
 import ServerLayout from '@/layouts/ServerLayout.vue';
 import type { Server } from '@/types';
+import type { PaginatedResponse } from '@/types/pagination';
 import { RuleStatus, RuleType } from '@/types/generated';
 import { Form, Head, router } from '@inertiajs/vue3';
 import {
@@ -64,16 +65,6 @@ interface FirewallRule {
     };
 }
 
-interface PaginatedRules {
-    data: FirewallRule[];
-    links: { url: string | null; label: string; active: boolean }[];
-    meta?: {
-        current_page: number;
-        last_page: number;
-        total: number;
-    };
-}
-
 interface SelectOption {
     value: string;
     label: string;
@@ -81,7 +72,7 @@ interface SelectOption {
 
 interface Props {
     server: Server;
-    rules: PaginatedRules;
+    rules: PaginatedResponse<FirewallRule>;
     ruleTypes: SelectOption[];
 }
 

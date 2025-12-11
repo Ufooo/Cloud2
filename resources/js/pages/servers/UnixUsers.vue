@@ -32,6 +32,7 @@ import { Label } from '@/components/ui/label';
 import { useConfirmation } from '@/composables/useConfirmation';
 import ServerLayout from '@/layouts/ServerLayout.vue';
 import type { Server } from '@/types';
+import type { PaginatedResponse } from '@/types/pagination';
 import { UserStatus } from '@/types/generated';
 import { Form, Head, router } from '@inertiajs/vue3';
 import { MoreHorizontal, Plus, Trash2, Users } from 'lucide-vue-next';
@@ -48,19 +49,9 @@ interface UnixUser {
     };
 }
 
-interface PaginatedUsers {
-    data: UnixUser[];
-    links: { url: string | null; label: string; active: boolean }[];
-    meta?: {
-        current_page: number;
-        last_page: number;
-        total: number;
-    };
-}
-
 interface Props {
     server: Server;
-    users: PaginatedUsers;
+    users: PaginatedResponse<UnixUser>;
 }
 
 const props = defineProps<Props>();

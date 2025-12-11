@@ -2,6 +2,7 @@
 
 namespace Nip\Php\Http\Controllers;
 
+use App\Http\Controllers\Concerns\LoadsServerPermissions;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -16,18 +17,16 @@ use Nip\Php\Http\Resources\PhpSettingResource;
 use Nip\Php\Http\Resources\PhpVersionResource;
 use Nip\Php\Models\PhpVersion;
 use Nip\Server\Data\ServerData;
-use Nip\Server\Data\ServerPermissionsData;
 use Nip\Server\Enums\PhpVersion as PhpVersionEnum;
-use Nip\Server\Enums\ServerStatus;
 use Nip\Server\Models\Server;
 
 class PhpController extends Controller
 {
+    use LoadsServerPermissions;
+
     public function index(Server $server): Response
     {
         Gate::authorize('view', $server);
-
-        abort_unless($server->status === ServerStatus::Connected, 403);
 
         $this->loadServerPermissions($server);
 
@@ -54,8 +53,6 @@ class PhpController extends Controller
     {
         Gate::authorize('update', $server);
 
-        abort_unless($server->status === ServerStatus::Connected, 403);
-
         $server->phpSetting()->updateOrCreate(
             ['server_id' => $server->id],
             $request->validated()
@@ -69,8 +66,6 @@ class PhpController extends Controller
     public function installVersion(InstallPhpVersionRequest $request, Server $server): RedirectResponse
     {
         Gate::authorize('update', $server);
-
-        abort_unless($server->status === ServerStatus::Connected, 403);
 
         $version = $request->validated()['version'];
 
@@ -100,8 +95,6 @@ class PhpController extends Controller
     {
         Gate::authorize('update', $server);
 
-        abort_unless($server->status === ServerStatus::Connected, 403);
-
         if ($phpVersion->is_cli_default) {
             return redirect()
                 ->route('servers.php', $server)
@@ -125,8 +118,6 @@ class PhpController extends Controller
     {
         Gate::authorize('update', $server);
 
-        abort_unless($server->status === ServerStatus::Connected, 403);
-
         $type = $request->validated()['type'];
 
         DB::transaction(function () use ($server, $phpVersion, $type) {
@@ -146,15 +137,5 @@ class PhpController extends Controller
         return redirect()
             ->route('servers.php', $server)
             ->with('success', $message);
-    }
-
-    private function loadServerPermissions(Server $server): void
-    {
-        $user = request()->user();
-        $server->can = ServerPermissionsData::from([
-            'view' => $user->can('view', $server),
-            'update' => $user->can('update', $server),
-            'delete' => $user->can('delete', $server),
-        ]);
     }
 }

@@ -2,11 +2,14 @@
 
 namespace Nip\Server\Enums;
 
+use App\Enums\Concerns\HasOptions;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 #[TypeScript]
 enum UbuntuVersion: string
 {
+    use HasOptions;
+
     case V2404 = '24.04';
     case V2204 = '22.04';
     case V2004 = '20.04';
@@ -18,19 +21,5 @@ enum UbuntuVersion: string
             self::V2204 => 'Ubuntu 22.04 LTS',
             self::V2004 => 'Ubuntu 20.04 LTS',
         };
-    }
-
-    /**
-     * @return array<int, array{value: string, label: string}>
-     */
-    public static function options(): array
-    {
-        return array_map(
-            fn (self $version) => [
-                'value' => $version->value,
-                'label' => $version->label(),
-            ],
-            self::cases()
-        );
     }
 }

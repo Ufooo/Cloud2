@@ -20,7 +20,10 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::prefix('/servers/{server:slug}')->group(function () {
         Route::get('/', [ServerController::class, 'show'])->name('servers.show');
         Route::delete('/', [ServerController::class, 'destroy'])->name('servers.destroy');
-        Route::get('/settings', [ServerController::class, 'settings'])->name('servers.settings');
-        Route::patch('/settings', [ServerController::class, 'update'])->name('servers.update');
+
+        Route::middleware('server.connected')->group(function () {
+            Route::get('/settings', [ServerController::class, 'settings'])->name('servers.settings');
+            Route::patch('/settings', [ServerController::class, 'update'])->name('servers.update');
+        });
     });
 });

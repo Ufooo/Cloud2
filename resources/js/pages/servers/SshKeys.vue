@@ -40,6 +40,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useConfirmation } from '@/composables/useConfirmation';
 import ServerLayout from '@/layouts/ServerLayout.vue';
 import type { Server } from '@/types';
+import type { PaginatedResponse } from '@/types/pagination';
 import { Form, Head, router } from '@inertiajs/vue3';
 import { Key, MoreHorizontal, Plus, Trash2 } from 'lucide-vue-next';
 import { ref } from 'vue';
@@ -63,19 +64,9 @@ interface SshKey {
     };
 }
 
-interface PaginatedKeys {
-    data: SshKey[];
-    links: { url: string | null; label: string; active: boolean }[];
-    meta?: {
-        current_page: number;
-        last_page: number;
-        total: number;
-    };
-}
-
 interface Props {
     server: Server;
-    keys: PaginatedKeys;
+    keys: PaginatedResponse<SshKey>;
     unixUsers: UnixUser[];
 }
 

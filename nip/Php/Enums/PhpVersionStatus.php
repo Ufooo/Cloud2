@@ -2,10 +2,11 @@
 
 namespace Nip\Php\Enums;
 
+use App\Enums\Contracts\HasStatusBadge;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 #[TypeScript]
-enum PhpVersionStatus: string
+enum PhpVersionStatus: string implements HasStatusBadge
 {
     case Pending = 'pending';
     case Installing = 'installing';

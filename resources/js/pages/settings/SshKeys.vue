@@ -28,6 +28,7 @@ import { useConfirmation } from '@/composables/useConfirmation';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import type { BreadcrumbItem } from '@/types';
+import type { PaginatedResponse } from '@/types/pagination';
 import { Form, Head, router } from '@inertiajs/vue3';
 import { Key, MoreHorizontal, Plus, Trash2 } from 'lucide-vue-next';
 import { ref } from 'vue';
@@ -41,13 +42,8 @@ interface UserSshKey {
     createdAt: string | null;
 }
 
-interface PaginatedKeys {
-    data: UserSshKey[];
-    links: { url: string | null; label: string; active: boolean }[];
-}
-
 interface Props {
-    keys: PaginatedKeys;
+    keys: PaginatedResponse<UserSshKey>;
 }
 
 defineProps<Props>();

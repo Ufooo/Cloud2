@@ -2,11 +2,14 @@
 
 namespace Nip\Server\Enums;
 
+use App\Enums\Concerns\HasOptions;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 #[TypeScript]
 enum PhpVersion: string
 {
+    use HasOptions;
+
     case Php84 = 'php84';
     case Php83 = 'php83';
     case Php82 = 'php82';
@@ -20,19 +23,5 @@ enum PhpVersion: string
             self::Php82 => 'PHP 8.2',
             self::Php81 => 'PHP 8.1',
         };
-    }
-
-    /**
-     * @return array<int, array{value: string, label: string}>
-     */
-    public static function options(): array
-    {
-        return array_map(
-            fn (self $version) => [
-                'value' => $version->value,
-                'label' => $version->label(),
-            ],
-            self::cases()
-        );
     }
 }

@@ -2,11 +2,14 @@
 
 namespace Nip\Server\Enums;
 
+use App\Enums\Concerns\HasOptions;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 #[TypeScript]
 enum Timezone: string
 {
+    use HasOptions;
+
     case UTC = 'UTC';
     case EuropeLondon = 'Europe/London';
     case EuropeParis = 'Europe/Paris';
@@ -40,19 +43,5 @@ enum Timezone: string
             self::AsiaSingapore => 'Asia/Singapore',
             self::AustraliaSydney => 'Australia/Sydney',
         };
-    }
-
-    /**
-     * @return array<int, array{value: string, label: string}>
-     */
-    public static function options(): array
-    {
-        return array_map(
-            fn (self $timezone) => [
-                'value' => $timezone->value,
-                'label' => $timezone->label(),
-            ],
-            self::cases()
-        );
     }
 }

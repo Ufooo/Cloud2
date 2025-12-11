@@ -2,7 +2,9 @@
 
 namespace Nip\UnixUser\Enums;
 
-enum UserStatus: string
+use App\Enums\Contracts\HasStatusBadge;
+
+enum UserStatus: string implements HasStatusBadge
 {
     case Pending = 'pending';
     case Installing = 'installing';
@@ -16,6 +18,15 @@ enum UserStatus: string
             self::Installing => 'Installing',
             self::Installed => 'Installed',
             self::Failed => 'Failed',
+        };
+    }
+
+    public function badgeVariant(): string
+    {
+        return match ($this) {
+            self::Installed => 'default',
+            self::Installing, self::Pending => 'secondary',
+            self::Failed => 'destructive',
         };
     }
 }

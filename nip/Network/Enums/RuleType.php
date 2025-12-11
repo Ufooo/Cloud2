@@ -2,11 +2,14 @@
 
 namespace Nip\Network\Enums;
 
+use App\Enums\Concerns\HasOptions;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 #[TypeScript]
 enum RuleType: string
 {
+    use HasOptions;
+
     case Allow = 'allow';
     case Deny = 'deny';
 
@@ -16,19 +19,5 @@ enum RuleType: string
             self::Allow => 'Allow',
             self::Deny => 'Deny',
         };
-    }
-
-    /**
-     * @return array<int, array{value: string, label: string}>
-     */
-    public static function options(): array
-    {
-        return array_map(
-            fn (self $type) => [
-                'value' => $type->value,
-                'label' => $type->label(),
-            ],
-            self::cases()
-        );
     }
 }

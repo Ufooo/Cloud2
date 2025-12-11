@@ -2,17 +2,17 @@
 
 namespace Nip\Process\Providers;
 
-use Illuminate\Support\ServiceProvider;
+use Nip\Support\Providers\NipServiceProvider;
 
-class ProcessServiceProvider extends ServiceProvider
+class ProcessServiceProvider extends NipServiceProvider
 {
-    public function register(): void
+    protected function modulePath(): string
     {
-        //
+        return __DIR__.'/..';
     }
 
     public function boot(): void
     {
-        $this->loadRoutesFrom(__DIR__.'/../Routes/web.php');
+        $this->loadRoutesFrom($this->modulePath().'/Routes/web.php');
     }
 }

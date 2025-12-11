@@ -2,6 +2,7 @@
 
 namespace Nip\Network\Http\Controllers;
 
+use App\Http\Controllers\Concerns\LoadsServerPermissions;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
@@ -13,17 +14,15 @@ use Nip\Network\Http\Requests\StoreFirewallRuleRequest;
 use Nip\Network\Http\Resources\FirewallRuleResource;
 use Nip\Network\Models\FirewallRule;
 use Nip\Server\Data\ServerData;
-use Nip\Server\Data\ServerPermissionsData;
-use Nip\Server\Enums\ServerStatus;
 use Nip\Server\Models\Server;
 
 class NetworkController extends Controller
 {
+    use LoadsServerPermissions;
+
     public function index(Server $server): Response
     {
         Gate::authorize('view', $server);
-
-        abort_unless($server->status === ServerStatus::Connected, 403);
 
         $this->loadServerPermissions($server);
 
@@ -40,8 +39,6 @@ class NetworkController extends Controller
 
     public function store(StoreFirewallRuleRequest $request, Server $server): RedirectResponse
     {
-        abort_unless($server->status === ServerStatus::Connected, 403);
-
         $server->firewallRules()->create([
             ...$request->validated(),
             'status' => RuleStatus::Pending,
@@ -56,7 +53,6 @@ class NetworkController extends Controller
     {
         Gate::authorize('view', $server);
 
-        abort_unless($server->status === ServerStatus::Connected, 403);
         abort_unless($rule->server_id === $server->id, 403);
 
         $rule->delete();
@@ -64,15 +60,5 @@ class NetworkController extends Controller
         return redirect()
             ->route('servers.network', $server)
             ->with('success', 'Firewall rule deleted successfully.');
-    }
-
-    private function loadServerPermissions(Server $server): void
-    {
-        $user = request()->user();
-        $server->can = ServerPermissionsData::from([
-            'view' => $user->can('view', $server),
-            'update' => $user->can('update', $server),
-            'delete' => $user->can('delete', $server),
-        ]);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Nip\Server\Http\Controllers;
 
+use App\Http\Controllers\Concerns\LoadsServerPermissions;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
@@ -25,6 +26,8 @@ use Nip\Server\Models\Server;
 
 class ServerController extends Controller
 {
+    use LoadsServerPermissions;
+
     public function index(): Response
     {
         $servers = Server::query()
@@ -87,8 +90,6 @@ class ServerController extends Controller
     {
         Gate::authorize('view', $server);
 
-        abort_unless($server->status === ServerStatus::Connected, 403);
-
         $this->loadServerPermissions($server);
 
         return Inertia::render('servers/Settings', [
@@ -100,8 +101,6 @@ class ServerController extends Controller
 
     public function update(UpdateServerSettingsRequest $request, Server $server): RedirectResponse
     {
-        abort_unless($server->status === ServerStatus::Connected, 403);
-
         $server->update($request->validated());
 
         return redirect()
@@ -121,15 +120,5 @@ class ServerController extends Controller
         if ($server->status === ServerStatus::Provisioning) {
             $server->provisioning_steps = $server->getProvisioningSteps();
         }
-    }
-
-    private function loadServerPermissions(Server $server): void
-    {
-        $user = request()->user();
-        $server->can = ServerPermissionsData::from([
-            'view' => $user->can('view', $server),
-            'update' => $user->can('update', $server),
-            'delete' => $user->can('delete', $server),
-        ]);
     }
 }
