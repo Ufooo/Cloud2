@@ -52,6 +52,7 @@ class UnixUserController extends Controller
         Gate::authorize('update', $server);
 
         abort_unless($user->server_id === $server->id, 403);
+        abort_if($user->username === 'root', 403, 'Cannot delete the root user.');
         abort_if($user->username === 'netipar', 403, 'Cannot delete the netipar user.');
         abort_if($user->status === UserStatus::Installing, 403, 'Cannot delete a user while installation is in progress.');
 

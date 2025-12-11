@@ -3,6 +3,7 @@
 return [
     App\Providers\AppServiceProvider::class,
     App\Providers\FortifyServiceProvider::class,
+    Nip\BackgroundProcess\Providers\BackgroundProcessServiceProvider::class,
     Nip\Network\Providers\NetworkServiceProvider::class,
     Nip\Php\Providers\PhpServiceProvider::class,
     Nip\Process\Providers\ProcessServiceProvider::class,

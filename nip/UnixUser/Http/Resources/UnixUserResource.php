@@ -23,7 +23,7 @@ class UnixUserResource extends JsonResource
             'displayableStatus' => $this->status->label(),
             'createdAt' => $this->created_at?->toISOString(),
             'can' => [
-                'delete' => $this->username !== 'netipar',
+                'delete' => ! in_array($this->username, ['root', 'netipar'], true),
             ],
         ];
     }

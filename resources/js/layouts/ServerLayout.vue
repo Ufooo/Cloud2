@@ -96,8 +96,8 @@ const navItems = computed<NavItem[]>(() => [
     },
     {
         title: 'Background Processes',
-        href: `/servers/${props.server.slug}/processes`,
-        routeName: 'servers.processes',
+        href: `/servers/${props.server.slug}/background-processes`,
+        routeName: 'servers.background-processes',
         icon: Activity,
     },
     {

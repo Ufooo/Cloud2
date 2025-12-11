@@ -11,6 +11,8 @@ use Nip\Server\Enums\ServerStatus;
 use Nip\Server\Enums\ServerType;
 use Nip\Server\Enums\UbuntuVersion;
 use Nip\Server\Models\Server;
+use Nip\UnixUser\Enums\UserStatus;
+use Nip\UnixUser\Models\UnixUser;
 
 class ServerFactory extends Factory
 {
@@ -72,5 +74,22 @@ class ServerFactory extends Factory
             'status' => ServerStatus::Provisioning,
             'is_ready' => false,
         ]);
+    }
+
+    public function configure(): static
+    {
+        return $this->afterCreating(function (Server $server) {
+            UnixUser::factory()->create([
+                'server_id' => $server->id,
+                'username' => 'root',
+                'status' => UserStatus::Installed,
+            ]);
+
+            UnixUser::factory()->create([
+                'server_id' => $server->id,
+                'username' => 'netipar',
+                'status' => UserStatus::Installed,
+            ]);
+        });
     }
 }

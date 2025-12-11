@@ -129,6 +129,14 @@ class Server extends Model
         return $this->hasMany(\Nip\Php\Models\PhpVersion::class);
     }
 
+    /**
+     * @return HasMany<\Nip\BackgroundProcess\Models\BackgroundProcess, $this>
+     */
+    public function backgroundProcesses(): HasMany
+    {
+        return $this->hasMany(\Nip\BackgroundProcess\Models\BackgroundProcess::class);
+    }
+
     protected function displayableType(): Attribute
     {
         return Attribute::get(fn () => $this->type?->label());
