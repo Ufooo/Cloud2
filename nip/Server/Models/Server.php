@@ -113,6 +113,22 @@ class Server extends Model
         return $this->hasMany(\Nip\SshKey\Models\SshKey::class);
     }
 
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne<\Nip\Php\Models\PhpSetting, $this>
+     */
+    public function phpSetting(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(\Nip\Php\Models\PhpSetting::class);
+    }
+
+    /**
+     * @return HasMany<\Nip\Php\Models\PhpVersion, $this>
+     */
+    public function phpVersions(): HasMany
+    {
+        return $this->hasMany(\Nip\Php\Models\PhpVersion::class);
+    }
+
     protected function displayableType(): Attribute
     {
         return Attribute::get(fn () => $this->type?->label());

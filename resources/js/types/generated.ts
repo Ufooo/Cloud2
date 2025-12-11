@@ -1,192 +1,124 @@
-export enum DatabaseType {
-    Mysql = 'mysql',
-    Mariadb = 'mariadb',
-    Postgresql = 'postgresql',
-}
+export enum DatabaseType { Mysql = 'mysql', Mariadb = 'mariadb', Postgresql = 'postgresql' };
 export type FirewallRuleData = {
-    id: number;
-    name: string;
-    port: string | null;
-    ipAddress: string | null;
-    type: RuleType;
-    status: RuleStatus;
-    displayableType: string;
-    displayableStatus: string;
+id: number;
+name: string;
+port: string | null;
+ipAddress: string | null;
+type: RuleType;
+status: RuleStatus;
+displayableType: string;
+displayableStatus: string;
 };
-export enum IdentityColor {
-    Blue = 'blue',
-    Green = 'green',
-    Orange = 'orange',
-    Purple = 'purple',
-    Red = 'red',
-    Yellow = 'yellow',
-    Cyan = 'cyan',
-    Gray = 'gray',
-}
-export enum PhpVersion {
-    Php84 = 'php84',
-    Php83 = 'php83',
-    Php82 = 'php82',
-    Php81 = 'php81',
-}
-export enum ProvisioningStep {
-    WaitingForServer = 0,
-    PreparingServer = 1,
-    ConfiguringSwap = 2,
-    InstallingBaseDependencies = 3,
-    InstallingPhp = 4,
-    InstallingNginx = 5,
-    InstallingDatabase = 6,
-    InstallingRedis = 7,
-    MakingFinalTouches = 10,
-}
+export enum IdentityColor { Blue = 'blue', Green = 'green', Orange = 'orange', Purple = 'purple', Red = 'red', Yellow = 'yellow', Cyan = 'cyan', Gray = 'gray' };
+export type PhpSettingData = {
+id: number;
+maxUploadSize: number | null;
+maxExecutionTime: number | null;
+opcacheEnabled: boolean;
+};
+export enum PhpVersion { Php84 = 'php84', Php83 = 'php83', Php82 = 'php82', Php81 = 'php81' };
+export type PhpVersionData = {
+id: number;
+version: string;
+isCliDefault: boolean;
+isSiteDefault: boolean;
+status: PhpVersionStatus;
+createdAt: string | null;
+};
+export enum PhpVersionStatus { Pending = 'pending', Installing = 'installing', Installed = 'installed', Uninstalling = 'uninstalling', Failed = 'failed' };
+export enum ProvisioningStep { WaitingForServer = 0, PreparingServer = 1, ConfiguringSwap = 2, InstallingBaseDependencies = 3, InstallingPhp = 4, InstallingNginx = 5, InstallingDatabase = 6, InstallingRedis = 7, MakingFinalTouches = 10 };
 export type ProvisioningStepData = {
-    value: number;
-    label: string;
-    description: string;
+value: number;
+label: string;
+description: string;
 };
-export enum RuleStatus {
-    Pending = 'pending',
-    Installing = 'installing',
-    Installed = 'installed',
-    Failed = 'failed',
-}
-export enum RuleType {
-    Allow = 'allow',
-    Deny = 'deny',
-}
+export enum RuleStatus { Pending = 'pending', Installing = 'installing', Installed = 'installed', Failed = 'failed' };
+export enum RuleType { Allow = 'allow', Deny = 'deny' };
 export type ServerCreateData = {
-    name: string;
-    provider: ServerProvider;
-    type: ServerType;
-    ipAddress: string | null;
-    privateIpAddress: string | null;
-    sshPort: string;
-    phpVersion: string;
-    databaseType: string | null;
-    ubuntuVersion: string | null;
-    timezone: string;
-    notes: string | null;
-    avatarColor: IdentityColor;
-    services: Array<any> | null;
-    region: Array<any> | null;
+name: string;
+provider: ServerProvider;
+type: ServerType;
+ipAddress: string | null;
+privateIpAddress: string | null;
+sshPort: string;
+phpVersion: string;
+databaseType: string | null;
+ubuntuVersion: string | null;
+timezone: string;
+notes: string | null;
+avatarColor: IdentityColor;
+services: Array<any> | null;
+region: Array<any> | null;
 };
 export type ServerData = {
-    id: number;
-    name: string;
-    slug: string;
-    provider: ServerProvider;
-    providerServerId: string | null;
-    type: ServerType;
-    displayableType: string | null;
-    status: ServerStatus;
-    provisioningCommand: string | null;
-    provisionStep: number;
-    provisioningSteps: Array<ProvisioningStepData> | null;
-    ipAddress: string | null;
-    privateIpAddress: string | null;
-    sshPort: string;
-    phpVersion: string;
-    displayablePhpVersion: string | null;
-    databaseType: string | null;
-    dbStatus: string | null;
-    ubuntuVersion: string | null;
-    timezone: Timezone;
-    notes: string | null;
-    avatarColor: IdentityColor;
-    services: Array<any> | null;
-    region: Array<any> | null;
-    displayableProvider: string | null;
-    displayableDatabaseType: string | null;
-    cloudProviderUrl: string | null;
-    isReady: boolean;
-    lastConnectedAt: any | null;
-    createdAt: any;
-    updatedAt: any;
-    can: ServerPermissionsData;
+id: number;
+name: string;
+slug: string;
+provider: ServerProvider;
+providerServerId: string | null;
+type: ServerType;
+displayableType: string | null;
+status: ServerStatus;
+provisioningCommand: string | null;
+provisionStep: number;
+provisioningSteps: Array<ProvisioningStepData> | null;
+ipAddress: string | null;
+privateIpAddress: string | null;
+sshPort: string;
+phpVersion: string;
+displayablePhpVersion: string | null;
+databaseType: string | null;
+dbStatus: string | null;
+ubuntuVersion: string | null;
+timezone: Timezone;
+notes: string | null;
+avatarColor: IdentityColor;
+services: Array<any> | null;
+region: Array<any> | null;
+displayableProvider: string | null;
+displayableDatabaseType: string | null;
+cloudProviderUrl: string | null;
+isReady: boolean;
+lastConnectedAt: any | null;
+createdAt: any;
+updatedAt: any;
+can: ServerPermissionsData;
 };
 export type ServerPermissionsData = {
-    view: boolean;
-    update: boolean;
-    delete: boolean;
+view: boolean;
+update: boolean;
+delete: boolean;
 };
-export enum ServerProvider {
-    DigitalOcean = 'digitalocean',
-    Vultr = 'vultr',
-    Custom = 'custom',
-}
+export enum ServerProvider { DigitalOcean = 'digitalocean', Vultr = 'vultr', Custom = 'custom' };
 export type ServerProviderOptionData = {
-    value: ServerProvider;
-    label: string;
+value: ServerProvider;
+label: string;
 };
-export enum ServerStatus {
-    Connecting = 'connecting',
-    Connected = 'connected',
-    Disconnected = 'disconnected',
-    Deleting = 'deleting',
-    Provisioning = 'provisioning',
-    Locked = 'locked',
-    Resizing = 'resizing',
-    Stopping = 'stopping',
-    Off = 'off',
-    Unknown = 'unknown',
-}
-export enum ServerType {
-    App = 'app',
-    Web = 'web',
-    LoadBalancer = 'loadbalancer',
-    Database = 'database',
-    Cache = 'cache',
-    Worker = 'worker',
-    Meilisearch = 'meilisearch',
-}
+export enum ServerStatus { Connecting = 'connecting', Connected = 'connected', Disconnected = 'disconnected', Deleting = 'deleting', Provisioning = 'provisioning', Locked = 'locked', Resizing = 'resizing', Stopping = 'stopping', Off = 'off', Unknown = 'unknown' };
+export enum ServerType { App = 'app', Web = 'web', LoadBalancer = 'loadbalancer', Database = 'database', Cache = 'cache', Worker = 'worker', Meilisearch = 'meilisearch' };
 export type ServerTypeOptionData = {
-    value: ServerType;
-    label: string;
-    description: string;
+value: ServerType;
+label: string;
+description: string;
 };
 export type SshKeyData = {
-    id: number;
-    name: string;
-    fingerprint: string;
-    createdAt: string;
-    unixUser: UnixUserData | null;
+id: number;
+name: string;
+fingerprint: string;
+createdAt: string;
+unixUser: UnixUserData | null;
 };
-export enum Timezone {
-    UTC = 'UTC',
-    EuropeLondon = 'Europe/London',
-    EuropeParis = 'Europe/Paris',
-    EuropeBerlin = 'Europe/Berlin',
-    EuropeBudapest = 'Europe/Budapest',
-    EuropeMoscow = 'Europe/Moscow',
-    AmericaNewYork = 'America/New_York',
-    AmericaChicago = 'America/Chicago',
-    AmericaDenver = 'America/Denver',
-    AmericaLosAngeles = 'America/Los_Angeles',
-    AsiaTokyo = 'Asia/Tokyo',
-    AsiaShanghai = 'Asia/Shanghai',
-    AsiaSingapore = 'Asia/Singapore',
-    AustraliaSydney = 'Australia/Sydney',
-}
-export enum UbuntuVersion {
-    V2404 = '24.04',
-    V2204 = '22.04',
-    V2004 = '20.04',
-}
+export enum Timezone { UTC = 'UTC', EuropeLondon = 'Europe/London', EuropeParis = 'Europe/Paris', EuropeBerlin = 'Europe/Berlin', EuropeBudapest = 'Europe/Budapest', EuropeMoscow = 'Europe/Moscow', AmericaNewYork = 'America/New_York', AmericaChicago = 'America/Chicago', AmericaDenver = 'America/Denver', AmericaLosAngeles = 'America/Los_Angeles', AsiaTokyo = 'Asia/Tokyo', AsiaShanghai = 'Asia/Shanghai', AsiaSingapore = 'Asia/Singapore', AustraliaSydney = 'Australia/Sydney' };
+export enum UbuntuVersion { V2404 = '24.04', V2204 = '22.04', V2004 = '20.04' };
 export type UnixUserData = {
-    id: number;
-    username: string;
-    status: UserStatus;
-    displayableStatus: string;
+id: number;
+username: string;
+status: UserStatus;
+displayableStatus: string;
 };
 export type UserSshKeyData = {
-    id: number;
-    name: string;
-    fingerprint: string;
+id: number;
+name: string;
+fingerprint: string;
 };
-export enum UserStatus {
-    Pending = 'pending',
-    Installing = 'installing',
-    Installed = 'installed',
-    Failed = 'failed',
-}
+export enum UserStatus { Pending = 'pending', Installing = 'installing', Installed = 'installed', Failed = 'failed' };
