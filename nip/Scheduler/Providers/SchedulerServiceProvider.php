@@ -10,9 +10,4 @@ class SchedulerServiceProvider extends NipServiceProvider
     {
         return __DIR__.'/..';
     }
-
-    public function boot(): void
-    {
-        $this->loadRoutesFrom($this->modulePath().'/Routes/web.php');
-    }
 }
