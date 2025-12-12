@@ -9,6 +9,7 @@ return [
     Nip\Process\Providers\ProcessServiceProvider::class,
     Nip\Scheduler\Providers\SchedulerServiceProvider::class,
     Nip\Server\Providers\ServerServiceProvider::class,
+    Nip\Site\Providers\SiteServiceProvider::class,
     Nip\SshKey\Providers\SshKeyServiceProvider::class,
     Nip\UnixUser\Providers\UnixUserServiceProvider::class,
 ];
