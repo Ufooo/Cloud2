@@ -15,7 +15,8 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
 
     // Site-specific routes
     Route::get('/sites/{site}', [SiteController::class, 'show'])->name('sites.show');
-    Route::put('/sites/{site}', [SiteController::class, 'update'])->name('sites.update');
+    Route::get('/sites/{site}/settings', [SiteController::class, 'settings'])->name('sites.settings');
+    Route::match(['put', 'patch'], '/sites/{site}', [SiteController::class, 'update'])->name('sites.update');
     Route::delete('/sites/{site}', [SiteController::class, 'destroy'])->name('sites.destroy');
     Route::post('/sites/{site}/deploy', [SiteController::class, 'deploy'])->name('sites.deploy');
 });

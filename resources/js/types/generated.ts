@@ -129,6 +129,7 @@ fullPath: string;
 webPath: string;
 url: string;
 phpVersion: string | null;
+phpVersionValue: string | null;
 packageManager: string | null;
 buildCommand: string | null;
 repository: string | null;

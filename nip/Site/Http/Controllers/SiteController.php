@@ -7,15 +7,16 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
+use Nip\Server\Enums\IdentityColor;
 use Nip\Server\Enums\PhpVersion;
 use Nip\Server\Enums\ServerStatus;
 use Nip\Server\Models\Server;
+use Nip\Site\Data\SiteData;
 use Nip\Site\Enums\DeployStatus;
 use Nip\Site\Enums\PackageManager;
 use Nip\Site\Enums\SiteStatus;
 use Nip\Site\Enums\SiteType;
 use Nip\Site\Enums\WwwRedirectType;
-use Nip\Site\Data\SiteData;
 use Nip\Site\Http\Requests\StoreSiteRequest;
 use Nip\Site\Http\Requests\UpdateSiteRequest;
 use Nip\Site\Http\Resources\SiteResource;
@@ -139,10 +140,18 @@ class SiteController extends Controller
     {
         Gate::authorize('update', $site->server);
 
-        $site->load('server');
+        $site->load(['server.phpVersions' => fn ($q) => $q->where('status', 'installed')->orderBy('version', 'desc')]);
+
+        $phpVersions = $site->server->phpVersions->map(fn ($pv) => [
+            'value' => $pv->version,
+            'label' => PhpVersion::tryFrom($pv->version)?->label() ?? $pv->version,
+        ])->values()->all();
 
         return Inertia::render('sites/Settings', [
             'site' => SiteData::fromModel($site),
+            'siteTypes' => SiteType::options(),
+            'phpVersions' => $phpVersions,
+            'colors' => IdentityColor::options(),
         ]);
     }
 
@@ -153,7 +162,7 @@ class SiteController extends Controller
         $site->update($request->validated());
 
         return redirect()
-            ->route('sites.index')
+            ->back()
             ->with('success', 'Site updated successfully.');
     }
 
