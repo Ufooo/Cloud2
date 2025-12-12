@@ -26,13 +26,13 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/AppLayout.vue';
-import type { BreadcrumbItem } from '@/types';
 import {
     ServerProvider,
     ServerType,
+    type BreadcrumbItem,
     type ServerProviderOptionData,
     type ServerTypeOptionData,
-} from '@/types/server';
+} from '@/types';
 import { Head, useForm } from '@inertiajs/vue3';
 import { computed, type Component } from 'vue';
 

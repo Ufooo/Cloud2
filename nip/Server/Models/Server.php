@@ -145,6 +145,14 @@ class Server extends Model
         return $this->hasMany(\Nip\Scheduler\Models\ScheduledJob::class);
     }
 
+    /**
+     * @return HasMany<\Nip\Site\Models\Site, $this>
+     */
+    public function sites(): HasMany
+    {
+        return $this->hasMany(\Nip\Site\Models\Site::class);
+    }
+
     protected function displayableType(): Attribute
     {
         return Attribute::get(fn () => $this->type?->label());

@@ -6,13 +6,13 @@ import {
 import CustomVpsLogo from '@/components/icons/CustomVpsLogo.vue';
 import DigitalOceanLogo from '@/components/icons/DigitalOceanLogo.vue';
 import VultrLogo from '@/components/icons/VultrLogo.vue';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { useServerActions, useServerAvatar } from '@/composables/useServer';
+import Avatar from '@/components/shared/Avatar.vue';
+import { useServerActions } from '@/composables/useServer';
 import AppLayout from '@/layouts/AppLayout.vue';
 import ServerProvisioning from '@/pages/servers/partials/ServerProvisioning.vue';
 import ServerStatusBadge from '@/pages/servers/partials/ServerStatusBadge.vue';
 import type { BreadcrumbItem, Server } from '@/types';
-import { ServerProvider, ServerStatus } from '@/types/server';
+import { ServerProvider, ServerStatus } from '@/types';
 import { Link } from '@inertiajs/vue3';
 import {
     Activity,
@@ -22,6 +22,7 @@ import {
     Globe,
     Key,
     LayoutDashboard,
+    PanelTop,
     Settings,
     Users,
 } from 'lucide-vue-next';
@@ -45,7 +46,6 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => [
     },
 ]);
 
-const { avatarColorClass, initials } = useServerAvatar(() => props.server);
 const { copyIpAddress } = useServerActions(() => props.server);
 
 const providerLogos: Record<ServerProvider, Component> = {
@@ -75,6 +75,12 @@ const navItems = computed<NavItem[]>(() => [
         href: `/servers/${props.server.slug}`,
         routeName: 'servers.show',
         icon: LayoutDashboard,
+    },
+    {
+        title: 'Sites',
+        href: `/servers/${props.server.slug}/sites`,
+        routeName: 'servers.sites',
+        icon: PanelTop,
     },
     {
         title: 'Unix Users',
@@ -140,14 +146,7 @@ function isActive(item: NavItem): boolean {
                     <!-- Server Header -->
                     <div class="border-b p-4">
                         <div class="flex items-center gap-3">
-                            <Avatar class="size-10 rounded-lg">
-                                <AvatarFallback
-                                    :class="avatarColorClass"
-                                    class="rounded-lg text-sm font-medium text-white"
-                                >
-                                    {{ initials }}
-                                </AvatarFallback>
-                            </Avatar>
+                            <Avatar :name="server.name" :color="server.avatarColor" />
 
                             <div class="min-w-0 flex-1">
                                 <div class="flex items-center gap-2">

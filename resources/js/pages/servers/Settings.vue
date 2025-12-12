@@ -24,8 +24,7 @@ import {
 import { useClipboard } from '@/composables/useClipboard';
 import { useConfirmation } from '@/composables/useConfirmation';
 import ServerLayout from '@/layouts/ServerLayout.vue';
-import type { Server } from '@/types';
-import { IdentityColor } from '@/types/server';
+import { IdentityColor, type Server } from '@/types';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { Copy, Key, Trash2 } from 'lucide-vue-next';
 

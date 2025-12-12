@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { index as serversIndex } from '@/actions/Nip/Server/Http/Controllers/ServerController';
+import { index as sitesIndex } from '@/actions/Nip/Site/Http/Controllers/SiteController';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
@@ -15,7 +16,7 @@ import {
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Server } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid, PanelTop, Server } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 const mainNavItems: NavItem[] = [
@@ -28,6 +29,11 @@ const mainNavItems: NavItem[] = [
         title: 'Servers',
         href: serversIndex.url(),
         icon: Server,
+    },
+    {
+        title: 'Sites',
+        href: sitesIndex.url(),
+        icon: PanelTop,
     },
 ];
 

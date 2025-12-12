@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { destroy } from '@/actions/Nip/Server/Http/Controllers/ServerController';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import Avatar from '@/components/shared/Avatar.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useConfirmation } from '@/composables/useConfirmation';
-import { useServerAvatar } from '@/composables/useServer';
 import type { Server as ServerType } from '@/types';
 import { router } from '@inertiajs/vue3';
 import { useEcho } from '@laravel/echo-vue';
@@ -20,7 +19,6 @@ interface Props {
 const props = defineProps<Props>();
 
 const { confirmButton } = useConfirmation();
-const { avatarColorClass, initials } = useServerAvatar(() => props.server);
 
 const showInstructionsModal = ref(false);
 
@@ -58,14 +56,7 @@ async function handleCancelProvisioning() {
             <!-- Server Header -->
             <Card>
                 <CardContent class="flex items-center gap-4 p-6">
-                    <Avatar class="size-16 rounded-lg">
-                        <AvatarFallback
-                            :class="avatarColorClass"
-                            class="rounded-lg text-xl font-medium text-white"
-                        >
-                            {{ initials }}
-                        </AvatarFallback>
-                    </Avatar>
+                    <Avatar :name="server.name" :color="server.avatarColor" size="lg" />
 
                     <div class="flex-1 space-y-1">
                         <div class="flex items-center gap-3">

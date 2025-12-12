@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { show } from '@/actions/Nip/Server/Http/Controllers/ServerController';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { useServerAvatar } from '@/composables/useServer';
+import Avatar from '@/components/shared/Avatar.vue';
 import type { Server } from '@/types';
 import { Link } from '@inertiajs/vue3';
 import ServerStatusBadge from './ServerStatusBadge.vue';
@@ -10,9 +9,7 @@ interface Props {
     server: Server;
 }
 
-const props = defineProps<Props>();
-
-const { avatarColorClass, initials } = useServerAvatar(() => props.server);
+defineProps<Props>();
 </script>
 
 <template>
@@ -20,15 +17,7 @@ const { avatarColorClass, initials } = useServerAvatar(() => props.server);
         :href="show.url(server)"
         class="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-accent/50"
     >
-        <!-- Avatar -->
-        <Avatar class="size-8 shrink-0 rounded">
-            <AvatarFallback
-                :class="avatarColorClass"
-                class="rounded text-xs font-medium text-white"
-            >
-                {{ initials }}
-            </AvatarFallback>
-        </Avatar>
+        <Avatar :name="server.name" :color="server.avatarColor" size="sm" />
 
         <!-- Content -->
         <div class="flex min-w-0 flex-1 cursor-pointer flex-col gap-y-0.5">

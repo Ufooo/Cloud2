@@ -7,14 +7,15 @@ import EmptyState from '@/components/shared/EmptyState.vue';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout.vue';
-import type { BreadcrumbItem, ServerListResponse } from '@/types';
+import type { BreadcrumbItem, Server as ServerType } from '@/types';
+import type { PaginatedResponse } from '@/types/pagination';
 import { Head, Link } from '@inertiajs/vue3';
 import { Plus, Server } from 'lucide-vue-next';
 import { computed } from 'vue';
 import ServerCardListItem from './partials/ServerCardListItem.vue';
 
 interface Props {
-    servers: ServerListResponse;
+    servers: PaginatedResponse<ServerType>;
 }
 
 const props = defineProps<Props>();
