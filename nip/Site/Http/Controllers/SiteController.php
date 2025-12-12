@@ -15,6 +15,7 @@ use Nip\Site\Enums\PackageManager;
 use Nip\Site\Enums\SiteStatus;
 use Nip\Site\Enums\SiteType;
 use Nip\Site\Enums\WwwRedirectType;
+use Nip\Site\Data\SiteData;
 use Nip\Site\Http\Requests\StoreSiteRequest;
 use Nip\Site\Http\Requests\UpdateSiteRequest;
 use Nip\Site\Http\Resources\SiteResource;
@@ -130,7 +131,18 @@ class SiteController extends Controller
         $site->load('server');
 
         return Inertia::render('sites/Show', [
-            'site' => SiteResource::make($site),
+            'site' => SiteData::fromModel($site),
+        ]);
+    }
+
+    public function settings(Site $site): Response
+    {
+        Gate::authorize('update', $site->server);
+
+        $site->load('server');
+
+        return Inertia::render('sites/Settings', [
+            'site' => SiteData::fromModel($site),
         ]);
     }
 
