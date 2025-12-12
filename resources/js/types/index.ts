@@ -38,4 +38,15 @@ export interface User {
 
 export type BreadcrumbItemType = BreadcrumbItem;
 
-export * from './server';
+export {
+    IdentityColor,
+    ServerProvider,
+    ServerStatus,
+    ServerType,
+    type ServerData as Server,
+    type ServerCreateData,
+    type ServerPermissionsData,
+    type ServerProviderOptionData,
+    type ServerTypeOptionData,
+    type SiteData as Site,
+} from './generated';

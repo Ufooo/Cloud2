@@ -1,4 +1,6 @@
+export enum CronFrequency { EveryMinute = 'every_minute', Hourly = 'hourly', Nightly = 'nightly', Weekly = 'weekly', Monthly = 'monthly', OnReboot = 'on_reboot', Custom = 'custom' };
 export enum DatabaseType { Mysql = 'mysql', Mariadb = 'mariadb', Postgresql = 'postgresql' };
+export enum DeployStatus { NeverDeployed = 'never_deployed', Deploying = 'deploying', Deployed = 'deployed', Failed = 'failed' };
 export type FirewallRuleData = {
 id: number;
 name: string;
@@ -9,7 +11,10 @@ status: RuleStatus;
 displayableType: string;
 displayableStatus: string;
 };
+export enum GracePeriod { OneMinute = 1, TwoMinutes = 2, FiveMinutes = 5, TenMinutes = 10, ThirtyMinutes = 30, OneHour = 60 };
 export enum IdentityColor { Blue = 'blue', Green = 'green', Orange = 'orange', Purple = 'purple', Red = 'red', Yellow = 'yellow', Cyan = 'cyan', Gray = 'gray' };
+export enum JobStatus { Pending = 'pending', Installing = 'installing', Installed = 'installed', Paused = 'paused', Failed = 'failed' };
+export enum PackageManager { Npm = 'npm', Yarn = 'yarn', Pnpm = 'pnpm', Bun = 'bun' };
 export type PhpSettingData = {
 id: number;
 maxUploadSize: number | null;
@@ -26,6 +31,7 @@ status: PhpVersionStatus;
 createdAt: string | null;
 };
 export enum PhpVersionStatus { Pending = 'pending', Installing = 'installing', Installed = 'installed', Uninstalling = 'uninstalling', Failed = 'failed' };
+export enum ProcessStatus { Pending = 'pending', Installing = 'installing', Installed = 'installed', Failed = 'failed' };
 export enum ProvisioningStep { WaitingForServer = 0, PreparingServer = 1, ConfiguringSwap = 2, InstallingBaseDependencies = 3, InstallingPhp = 4, InstallingNginx = 5, InstallingDatabase = 6, InstallingRedis = 7, MakingFinalTouches = 10 };
 export type ProvisioningStepData = {
 value: number;
@@ -101,6 +107,48 @@ value: ServerType;
 label: string;
 description: string;
 };
+export type SiteData = {
+id: string;
+slug: string;
+serverId: number;
+serverName: string | null;
+serverSlug: string | null;
+domain: string;
+type: string | null;
+displayableType: string | null;
+status: string | null;
+displayableStatus: string | null;
+statusBadgeVariant: string | null;
+deployStatus: string | null;
+displayableDeployStatus: string | null;
+deployStatusBadgeVariant: string | null;
+user: string;
+rootDirectory: string;
+webDirectory: string;
+fullPath: string;
+webPath: string;
+url: string;
+phpVersion: string | null;
+packageManager: string | null;
+buildCommand: string | null;
+repository: string | null;
+branch: string | null;
+displayableRepository: string | null;
+isIsolated: boolean;
+avatarColor: IdentityColor | null;
+notes: string | null;
+lastDeployedAt: string | null;
+lastDeployedAtHuman: string | null;
+createdAt: string | null;
+can: SitePermissionsData;
+};
+export type SitePermissionsData = {
+update: boolean;
+delete: boolean;
+deploy: boolean;
+};
+export enum SiteStatus { Pending = 'pending', Installing = 'installing', Installed = 'installed', Failed = 'failed', Deleting = 'deleting' };
+export enum SiteType { Laravel = 'laravel', Symfony = 'symfony', Statamic = 'statamic', WordPress = 'wordpress', PhpMyAdmin = 'phpmyadmin', Php = 'php', NextJs = 'nextjs', NuxtJs = 'nuxtjs', Html = 'html', Other = 'other' };
 export type SshKeyData = {
 id: number;
 name: string;
@@ -108,6 +156,8 @@ fingerprint: string;
 createdAt: string;
 unixUser: UnixUserData | null;
 };
+export enum StopSignal { TERM = 'TERM', HUP = 'HUP', INT = 'INT', QUIT = 'QUIT', KILL = 'KILL', USR1 = 'USR1', USR2 = 'USR2' };
+export enum SupervisorProcessStatus { Running = 'RUNNING', Starting = 'STARTING', Stopping = 'STOPPING', Stopped = 'STOPPED', Backoff = 'BACKOFF', Exited = 'EXITED', Fatal = 'FATAL', Unknown = 'UNKNOWN' };
 export enum Timezone { UTC = 'UTC', EuropeLondon = 'Europe/London', EuropeParis = 'Europe/Paris', EuropeBerlin = 'Europe/Berlin', EuropeBudapest = 'Europe/Budapest', EuropeMoscow = 'Europe/Moscow', AmericaNewYork = 'America/New_York', AmericaChicago = 'America/Chicago', AmericaDenver = 'America/Denver', AmericaLosAngeles = 'America/Los_Angeles', AsiaTokyo = 'Asia/Tokyo', AsiaShanghai = 'Asia/Shanghai', AsiaSingapore = 'Asia/Singapore', AustraliaSydney = 'Australia/Sydney' };
 export enum UbuntuVersion { V2404 = '24.04', V2204 = '22.04', V2004 = '20.04' };
 export type UnixUserData = {
@@ -122,3 +172,4 @@ name: string;
 fingerprint: string;
 };
 export enum UserStatus { Pending = 'pending', Installing = 'installing', Installed = 'installed', Failed = 'failed' };
+export enum WwwRedirectType { FromWww = 'from_www', ToWww = 'to_www', None = 'none' };
