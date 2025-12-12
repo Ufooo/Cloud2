@@ -1,8 +1,16 @@
 <script setup lang="ts">
+import { index as backgroundProcessIndex } from '@/actions/Nip/BackgroundProcess/Http/Controllers/BackgroundProcessController';
+import { index as networkIndex } from '@/actions/Nip/Network/Http/Controllers/NetworkController';
+import { index as phpIndex } from '@/actions/Nip/Php/Http/Controllers/PhpController';
+import { index as schedulerIndex } from '@/actions/Nip/Scheduler/Http/Controllers/ScheduledJobController';
 import {
     index,
+    settings,
     show,
 } from '@/actions/Nip/Server/Http/Controllers/ServerController';
+import { index as sitesIndex } from '@/actions/Nip/Site/Http/Controllers/ServerSiteController';
+import { index as sshKeysIndex } from '@/actions/Nip/SshKey/Http/Controllers/SshKeyController';
+import { index as unixUsersIndex } from '@/actions/Nip/UnixUser/Http/Controllers/UnixUserController';
 import CustomVpsLogo from '@/components/icons/CustomVpsLogo.vue';
 import DigitalOceanLogo from '@/components/icons/DigitalOceanLogo.vue';
 import VultrLogo from '@/components/icons/VultrLogo.vue';
@@ -65,63 +73,53 @@ const isProvisioning = computed(
 interface NavItem {
     title: string;
     href: string;
-    routeName: string;
     icon: FunctionalComponent;
 }
 
 const navItems = computed<NavItem[]>(() => [
     {
         title: 'Overview',
-        href: `/servers/${props.server.slug}`,
-        routeName: 'servers.show',
+        href: show.url(props.server),
         icon: LayoutDashboard,
     },
     {
         title: 'Sites',
-        href: `/servers/${props.server.slug}/sites`,
-        routeName: 'servers.sites',
+        href: sitesIndex.url(props.server),
         icon: PanelTop,
     },
     {
         title: 'Unix Users',
-        href: `/servers/${props.server.slug}/unix-users`,
-        routeName: 'servers.unix-users',
+        href: unixUsersIndex.url(props.server),
         icon: Users,
     },
     {
         title: 'PHP',
-        href: `/servers/${props.server.slug}/php`,
-        routeName: 'servers.php',
+        href: phpIndex.url(props.server),
         icon: Code,
     },
     {
         title: 'Scheduler',
-        href: `/servers/${props.server.slug}/scheduler`,
-        routeName: 'servers.scheduler',
+        href: schedulerIndex.url(props.server),
         icon: Clock,
     },
     {
         title: 'Background Processes',
-        href: `/servers/${props.server.slug}/background-processes`,
-        routeName: 'servers.background-processes',
+        href: backgroundProcessIndex.url(props.server),
         icon: Activity,
     },
     {
         title: 'SSH Keys',
-        href: `/servers/${props.server.slug}/ssh-keys`,
-        routeName: 'servers.ssh-keys',
+        href: sshKeysIndex.url(props.server),
         icon: Key,
     },
     {
         title: 'Network',
-        href: `/servers/${props.server.slug}/network`,
-        routeName: 'servers.network',
+        href: networkIndex.url(props.server),
         icon: Globe,
     },
     {
         title: 'Settings',
-        href: `/servers/${props.server.slug}/settings`,
-        routeName: 'servers.settings',
+        href: settings.url(props.server),
         icon: Settings,
     },
 ]);
@@ -200,7 +198,7 @@ function isActive(item: NavItem): boolean {
                     <!-- Navigation -->
                     <nav class="flex-1 overflow-y-auto p-2">
                         <ul class="space-y-1">
-                            <li v-for="item in navItems" :key="item.routeName">
+                            <li v-for="item in navItems" :key="item.href">
                                 <Link
                                     :href="item.href"
                                     class="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors"

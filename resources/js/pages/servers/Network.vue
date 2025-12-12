@@ -3,7 +3,9 @@ import {
     destroy,
     store,
 } from '@/actions/Nip/Network/Http/Controllers/NetworkController';
-import InputError from '@/components/InputError.vue';
+import EmptyState from '@/components/shared/EmptyState.vue';
+import FormField from '@/components/shared/FormField.vue';
+import ResourceFormDialog from '@/components/shared/ResourceFormDialog.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,21 +16,12 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -36,12 +29,12 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { useConfirmation } from '@/composables/useConfirmation';
+import { useResourceDelete } from '@/composables/useResourceDelete';
 import ServerLayout from '@/layouts/ServerLayout.vue';
 import type { Server } from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
 import { RuleStatus, RuleType } from '@/types/generated';
-import { Form, Head, router } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import {
     MoreHorizontal,
     Plus,
@@ -78,31 +71,13 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const { confirmButton } = useConfirmation();
+const addRuleDialog = ref<InstanceType<typeof ResourceFormDialog>>();
 
-const showAddRuleDialog = ref(false);
-
-function openAddRuleDialog() {
-    showAddRuleDialog.value = true;
-}
-
-function onSuccess() {
-    showAddRuleDialog.value = false;
-}
-
-async function deleteRule(rule: FirewallRule) {
-    const confirmed = await confirmButton({
-        title: 'Delete Firewall Rule',
-        description: `Are you sure you want to delete the "${rule.name}" rule?`,
-        confirmText: 'Delete',
-    });
-
-    if (!confirmed) {
-        return;
-    }
-
-    router.delete(destroy.url({ server: props.server, rule: rule.id }));
-}
+const { deleteResource: deleteRule } = useResourceDelete<FirewallRule>({
+    resourceName: 'Firewall Rule',
+    getDisplayName: (rule) => rule.name,
+    getDeleteUrl: (rule) => destroy.url({ server: props.server, rule: rule.id }),
+});
 
 function syncRules() {
     router.reload({ only: ['rules'] });
@@ -121,7 +96,6 @@ function getBadgeVariant(rule: FirewallRule) {
 
     <ServerLayout :server="server">
         <div class="space-y-6">
-            <!-- Firewall Rules Section -->
             <Card>
                 <CardHeader>
                     <div class="flex items-center justify-between">
@@ -146,7 +120,7 @@ function getBadgeVariant(rule: FirewallRule) {
                             </Button>
                             <Button
                                 variant="outline"
-                                @click="openAddRuleDialog"
+                                @click="addRuleDialog?.open()"
                             >
                                 <Plus class="mr-2 size-4" />
                                 Add rule
@@ -156,28 +130,23 @@ function getBadgeVariant(rule: FirewallRule) {
                 </CardHeader>
 
                 <CardContent>
-                    <div
+                    <EmptyState
                         v-if="rules.data.length === 0"
-                        class="rounded-lg border border-dashed p-8 text-center"
+                        :icon="Shield"
+                        title="No firewall rules yet"
+                        description="Get started and create your first rule."
+                        compact
                     >
-                        <Shield
-                            class="mx-auto mb-4 size-12 text-muted-foreground opacity-50"
-                        />
-                        <h3 class="text-lg font-medium">
-                            No firewall rules yet
-                        </h3>
-                        <p class="mt-2 text-sm text-muted-foreground">
-                            Get started and create your first rule.
-                        </p>
-                        <Button
-                            variant="outline"
-                            class="mt-4"
-                            @click="openAddRuleDialog"
-                        >
-                            <Plus class="mr-2 size-4" />
-                            Add rule
-                        </Button>
-                    </div>
+                        <template #action>
+                            <Button
+                                variant="outline"
+                                @click="addRuleDialog?.open()"
+                            >
+                                <Plus class="mr-2 size-4" />
+                                Add rule
+                            </Button>
+                        </template>
+                    </EmptyState>
 
                     <div v-else class="divide-y">
                         <div
@@ -240,93 +209,62 @@ function getBadgeVariant(rule: FirewallRule) {
             </Card>
         </div>
 
-        <!-- Add Rule Dialog -->
-        <Dialog v-model:open="showAddRuleDialog">
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Add firewall rule</DialogTitle>
-                    <DialogDescription>
-                        Create a new firewall rule to control traffic to your
-                        server.
-                    </DialogDescription>
-                </DialogHeader>
+        <ResourceFormDialog
+            ref="addRuleDialog"
+            title="Add firewall rule"
+            description="Create a new firewall rule to control traffic to your server."
+            submit-text="Create rule"
+            processing-text="Creating..."
+            :form-action="store.form(server)"
+        >
+            <template #default="{ errors }">
+                <FormField label="Name" name="name" :error="errors.name">
+                    <Input
+                        id="name"
+                        name="name"
+                        placeholder="e.g., MySQL, Custom"
+                    />
+                </FormField>
 
-                <Form
-                    v-bind="store.form(server)"
-                    class="space-y-4"
-                    :on-success="onSuccess"
-                    reset-on-success
-                    v-slot="{ errors, processing }"
+                <FormField
+                    label="Port"
+                    name="port"
+                    :error="errors.port"
+                    description="Leave empty to allow any port."
                 >
-                    <div class="space-y-2">
-                        <Label for="rule-name">Name</Label>
-                        <Input
-                            id="rule-name"
-                            name="name"
-                            placeholder="e.g., MySQL, Custom"
-                        />
-                        <InputError :message="errors.name" />
-                    </div>
+                    <Input id="port" name="port" placeholder="e.g., 3306" />
+                </FormField>
 
-                    <div class="space-y-2">
-                        <Label for="rule-port">Port</Label>
-                        <Input
-                            id="rule-port"
-                            name="port"
-                            placeholder="e.g., 3306"
-                        />
-                        <p class="text-sm text-muted-foreground">
-                            Leave empty to allow any port.
-                        </p>
-                        <InputError :message="errors.port" />
-                    </div>
+                <FormField
+                    label="IP address"
+                    name="ip_address"
+                    :error="errors.ip_address"
+                    description="Leave empty to allow from any IP address."
+                >
+                    <Input
+                        id="ip_address"
+                        name="ip_address"
+                        placeholder="e.g., 192.168.1.1"
+                    />
+                </FormField>
 
-                    <div class="space-y-2">
-                        <Label for="rule-ip">IP address</Label>
-                        <Input
-                            id="rule-ip"
-                            name="ip_address"
-                            placeholder="e.g., 192.168.1.1"
-                        />
-                        <p class="text-sm text-muted-foreground">
-                            Leave empty to allow from any IP address.
-                        </p>
-                        <InputError :message="errors.ip_address" />
-                    </div>
-
-                    <div class="space-y-2">
-                        <Label for="rule-type">Type</Label>
-                        <Select name="type" :default-value="RuleType.Allow">
-                            <SelectTrigger id="rule-type">
-                                <SelectValue placeholder="Select type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem
-                                    v-for="ruleType in ruleTypes"
-                                    :key="ruleType.value"
-                                    :value="ruleType.value"
-                                >
-                                    {{ ruleType.label }}
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <InputError :message="errors.type" />
-                    </div>
-
-                    <DialogFooter>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            @click="showAddRuleDialog = false"
-                        >
-                            Cancel
-                        </Button>
-                        <Button type="submit" :disabled="processing">
-                            {{ processing ? 'Creating...' : 'Create rule' }}
-                        </Button>
-                    </DialogFooter>
-                </Form>
-            </DialogContent>
-        </Dialog>
+                <FormField label="Type" name="type" :error="errors.type">
+                    <Select name="type" :default-value="RuleType.Allow">
+                        <SelectTrigger id="type">
+                            <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem
+                                v-for="ruleType in ruleTypes"
+                                :key="ruleType.value"
+                                :value="ruleType.value"
+                            >
+                                {{ ruleType.label }}
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                </FormField>
+            </template>
+        </ResourceFormDialog>
     </ServerLayout>
 </template>

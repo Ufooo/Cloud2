@@ -3,7 +3,9 @@ import {
     destroy,
     store,
 } from '@/actions/Nip/UnixUser/Http/Controllers/UnixUserController';
-import InputError from '@/components/InputError.vue';
+import EmptyState from '@/components/shared/EmptyState.vue';
+import FormField from '@/components/shared/FormField.vue';
+import ResourceFormDialog from '@/components/shared/ResourceFormDialog.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,27 +16,18 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useConfirmation } from '@/composables/useConfirmation';
+import { useResourceDelete } from '@/composables/useResourceDelete';
 import ServerLayout from '@/layouts/ServerLayout.vue';
 import type { Server } from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
 import { UserStatus } from '@/types/generated';
-import { Form, Head, router } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
 import { MoreHorizontal, Plus, Trash2, Users } from 'lucide-vue-next';
 import { ref } from 'vue';
 
@@ -56,31 +49,13 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const { confirmButton } = useConfirmation();
+const addUserDialog = ref<InstanceType<typeof ResourceFormDialog>>();
 
-const showAddUserDialog = ref(false);
-
-function openAddUserDialog() {
-    showAddUserDialog.value = true;
-}
-
-function onSuccess() {
-    showAddUserDialog.value = false;
-}
-
-async function deleteUser(user: UnixUser) {
-    const confirmed = await confirmButton({
-        title: 'Delete Unix User',
-        description: `Are you sure you want to delete the "${user.username}" user?`,
-        confirmText: 'Delete',
-    });
-
-    if (!confirmed) {
-        return;
-    }
-
-    router.delete(destroy.url({ server: props.server, user: user.id }));
-}
+const { deleteResource: deleteUser } = useResourceDelete<UnixUser>({
+    resourceName: 'Unix User',
+    getDisplayName: (user) => user.username,
+    getDeleteUrl: (user) => destroy.url({ server: props.server, user: user.id }),
+});
 
 function getBadgeVariant(user: UnixUser) {
     if (user.status !== UserStatus.Installed) {
@@ -111,7 +86,7 @@ function getBadgeVariant(user: UnixUser) {
                         <div class="flex items-center gap-2">
                             <Button
                                 variant="outline"
-                                @click="openAddUserDialog"
+                                @click="addUserDialog?.open()"
                             >
                                 <Plus class="mr-2 size-4" />
                                 Add user
@@ -121,26 +96,23 @@ function getBadgeVariant(user: UnixUser) {
                 </CardHeader>
 
                 <CardContent>
-                    <div
+                    <EmptyState
                         v-if="users.data.length === 0"
-                        class="rounded-lg border border-dashed p-8 text-center"
+                        :icon="Users"
+                        title="No users yet"
+                        description="Get started and create your first user."
+                        compact
                     >
-                        <Users
-                            class="mx-auto mb-4 size-12 text-muted-foreground opacity-50"
-                        />
-                        <h3 class="text-lg font-medium">No users yet</h3>
-                        <p class="mt-2 text-sm text-muted-foreground">
-                            Get started and create your first user.
-                        </p>
-                        <Button
-                            variant="outline"
-                            class="mt-4"
-                            @click="openAddUserDialog"
-                        >
-                            <Plus class="mr-2 size-4" />
-                            Add user
-                        </Button>
-                    </div>
+                        <template #action>
+                            <Button
+                                variant="outline"
+                                @click="addUserDialog?.open()"
+                            >
+                                <Plus class="mr-2 size-4" />
+                                Add user
+                            </Button>
+                        </template>
+                    </EmptyState>
 
                     <div v-else class="divide-y">
                         <div
@@ -183,51 +155,28 @@ function getBadgeVariant(user: UnixUser) {
             </Card>
         </div>
 
-        <!-- Add User Dialog -->
-        <Dialog v-model:open="showAddUserDialog">
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Add Unix user</DialogTitle>
-                    <DialogDescription>
-                        Create a new system user on your server.
-                    </DialogDescription>
-                </DialogHeader>
-
-                <Form
-                    v-bind="store.form(server)"
-                    class="space-y-4"
-                    :on-success="onSuccess"
-                    reset-on-success
-                    v-slot="{ errors, processing }"
+        <ResourceFormDialog
+            ref="addUserDialog"
+            title="Add Unix user"
+            description="Create a new system user on your server."
+            submit-text="Create user"
+            processing-text="Creating..."
+            :form-action="store.form(server)"
+        >
+            <template #default="{ errors }">
+                <FormField
+                    label="Username"
+                    name="username"
+                    :error="errors.username"
+                    description="Lowercase letters, numbers, underscores, and hyphens only."
                 >
-                    <div class="space-y-2">
-                        <Label for="username">Username</Label>
-                        <Input
-                            id="username"
-                            name="username"
-                            placeholder="e.g., deployer"
-                        />
-                        <p class="text-sm text-muted-foreground">
-                            Lowercase letters, numbers, underscores, and hyphens
-                            only.
-                        </p>
-                        <InputError :message="errors.username" />
-                    </div>
-
-                    <DialogFooter>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            @click="showAddUserDialog = false"
-                        >
-                            Cancel
-                        </Button>
-                        <Button type="submit" :disabled="processing">
-                            {{ processing ? 'Creating...' : 'Create user' }}
-                        </Button>
-                    </DialogFooter>
-                </Form>
-            </DialogContent>
-        </Dialog>
+                    <Input
+                        id="username"
+                        name="username"
+                        placeholder="e.g., deployer"
+                    />
+                </FormField>
+            </template>
+        </ResourceFormDialog>
     </ServerLayout>
 </template>

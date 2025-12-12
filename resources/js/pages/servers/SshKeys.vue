@@ -3,7 +3,9 @@ import {
     destroy,
     store,
 } from '@/actions/Nip/SshKey/Http/Controllers/SshKeyController';
-import InputError from '@/components/InputError.vue';
+import EmptyState from '@/components/shared/EmptyState.vue';
+import FormField from '@/components/shared/FormField.vue';
+import ResourceFormDialog from '@/components/shared/ResourceFormDialog.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,21 +16,12 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -37,11 +30,11 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useConfirmation } from '@/composables/useConfirmation';
+import { useResourceDelete } from '@/composables/useResourceDelete';
 import ServerLayout from '@/layouts/ServerLayout.vue';
 import type { Server } from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
-import { Form, Head, router } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
 import { Key, MoreHorizontal, Plus, Trash2 } from 'lucide-vue-next';
 import { ref } from 'vue';
 
@@ -72,31 +65,13 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const { confirmButton } = useConfirmation();
+const addKeyDialog = ref<InstanceType<typeof ResourceFormDialog>>();
 
-const showAddKeyDialog = ref(false);
-
-function openAddKeyDialog() {
-    showAddKeyDialog.value = true;
-}
-
-function onSuccess() {
-    showAddKeyDialog.value = false;
-}
-
-async function deleteKey(key: SshKey) {
-    const confirmed = await confirmButton({
-        title: 'Delete SSH Key',
-        description: `Are you sure you want to delete the "${key.name}" key?`,
-        confirmText: 'Delete',
-    });
-
-    if (!confirmed) {
-        return;
-    }
-
-    router.delete(destroy.url({ server: props.server, sshKey: key.id }));
-}
+const { deleteResource: deleteKey } = useResourceDelete<SshKey>({
+    resourceName: 'SSH Key',
+    getDisplayName: (key) => key.name,
+    getDeleteUrl: (key) => destroy.url({ server: props.server, sshKey: key.id }),
+});
 </script>
 
 <template>
@@ -119,7 +94,10 @@ async function deleteKey(key: SshKey) {
                             </CardDescription>
                         </div>
                         <div class="flex items-center gap-2">
-                            <Button variant="outline" @click="openAddKeyDialog">
+                            <Button
+                                variant="outline"
+                                @click="addKeyDialog?.open()"
+                            >
                                 <Plus class="mr-2 size-4" />
                                 Add key
                             </Button>
@@ -128,26 +106,23 @@ async function deleteKey(key: SshKey) {
                 </CardHeader>
 
                 <CardContent>
-                    <div
+                    <EmptyState
                         v-if="keys.data.length === 0"
-                        class="rounded-lg border border-dashed p-8 text-center"
+                        :icon="Key"
+                        title="No keys yet"
+                        description="Get started and add your first SSH key."
+                        compact
                     >
-                        <Key
-                            class="mx-auto mb-4 size-12 text-muted-foreground opacity-50"
-                        />
-                        <h3 class="text-lg font-medium">No keys yet</h3>
-                        <p class="mt-2 text-sm text-muted-foreground">
-                            Get started and add your first SSH key.
-                        </p>
-                        <Button
-                            variant="outline"
-                            class="mt-4"
-                            @click="openAddKeyDialog"
-                        >
-                            <Plus class="mr-2 size-4" />
-                            Add key
-                        </Button>
-                    </div>
+                        <template #action>
+                            <Button
+                                variant="outline"
+                                @click="addKeyDialog?.open()"
+                            >
+                                <Plus class="mr-2 size-4" />
+                                Add key
+                            </Button>
+                        </template>
+                    </EmptyState>
 
                     <div v-else class="divide-y">
                         <div
@@ -199,86 +174,60 @@ async function deleteKey(key: SshKey) {
             </Card>
         </div>
 
-        <!-- Add Key Dialog -->
-        <Dialog v-model:open="showAddKeyDialog">
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Add SSH key</DialogTitle>
-                    <DialogDescription>
-                        Add a new SSH key to your server. Select which Unix
-                        user this key should be authorized for.
-                    </DialogDescription>
-                </DialogHeader>
+        <ResourceFormDialog
+            ref="addKeyDialog"
+            title="Add SSH key"
+            description="Add a new SSH key to your server. Select which Unix user this key should be authorized for."
+            submit-text="Add key"
+            processing-text="Adding..."
+            :form-action="store.form(server)"
+        >
+            <template #default="{ errors }">
+                <FormField label="Name" name="name" :error="errors.name">
+                    <Input
+                        id="name"
+                        name="name"
+                        placeholder="e.g., MacBook Pro"
+                    />
+                </FormField>
 
-                <Form
-                    v-bind="store.form(server)"
-                    class="space-y-4"
-                    :on-success="onSuccess"
-                    reset-on-success
-                    v-slot="{ errors, processing }"
+                <FormField
+                    label="Public key"
+                    name="public_key"
+                    :error="errors.public_key"
+                    description="Paste your SSH public key (usually found in ~/.ssh/id_rsa.pub or ~/.ssh/id_ed25519.pub)."
                 >
-                    <div class="space-y-2">
-                        <Label for="key-name">Name</Label>
-                        <Input
-                            id="key-name"
-                            name="name"
-                            placeholder="e.g., MacBook Pro"
-                        />
-                        <InputError :message="errors.name" />
-                    </div>
+                    <Textarea
+                        id="public_key"
+                        name="public_key"
+                        placeholder="ssh-rsa AAAA... or ssh-ed25519 AAAA..."
+                        rows="4"
+                        class="font-mono text-sm"
+                    />
+                </FormField>
 
-                    <div class="space-y-2">
-                        <Label for="public-key">Public key</Label>
-                        <Textarea
-                            id="public-key"
-                            name="public_key"
-                            placeholder="ssh-rsa AAAA... or ssh-ed25519 AAAA..."
-                            rows="4"
-                            class="font-mono text-sm"
-                        />
-                        <p class="text-sm text-muted-foreground">
-                            Paste your SSH public key (usually found in
-                            ~/.ssh/id_rsa.pub or ~/.ssh/id_ed25519.pub).
-                        </p>
-                        <InputError :message="errors.public_key" />
-                    </div>
-
-                    <div class="space-y-2">
-                        <Label for="unix-user">Unix user</Label>
-                        <Select name="unix_user_id" required>
-                            <SelectTrigger id="unix-user">
-                                <SelectValue placeholder="Select a user" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem
-                                    v-for="user in unixUsers"
-                                    :key="user.id"
-                                    :value="user.id.toString()"
-                                >
-                                    {{ user.username }}
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <p class="text-sm text-muted-foreground">
-                            The Unix user this key will be authorized for.
-                        </p>
-                        <InputError :message="errors.unix_user_id" />
-                    </div>
-
-                    <DialogFooter>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            @click="showAddKeyDialog = false"
-                        >
-                            Cancel
-                        </Button>
-                        <Button type="submit" :disabled="processing">
-                            {{ processing ? 'Adding...' : 'Add key' }}
-                        </Button>
-                    </DialogFooter>
-                </Form>
-            </DialogContent>
-        </Dialog>
+                <FormField
+                    label="Unix user"
+                    name="unix_user_id"
+                    :error="errors.unix_user_id"
+                    description="The Unix user this key will be authorized for."
+                >
+                    <Select name="unix_user_id" required>
+                        <SelectTrigger id="unix_user_id">
+                            <SelectValue placeholder="Select a user" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem
+                                v-for="user in unixUsers"
+                                :key="user.id"
+                                :value="user.id.toString()"
+                            >
+                                {{ user.username }}
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                </FormField>
+            </template>
+        </ResourceFormDialog>
     </ServerLayout>
 </template>
