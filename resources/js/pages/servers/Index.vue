@@ -4,6 +4,7 @@ import {
     index,
 } from '@/actions/Nip/Server/Http/Controllers/ServerController';
 import EmptyState from '@/components/shared/EmptyState.vue';
+import Pagination from '@/components/shared/Pagination.vue';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -72,9 +73,10 @@ const hasServers = computed(() => props.servers.data.length > 0);
                         :server="server"
                     />
                 </div>
-            </Card>
 
-            <!-- Pagination will be added when backend pagination is ready -->
+                <!-- Pagination -->
+                <Pagination :meta="servers.meta" />
+            </Card>
         </div>
     </AppLayout>
 </template>

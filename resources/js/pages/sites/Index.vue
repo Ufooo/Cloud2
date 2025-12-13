@@ -2,6 +2,7 @@
 import { index } from '@/actions/Nip/Site/Http/Controllers/SiteController';
 import SiteTypeIcon from '@/components/icons/SiteTypeIcon.vue';
 import EmptyState from '@/components/shared/EmptyState.vue';
+import Pagination from '@/components/shared/Pagination.vue';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -106,6 +107,9 @@ function selectTypeAndNavigate(type: string) {
                         :show-server="!currentServer"
                     />
                 </div>
+
+                <!-- Pagination -->
+                <Pagination :meta="sites.meta" />
             </Card>
         </div>
 
