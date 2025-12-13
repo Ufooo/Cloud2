@@ -2,7 +2,6 @@
 
 namespace Nip\Scheduler\Http\Controllers;
 
-use App\Http\Controllers\Concerns\LoadsServerPermissions;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
@@ -11,35 +10,32 @@ use Inertia\Response;
 use Nip\Scheduler\Enums\CronFrequency;
 use Nip\Scheduler\Enums\GracePeriod;
 use Nip\Scheduler\Enums\JobStatus;
-use Nip\Scheduler\Http\Requests\StoreScheduledJobRequest;
-use Nip\Scheduler\Http\Requests\UpdateScheduledJobRequest;
+use Nip\Scheduler\Http\Requests\StoreSiteScheduledJobRequest;
+use Nip\Scheduler\Http\Requests\UpdateSiteScheduledJobRequest;
 use Nip\Scheduler\Http\Resources\ScheduledJobResource;
 use Nip\Scheduler\Models\ScheduledJob;
-use Nip\Server\Data\ServerData;
-use Nip\Server\Models\Server;
+use Nip\Site\Data\SiteData;
+use Nip\Site\Models\Site;
 
-class ScheduledJobController extends Controller
+class SiteScheduledJobController extends Controller
 {
-    use LoadsServerPermissions;
-
-    public function index(Server $server): Response
+    public function index(Site $site): Response
     {
-        Gate::authorize('view', $server);
+        Gate::authorize('view', $site->server);
 
-        $this->loadServerPermissions($server);
+        $site->load('server');
 
-        $jobs = $server->scheduledJobs()
-            ->with('site')
+        $jobs = $site->scheduledJobs()
             ->orderBy('name')
             ->paginate(10);
 
-        $users = $server->unixUsers()
+        $users = $site->server->unixUsers()
             ->orderBy('username')
             ->pluck('username')
             ->toArray();
 
-        return Inertia::render('servers/Scheduler', [
-            'server' => ServerData::from($server),
+        return Inertia::render('sites/Scheduler', [
+            'site' => SiteData::fromModel($site),
             'jobs' => ScheduledJobResource::collection($jobs),
             'users' => $users,
             'frequencies' => CronFrequency::options(),
@@ -47,7 +43,7 @@ class ScheduledJobController extends Controller
         ]);
     }
 
-    public function store(StoreScheduledJobRequest $request, Server $server): RedirectResponse
+    public function store(StoreSiteScheduledJobRequest $request, Site $site): RedirectResponse
     {
         $data = $request->validated();
 
@@ -55,19 +51,20 @@ class ScheduledJobController extends Controller
             $data['heartbeat_url'] = $this->generateHeartbeatUrl();
         }
 
-        $server->scheduledJobs()->create([
+        $site->scheduledJobs()->create([
             ...$data,
+            'server_id' => $site->server_id,
             'status' => JobStatus::Pending,
         ]);
 
         return redirect()
-            ->route('servers.scheduler', $server)
+            ->route('sites.scheduler', $site)
             ->with('success', 'Scheduled job created successfully.');
     }
 
-    public function update(UpdateScheduledJobRequest $request, Server $server, ScheduledJob $job): RedirectResponse
+    public function update(UpdateSiteScheduledJobRequest $request, Site $site, ScheduledJob $job): RedirectResponse
     {
-        abort_unless($job->server_id === $server->id, 403);
+        abort_unless($job->site_id === $site->id, 403);
 
         $data = $request->validated();
 
@@ -83,15 +80,15 @@ class ScheduledJobController extends Controller
         $job->update($data);
 
         return redirect()
-            ->route('servers.scheduler', $server)
+            ->route('sites.scheduler', $site)
             ->with('success', 'Scheduled job updated successfully.');
     }
 
-    public function destroy(Server $server, ScheduledJob $job): RedirectResponse
+    public function destroy(Site $site, ScheduledJob $job): RedirectResponse
     {
-        Gate::authorize('update', $server);
+        Gate::authorize('update', $site->server);
 
-        abort_unless($job->server_id === $server->id, 403);
+        abort_unless($job->site_id === $site->id, 403);
         abort_if(
             $job->status === JobStatus::Installing,
             403,
@@ -101,39 +98,35 @@ class ScheduledJobController extends Controller
         $job->delete();
 
         return redirect()
-            ->route('servers.scheduler', $server)
+            ->route('sites.scheduler', $site)
             ->with('success', 'Scheduled job deleted successfully.');
     }
 
-    public function pause(Server $server, ScheduledJob $job): RedirectResponse
+    public function pause(Site $site, ScheduledJob $job): RedirectResponse
     {
-        Gate::authorize('update', $server);
+        Gate::authorize('update', $site->server);
 
-        abort_unless($job->server_id === $server->id, 403);
+        abort_unless($job->site_id === $site->id, 403);
         abort_unless($job->status === JobStatus::Installed, 403, 'Job must be installed to pause.');
 
         $job->update(['status' => JobStatus::Paused]);
 
-        // TODO: Dispatch job to pause the cron on the server
-
         return redirect()
-            ->route('servers.scheduler', $server)
+            ->route('sites.scheduler', $site)
             ->with('success', 'Scheduled job paused successfully.');
     }
 
-    public function resume(Server $server, ScheduledJob $job): RedirectResponse
+    public function resume(Site $site, ScheduledJob $job): RedirectResponse
     {
-        Gate::authorize('update', $server);
+        Gate::authorize('update', $site->server);
 
-        abort_unless($job->server_id === $server->id, 403);
+        abort_unless($job->site_id === $site->id, 403);
         abort_unless($job->status === JobStatus::Paused, 403, 'Job must be paused to resume.');
 
         $job->update(['status' => JobStatus::Installed]);
 
-        // TODO: Dispatch job to resume the cron on the server
-
         return redirect()
-            ->route('servers.scheduler', $server)
+            ->route('sites.scheduler', $site)
             ->with('success', 'Scheduled job resumed successfully.');
     }
 

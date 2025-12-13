@@ -40,6 +40,9 @@ class ScheduledJobResource extends JsonResource
             'statusBadgeVariant' => $this->status?->badgeVariant(),
             'isCustomFrequency' => $this->frequency === CronFrequency::Custom,
             'createdAt' => $this->created_at?->toISOString(),
+            'siteId' => $this->site_id,
+            'siteDomain' => $this->whenLoaded('site', fn () => $this->site?->domain),
+            'siteSlug' => $this->whenLoaded('site', fn () => $this->site?->slug),
             'can' => [
                 'update' => $canUpdate && ($isInstalled || $isPaused),
                 'delete' => $canUpdate && $this->status !== JobStatus::Installing,

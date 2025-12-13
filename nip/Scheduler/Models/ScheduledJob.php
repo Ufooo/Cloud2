@@ -10,6 +10,7 @@ use Nip\Scheduler\Enums\CronFrequency;
 use Nip\Scheduler\Enums\GracePeriod;
 use Nip\Scheduler\Enums\JobStatus;
 use Nip\Server\Models\Server;
+use Nip\Site\Models\Site;
 
 class ScheduledJob extends Model
 {
@@ -23,6 +24,7 @@ class ScheduledJob extends Model
 
     protected $fillable = [
         'server_id',
+        'site_id',
         'name',
         'command',
         'user',
@@ -40,6 +42,14 @@ class ScheduledJob extends Model
     public function server(): BelongsTo
     {
         return $this->belongsTo(Server::class);
+    }
+
+    /**
+     * @return BelongsTo<Site, $this>
+     */
+    public function site(): BelongsTo
+    {
+        return $this->belongsTo(Site::class);
     }
 
     /**

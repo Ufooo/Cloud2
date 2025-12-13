@@ -117,6 +117,14 @@ class Site extends Model
         return $this->hasMany(\Nip\Domain\Models\Certificate::class);
     }
 
+    /**
+     * @return HasMany<\Nip\Scheduler\Models\ScheduledJob, $this>
+     */
+    public function scheduledJobs(): HasMany
+    {
+        return $this->hasMany(\Nip\Scheduler\Models\ScheduledJob::class);
+    }
+
     public function getFullPath(): string
     {
         return "/home/{$this->user}/{$this->domain}";

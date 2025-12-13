@@ -5,7 +5,7 @@ import {
     resume,
     store,
     update,
-} from '@/actions/Nip/Scheduler/Http/Controllers/ScheduledJobController';
+} from '@/actions/Nip/Scheduler/Http/Controllers/SiteScheduledJobController';
 import InputError from '@/components/InputError.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -42,8 +42,8 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useConfirmation } from '@/composables/useConfirmation';
-import ServerLayout from '@/layouts/ServerLayout.vue';
-import type { Server } from '@/types';
+import SiteLayout from '@/layouts/SiteLayout.vue';
+import type { Site } from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
 import { Form, Head, router } from '@inertiajs/vue3';
 import {
@@ -94,9 +94,6 @@ interface ScheduledJob {
     statusBadgeVariant: BadgeVariant;
     isCustomFrequency: boolean;
     createdAt: string | null;
-    siteId: string | null;
-    siteDomain: string | null;
-    siteSlug: string | null;
     can: {
         update: boolean;
         delete: boolean;
@@ -106,7 +103,7 @@ interface ScheduledJob {
 }
 
 interface Props {
-    server: Server;
+    site: Site;
     jobs: PaginatedResponse<ScheduledJob>;
     users: string[];
     frequencies: FrequencyOption[];
@@ -161,15 +158,15 @@ async function deleteJob(job: ScheduledJob) {
         return;
     }
 
-    router.delete(destroy.url({ server: props.server, job: job.id }));
+    router.delete(destroy.url({ site: props.site, job: job.id }));
 }
 
 function pauseJob(job: ScheduledJob) {
-    router.post(pause.url({ server: props.server, job: job.id }));
+    router.post(pause.url({ site: props.site, job: job.id }));
 }
 
 function resumeJob(job: ScheduledJob) {
-    router.post(resume.url({ server: props.server, job: job.id }));
+    router.post(resume.url({ site: props.site, job: job.id }));
 }
 
 watch(
@@ -184,9 +181,9 @@ watch(
 </script>
 
 <template>
-    <Head :title="`Scheduler - ${server.name}`" />
+    <Head :title="`Scheduler - ${site.domain}`" />
 
-    <ServerLayout :server="server">
+    <SiteLayout :site="site">
         <div class="space-y-6">
             <Card>
                 <CardHeader>
@@ -197,8 +194,7 @@ watch(
                                 Scheduled jobs
                             </CardTitle>
                             <CardDescription>
-                                Forge allows you to schedule any recurring tasks
-                                that need to run on your server.
+                                Manage scheduled tasks for this site.
                             </CardDescription>
                         </div>
                         <div class="flex items-center gap-2">
@@ -222,7 +218,8 @@ watch(
                             No scheduled jobs yet
                         </h3>
                         <p class="mt-2 text-sm text-muted-foreground">
-                            Get started and create your first scheduled job.
+                            Get started and create your first scheduled job for
+                            this site.
                         </p>
                         <Button
                             variant="outline"
@@ -248,13 +245,6 @@ watch(
                                     >
                                         {{ job.name }}
                                     </p>
-                                    <Badge
-                                        v-if="job.siteDomain"
-                                        variant="secondary"
-                                        class="shrink-0 text-xs"
-                                    >
-                                        {{ job.siteDomain }}
-                                    </Badge>
                                 </div>
                                 <p
                                     class="mt-1 truncate font-mono text-xs text-muted-foreground"
@@ -330,13 +320,12 @@ watch(
                 <DialogHeader>
                     <DialogTitle>New scheduled job</DialogTitle>
                     <DialogDescription>
-                        Create a new scheduled job for the
-                        {{ server.name }} server.
+                        Create a new scheduled job for {{ site.domain }}.
                     </DialogDescription>
                 </DialogHeader>
 
                 <Form
-                    v-bind="store.form(server)"
+                    v-bind="store.form(site)"
                     class="space-y-4"
                     :on-success="onSuccess"
                     reset-on-success
@@ -361,7 +350,7 @@ watch(
                             id="command"
                             name="command"
                             class="font-mono text-sm"
-                            placeholder="/usr/local/bin/composer self-update"
+                            placeholder="php artisan schedule:run"
                         />
                         <InputError :message="errors.command" />
                     </div>
@@ -515,7 +504,7 @@ watch(
                 <Form
                     v-bind="
                         update.form({
-                            server: server,
+                            site: site,
                             job: editingJob.id,
                         })
                     "
@@ -693,5 +682,5 @@ watch(
                 </Form>
             </DialogContent>
         </Dialog>
-    </ServerLayout>
+    </SiteLayout>
 </template>
