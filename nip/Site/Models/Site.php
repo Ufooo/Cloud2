@@ -125,6 +125,14 @@ class Site extends Model
         return $this->hasMany(\Nip\Scheduler\Models\ScheduledJob::class);
     }
 
+    /**
+     * @return HasMany<\Nip\BackgroundProcess\Models\BackgroundProcess, $this>
+     */
+    public function backgroundProcesses(): HasMany
+    {
+        return $this->hasMany(\Nip\BackgroundProcess\Models\BackgroundProcess::class);
+    }
+
     public function getFullPath(): string
     {
         return "/home/{$this->user}/{$this->domain}";

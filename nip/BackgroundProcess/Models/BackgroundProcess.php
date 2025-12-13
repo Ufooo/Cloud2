@@ -10,6 +10,7 @@ use Nip\BackgroundProcess\Enums\ProcessStatus;
 use Nip\BackgroundProcess\Enums\StopSignal;
 use Nip\BackgroundProcess\Enums\SupervisorProcessStatus;
 use Nip\Server\Models\Server;
+use Nip\Site\Models\Site;
 
 class BackgroundProcess extends Model
 {
@@ -23,6 +24,7 @@ class BackgroundProcess extends Model
 
     protected $fillable = [
         'server_id',
+        'site_id',
         'name',
         'command',
         'directory',
@@ -41,6 +43,14 @@ class BackgroundProcess extends Model
     public function server(): BelongsTo
     {
         return $this->belongsTo(Server::class);
+    }
+
+    /**
+     * @return BelongsTo<Site, $this>
+     */
+    public function site(): BelongsTo
+    {
+        return $this->belongsTo(Site::class);
     }
 
     /**

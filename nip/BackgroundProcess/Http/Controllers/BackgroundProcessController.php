@@ -28,6 +28,7 @@ class BackgroundProcessController extends Controller
         $this->loadServerPermissions($server);
 
         $processes = $server->backgroundProcesses()
+            ->with('site')
             ->orderBy('name')
             ->paginate(10);
 

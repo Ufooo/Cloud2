@@ -44,6 +44,9 @@ class BackgroundProcessResource extends JsonResource
             'displayableSupervisorProcessStatus' => $this->supervisor_process_status?->label(),
             'supervisorBadgeVariant' => $this->supervisor_process_status?->badgeVariant(),
             'createdAt' => $this->created_at?->toISOString(),
+            'siteId' => $this->site_id,
+            'siteDomain' => $this->whenLoaded('site', fn () => $this->site?->domain),
+            'siteSlug' => $this->whenLoaded('site', fn () => $this->site?->slug),
             'can' => [
                 'update' => $canUpdate && $isInstalled,
                 'delete' => $canUpdate && $this->status !== ProcessStatus::Installing,

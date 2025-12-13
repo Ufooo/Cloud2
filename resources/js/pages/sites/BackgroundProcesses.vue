@@ -6,7 +6,7 @@ import {
     stop,
     store,
     update,
-} from '@/actions/Nip/BackgroundProcess/Http/Controllers/BackgroundProcessController';
+} from '@/actions/Nip/BackgroundProcess/Http/Controllers/SiteBackgroundProcessController';
 import InputError from '@/components/InputError.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -42,8 +42,8 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { useConfirmation } from '@/composables/useConfirmation';
-import ServerLayout from '@/layouts/ServerLayout.vue';
-import type { Server } from '@/types';
+import SiteLayout from '@/layouts/SiteLayout.vue';
+import type { Site } from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
 import { Form, Head, router } from '@inertiajs/vue3';
 import {
@@ -88,9 +88,6 @@ interface BackgroundProcess {
     displayableSupervisorProcessStatus: string | null;
     supervisorBadgeVariant: BadgeVariant;
     createdAt: string | null;
-    siteId: string | null;
-    siteDomain: string | null;
-    siteSlug: string | null;
     can: {
         update: boolean;
         delete: boolean;
@@ -101,7 +98,7 @@ interface BackgroundProcess {
 }
 
 interface Props {
-    server: Server;
+    site: Site;
     processes: PaginatedResponse<BackgroundProcess>;
     users: string[];
     stopSignals: StopSignalOption[];
@@ -144,25 +141,19 @@ async function deleteProcess(process: BackgroundProcess) {
         return;
     }
 
-    router.delete(
-        destroy.url({ server: props.server, process: process.id }),
-    );
+    router.delete(destroy.url({ site: props.site, process: process.id }));
 }
 
 function restartProcess(process: BackgroundProcess) {
-    router.post(
-        restart.url({ server: props.server, process: process.id }),
-    );
+    router.post(restart.url({ site: props.site, process: process.id }));
 }
 
 function startProcess(process: BackgroundProcess) {
-    router.post(
-        start.url({ server: props.server, process: process.id }),
-    );
+    router.post(start.url({ site: props.site, process: process.id }));
 }
 
 function stopProcess(process: BackgroundProcess) {
-    router.post(stop.url({ server: props.server, process: process.id }));
+    router.post(stop.url({ site: props.site, process: process.id }));
 }
 
 function getStatusBadge(process: BackgroundProcess): {
@@ -195,9 +186,9 @@ function pluralize(count: number, singular: string, plural: string): string {
 </script>
 
 <template>
-    <Head :title="`Background Processes - ${server.name}`" />
+    <Head :title="`Background Processes - ${site.domain}`" />
 
-    <ServerLayout :server="server">
+    <SiteLayout :site="site">
         <div class="space-y-6">
             <Card>
                 <CardHeader>
@@ -208,10 +199,7 @@ function pluralize(count: number, singular: string, plural: string): string {
                                 Background processes
                             </CardTitle>
                             <CardDescription>
-                                Background processes are managed using
-                                Supervisor, which monitors your processes and
-                                automatically restarts them if they crash or
-                                stop unexpectedly.
+                                Manage background processes for this site.
                             </CardDescription>
                         </div>
                         <div class="flex items-center gap-2">
@@ -235,8 +223,8 @@ function pluralize(count: number, singular: string, plural: string): string {
                             No background processes yet
                         </h3>
                         <p class="mt-2 text-sm text-muted-foreground">
-                            Get started and create your first background
-                            process.
+                            Get started and create your first background process
+                            for this site.
                         </p>
                         <Button
                             variant="outline"
@@ -262,13 +250,6 @@ function pluralize(count: number, singular: string, plural: string): string {
                                     >
                                         {{ process.name }}
                                     </p>
-                                    <Badge
-                                        v-if="process.siteDomain"
-                                        variant="secondary"
-                                        class="shrink-0 text-xs"
-                                    >
-                                        {{ process.siteDomain }}
-                                    </Badge>
                                 </div>
                                 <p
                                     class="mt-1 truncate font-mono text-xs text-muted-foreground"
@@ -367,13 +348,12 @@ function pluralize(count: number, singular: string, plural: string): string {
                 <DialogHeader>
                     <DialogTitle>New background process</DialogTitle>
                     <DialogDescription>
-                        Create a new background process that will be restarted
-                        if it crashes or the server restarts.
+                        Create a new background process for {{ site.domain }}.
                     </DialogDescription>
                 </DialogHeader>
 
                 <Form
-                    v-bind="store.form(server)"
+                    v-bind="store.form(site)"
                     class="space-y-4"
                     :on-success="onSuccess"
                     reset-on-success
@@ -583,7 +563,7 @@ function pluralize(count: number, singular: string, plural: string): string {
                 <Form
                     v-bind="
                         update.form({
-                            server: server,
+                            site: site,
                             process: editingProcess.id,
                         })
                     "
@@ -726,5 +706,5 @@ function pluralize(count: number, singular: string, plural: string): string {
                 </Form>
             </DialogContent>
         </Dialog>
-    </ServerLayout>
+    </SiteLayout>
 </template>
