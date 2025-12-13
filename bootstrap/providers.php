@@ -9,6 +9,7 @@ return [
     Nip\Php\Providers\PhpServiceProvider::class,
     Nip\Process\Providers\ProcessServiceProvider::class,
     Nip\Scheduler\Providers\SchedulerServiceProvider::class,
+    Nip\Security\Providers\SecurityServiceProvider::class,
     Nip\Server\Providers\ServerServiceProvider::class,
     Nip\Site\Providers\SiteServiceProvider::class,
     Nip\SshKey\Providers\SshKeyServiceProvider::class,

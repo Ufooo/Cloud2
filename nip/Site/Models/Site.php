@@ -133,6 +133,14 @@ class Site extends Model
         return $this->hasMany(\Nip\BackgroundProcess\Models\BackgroundProcess::class);
     }
 
+    /**
+     * @return HasMany<\Nip\Security\Models\SecurityRule, $this>
+     */
+    public function securityRules(): HasMany
+    {
+        return $this->hasMany(\Nip\Security\Models\SecurityRule::class);
+    }
+
     public function getFullPath(): string
     {
         return "/home/{$this->user}/{$this->domain}";
