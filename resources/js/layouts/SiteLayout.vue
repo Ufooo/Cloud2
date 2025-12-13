@@ -93,7 +93,12 @@ const navItems = computed<NavItem[]>(() => [
 ]);
 
 function isActive(item: NavItem): boolean {
-    return window.location.pathname === item.href;
+    const pathname = window.location.pathname;
+    // Exact match for overview, prefix match for others
+    if (item.href === `/sites/${props.site.slug}`) {
+        return pathname === item.href;
+    }
+    return pathname.startsWith(item.href);
 }
 </script>
 

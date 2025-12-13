@@ -46,6 +46,15 @@ class SiteData extends Data
         public ?string $lastDeployedAt,
         public ?string $lastDeployedAtHuman,
         public ?string $createdAt,
+        // Deployment settings
+        public ?string $deployScript,
+        public bool $pushToDeploy,
+        public bool $autoSource,
+        public ?string $deployHookUrl,
+        public int $deploymentRetention,
+        public bool $zeroDowntime,
+        public ?string $healthcheckEndpoint,
+        public ?string $deployKey,
         public SitePermissionsData $can,
     ) {}
 
@@ -88,6 +97,14 @@ class SiteData extends Data
             lastDeployedAt: $site->last_deployed_at?->toISOString(),
             lastDeployedAtHuman: $site->last_deployed_at?->diffForHumans(),
             createdAt: $site->created_at?->toISOString(),
+            deployScript: $site->deploy_script,
+            pushToDeploy: $site->push_to_deploy ?? false,
+            autoSource: $site->auto_source ?? false,
+            deployHookUrl: $site->getDeployHookUrl(),
+            deploymentRetention: $site->deployment_retention ?? 5,
+            zeroDowntime: $site->zero_downtime ?? false,
+            healthcheckEndpoint: $site->healthcheck_endpoint,
+            deployKey: $site->deploy_key,
             can: new SitePermissionsData(
                 update: $canUpdate && $isInstalled,
                 delete: $canUpdate && $site->status !== SiteStatus::Installing,

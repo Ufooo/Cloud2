@@ -59,6 +59,12 @@ class Site extends Model
         'branch',
         'deploy_key',
         'deploy_script',
+        'push_to_deploy',
+        'auto_source',
+        'deploy_hook_token',
+        'deployment_retention',
+        'zero_downtime',
+        'healthcheck_endpoint',
         'environment',
         'is_isolated',
         'avatar_color',
@@ -80,6 +86,10 @@ class Site extends Model
             'package_manager' => PackageManager::class,
             'avatar_color' => IdentityColor::class,
             'is_isolated' => 'boolean',
+            'push_to_deploy' => 'boolean',
+            'auto_source' => 'boolean',
+            'zero_downtime' => 'boolean',
+            'deployment_retention' => 'integer',
             'last_deployed_at' => 'datetime',
         ];
     }
@@ -175,5 +185,21 @@ class Site extends Model
         $branch = $this->branch ?? 'main';
 
         return "{$this->repository}:{$branch}";
+    }
+
+    public function getDeployHookUrl(): ?string
+    {
+        if (! $this->deploy_hook_token) {
+            return null;
+        }
+
+        return url("/deploy/{$this->deploy_hook_token}");
+    }
+
+    public function regenerateDeployHookToken(): void
+    {
+        $this->update([
+            'deploy_hook_token' => bin2hex(random_bytes(32)),
+        ]);
     }
 }
