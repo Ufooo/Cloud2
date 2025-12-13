@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { index as backgroundProcessIndex } from '@/actions/Nip/BackgroundProcess/Http/Controllers/BackgroundProcessController';
+import { indexForServer as databasesIndex } from '@/actions/Nip/Database/Http/Controllers/DatabaseController';
 import { index as networkIndex } from '@/actions/Nip/Network/Http/Controllers/NetworkController';
 import { index as phpIndex } from '@/actions/Nip/Php/Http/Controllers/PhpController';
 import { index as schedulerIndex } from '@/actions/Nip/Scheduler/Http/Controllers/ScheduledJobController';
@@ -27,6 +28,7 @@ import {
     Clock,
     Code,
     Copy,
+    Database,
     Globe,
     Key,
     LayoutDashboard,
@@ -116,6 +118,11 @@ const navItems = computed<NavItem[]>(() => [
         title: 'Network',
         href: networkIndex.url(props.server),
         icon: Globe,
+    },
+    {
+        title: 'Databases',
+        href: databasesIndex.url(props.server),
+        icon: Database,
     },
     {
         title: 'Settings',

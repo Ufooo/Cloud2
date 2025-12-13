@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { indexForSite as databasesIndex } from '@/actions/Nip/Database/Http/Controllers/DatabaseController';
 import { index as sitesIndex } from '@/actions/Nip/Site/Http/Controllers/SiteController';
 import SiteTypeIcon from '@/components/icons/SiteTypeIcon.vue';
 import Avatar from '@/components/shared/Avatar.vue';
@@ -10,6 +11,7 @@ import {
     Activity,
     Bell,
     Clock,
+    Database,
     ExternalLink,
     Globe,
     LayoutDashboard,
@@ -54,6 +56,11 @@ const navItems = computed<NavItem[]>(() => [
         title: 'Deployments',
         href: `/sites/${props.site.slug}/deployments`,
         icon: Rocket,
+    },
+    {
+        title: 'Databases',
+        href: databasesIndex.url(props.site),
+        icon: Database,
     },
     {
         title: 'Scheduler',
