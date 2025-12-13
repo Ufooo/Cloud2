@@ -34,18 +34,11 @@ const emit = defineEmits<{
     (e: 'update:open', value: boolean): void;
     (e: 'update:wwwRedirectType', value: string): void;
     (e: 'update:allowWildcard', value: boolean): void;
+    (e: 'save'): void;
 }>();
 
 const localWwwRedirectType = ref(props.wwwRedirectType);
 const localAllowWildcard = ref(props.allowWildcard);
-
-watch(() => props.wwwRedirectType, (newValue) => {
-    localWwwRedirectType.value = newValue;
-});
-
-watch(() => props.allowWildcard, (newValue) => {
-    localAllowWildcard.value = newValue;
-});
 
 watch(() => props.open, (isOpen) => {
     if (isOpen) {
@@ -54,32 +47,15 @@ watch(() => props.open, (isOpen) => {
     }
 });
 
-function selectRedirectOption(value: string) {
-    localWwwRedirectType.value = value;
-}
-
-function selectWildcardOption(value: boolean) {
+function setWildcard(value: boolean) {
     localAllowWildcard.value = value;
-    // When wildcard is enabled, force "No redirect" because www redirects don't work with wildcards
-    if (value) {
-        localWwwRedirectType.value = 'none';
-    }
-}
-
-function isRedirectDisabled(redirectValue: string): boolean {
-    // When wildcard is enabled, only "No redirect" (none) is allowed
-    return localAllowWildcard.value && redirectValue !== 'none';
+    if (value) localWwwRedirectType.value = 'none';
 }
 
 function save() {
     emit('update:wwwRedirectType', localWwwRedirectType.value);
     emit('update:allowWildcard', localAllowWildcard.value);
-    emit('update:open', false);
-}
-
-function cancel() {
-    localWwwRedirectType.value = props.wwwRedirectType;
-    localAllowWildcard.value = props.allowWildcard;
+    emit('save');
     emit('update:open', false);
 }
 </script>
@@ -108,7 +84,7 @@ function cancel() {
                             :class="!localAllowWildcard
                                 ? 'border-primary bg-primary/5'
                                 : 'border-border hover:bg-muted/50'"
-                            @click="selectWildcardOption(false)"
+                            @click="setWildcard(false)"
                         >
                             <div
                                 class="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border"
@@ -134,7 +110,7 @@ function cancel() {
                             :class="localAllowWildcard
                                 ? 'border-primary bg-primary/5'
                                 : 'border-border hover:bg-muted/50'"
-                            @click="selectWildcardOption(true)"
+                            @click="setWildcard(true)"
                         >
                             <div
                                 class="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border"
@@ -173,10 +149,10 @@ function cancel() {
                                 localWwwRedirectType === redirectType.value
                                     ? 'border-primary bg-primary/5'
                                     : 'border-border hover:bg-muted/50',
-                                isRedirectDisabled(redirectType.value) ? 'cursor-not-allowed opacity-50' : ''
+                                localAllowWildcard && redirectType.value !== 'none' ? 'cursor-not-allowed opacity-50' : ''
                             ]"
-                            :disabled="isRedirectDisabled(redirectType.value)"
-                            @click="!isRedirectDisabled(redirectType.value) && selectRedirectOption(redirectType.value)"
+                            :disabled="localAllowWildcard && redirectType.value !== 'none'"
+                            @click="localWwwRedirectType = redirectType.value"
                         >
                             <div
                                 class="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border"
@@ -206,12 +182,8 @@ function cancel() {
             </div>
 
             <DialogFooter>
-                <Button type="button" variant="outline" @click="cancel">
-                    Cancel
-                </Button>
-                <Button type="button" @click="save">
-                    Save
-                </Button>
+                <Button type="button" variant="outline" @click="$emit('update:open', false)">Cancel</Button>
+                <Button type="button" @click="save">Save</Button>
             </DialogFooter>
         </DialogContent>
     </Dialog>

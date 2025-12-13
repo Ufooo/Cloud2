@@ -5,6 +5,8 @@ namespace Nip\Site\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Nip\Server\Enums\IdentityColor;
 use Nip\Server\Models\Server;
 use Nip\Site\Database\Factories\SiteFactory;
@@ -88,6 +90,31 @@ class Site extends Model
     public function server(): BelongsTo
     {
         return $this->belongsTo(Server::class);
+    }
+
+    /**
+     * @return HasMany<\Nip\Domain\Models\DomainRecord, $this>
+     */
+    public function domainRecords(): HasMany
+    {
+        return $this->hasMany(\Nip\Domain\Models\DomainRecord::class);
+    }
+
+    /**
+     * @return HasOne<\Nip\Domain\Models\DomainRecord, $this>
+     */
+    public function primaryDomain(): HasOne
+    {
+        return $this->hasOne(\Nip\Domain\Models\DomainRecord::class)
+            ->where('type', \Nip\Domain\Enums\DomainRecordType::Primary);
+    }
+
+    /**
+     * @return HasMany<\Nip\Domain\Models\Certificate, $this>
+     */
+    public function certificates(): HasMany
+    {
+        return $this->hasMany(\Nip\Domain\Models\Certificate::class);
     }
 
     public function getFullPath(): string

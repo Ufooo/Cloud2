@@ -1,6 +1,59 @@
+export type CertificateData = {
+id: string;
+siteId: string;
+type: string;
+displayableType: string;
+status: string;
+displayableStatus: string;
+statusBadgeVariant: string;
+domains: { [key: number]: string };
+active: boolean;
+path: string | null;
+issuedAt: string | null;
+issuedAtHuman: string | null;
+expiresAt: string | null;
+expiresAtHuman: string | null;
+isExpiringSoon: boolean;
+daysUntilExpiry: number | null;
+createdAt: string | null;
+can: CertificatePermissionsData;
+};
+export type CertificatePermissionsData = {
+delete: boolean;
+activate: boolean;
+deactivate: boolean;
+renew: boolean;
+};
+export enum CertificateStatus { Pending = 'pending', Installing = 'installing', Installed = 'installed', Renewing = 'renewing', Removing = 'removing', Failed = 'failed' };
+export enum CertificateType { LetsEncrypt = 'letsencrypt', Existing = 'existing', Csr = 'csr' };
 export enum CronFrequency { EveryMinute = 'every_minute', Hourly = 'hourly', Nightly = 'nightly', Weekly = 'weekly', Monthly = 'monthly', OnReboot = 'on_reboot', Custom = 'custom' };
 export enum DatabaseType { Mysql = 'mysql', Mariadb = 'mariadb', Postgresql = 'postgresql' };
 export enum DeployStatus { NeverDeployed = 'never_deployed', Deploying = 'deploying', Deployed = 'deployed', Failed = 'failed' };
+export type DomainRecordData = {
+id: string;
+siteId: string;
+certificateId: string | null;
+name: string;
+type: string;
+displayableType: string;
+status: string;
+displayableStatus: string;
+statusBadgeVariant: string;
+wwwRedirectType: string;
+wwwRedirectTypeLabel: string;
+allowWildcard: boolean;
+isPrimary: boolean;
+url: string;
+createdAt: string | null;
+can: DomainRecordPermissionsData;
+};
+export type DomainRecordPermissionsData = {
+update: boolean;
+delete: boolean;
+makePrimary: boolean;
+};
+export enum DomainRecordStatus { Pending = 'pending', Creating = 'creating', Enabled = 'enabled', Disabled = 'disabled', Updating = 'updating', Securing = 'securing', Removing = 'removing', Disabling = 'disabling', Enabling = 'enabling' };
+export enum DomainRecordType { Primary = 'primary', Alias = 'alias', Reverb = 'reverb' };
 export type FirewallRuleData = {
 id: number;
 name: string;
