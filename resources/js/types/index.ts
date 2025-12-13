@@ -43,6 +43,8 @@ export {
     ServerProvider,
     ServerStatus,
     ServerType,
+    type CertificateData,
+    type DomainRecordData,
     type ServerData as Server,
     type ServerCreateData,
     type ServerPermissionsData,

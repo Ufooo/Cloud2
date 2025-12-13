@@ -21,10 +21,11 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { DomainRecordData, Site } from '@/types';
 import { router, useForm } from '@inertiajs/vue3';
-import { Globe, MoreVertical, Settings, Shield, Trash2 } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { Globe, Lock, LockOpen, MoreVertical, Settings, Shield, Trash2 } from 'lucide-vue-next';
+import { computed, ref } from 'vue';
 import ConfigureDomainModal from '../../partials/ConfigureDomainModal.vue';
 
 interface WwwRedirectTypeOption {
@@ -48,6 +49,13 @@ const showDeleteConfirm = ref(false);
 const editForm = useForm({
     allow_wildcard: props.domain.allowWildcard,
     www_redirect_type: props.domain.wwwRedirectType,
+});
+
+const certificateTooltip = computed(() => {
+    if (props.domain.isSecured) {
+        return `This domain is secured with ${props.domain.certificateType}.`;
+    }
+    return "This domain's certificate is currently disabled.";
 });
 
 function openEditModal() {
@@ -84,6 +92,25 @@ function handleDelete() {
                     <span class="truncate font-medium">
                         {{ domain.name }}
                     </span>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger as-child>
+                                <button type="button" class="shrink-0">
+                                    <Lock
+                                        v-if="domain.isSecured"
+                                        class="size-4 text-green-500"
+                                    />
+                                    <LockOpen
+                                        v-else
+                                        class="size-4 text-amber-500"
+                                    />
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                {{ certificateTooltip }}
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                     <Badge v-if="domain.isPrimary" variant="secondary">
                         Primary
                     </Badge>

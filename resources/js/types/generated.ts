@@ -25,7 +25,7 @@ deactivate: boolean;
 renew: boolean;
 };
 export enum CertificateStatus { Pending = 'pending', Installing = 'installing', Installed = 'installed', Renewing = 'renewing', Removing = 'removing', Failed = 'failed' };
-export enum CertificateType { LetsEncrypt = 'letsencrypt', Existing = 'existing', Csr = 'csr' };
+export enum CertificateType { LetsEncrypt = 'letsencrypt', Existing = 'existing', Csr = 'csr', Clone = 'clone' };
 export enum CronFrequency { EveryMinute = 'every_minute', Hourly = 'hourly', Nightly = 'nightly', Weekly = 'weekly', Monthly = 'monthly', OnReboot = 'on_reboot', Custom = 'custom' };
 export enum DatabaseType { Mysql = 'mysql', Mariadb = 'mariadb', Postgresql = 'postgresql' };
 export enum DeployStatus { NeverDeployed = 'never_deployed', Deploying = 'deploying', Deployed = 'deployed', Failed = 'failed' };
@@ -33,6 +33,8 @@ export type DomainRecordData = {
 id: string;
 siteId: string;
 certificateId: string | null;
+isSecured: boolean;
+certificateType: string | null;
 name: string;
 type: string;
 displayableType: string;

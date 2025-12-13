@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { store as storeCertificate } from '@/actions/Nip/Domain/Http/Controllers/CertificateController';
 import { store } from '@/actions/Nip/Domain/Http/Controllers/DomainRecordController';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,36 +8,21 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import SiteLayout from '@/layouts/SiteLayout.vue';
 import type { CertificateData, DomainRecordData, Site } from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
 import { Head, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import ConfigureDomainModal from '../partials/ConfigureDomainModal.vue';
+import AddCertificateModal from './partials/AddCertificateModal.vue';
 import CertificateItem from './partials/CertificateItem.vue';
 import DomainRecordItem from './partials/DomainRecordItem.vue';
 
-interface SelectOption {
+interface CertificateTypeOption {
     value: string;
     label: string;
+    description: string;
 }
 
 interface WwwRedirectTypeOption {
@@ -48,12 +32,18 @@ interface WwwRedirectTypeOption {
     isDefault: boolean;
 }
 
+interface CountryOption {
+    code: string;
+    name: string;
+}
+
 interface Props {
     site: Site;
     domainRecords: PaginatedResponse<DomainRecordData>;
     certificates: PaginatedResponse<CertificateData>;
     wwwRedirectTypes: WwwRedirectTypeOption[];
-    certificateTypes: SelectOption[];
+    certificateTypes: CertificateTypeOption[];
+    countries: CountryOption[];
     can: {
         domains: { create: boolean };
         certificates: { create: boolean };
@@ -72,13 +62,6 @@ const addDomainForm = useForm({
     www_redirect_type: 'from_www',
 });
 
-const addCertificateForm = useForm({
-    type: 'letsencrypt',
-    domains: [] as string[],
-    certificate: '',
-    private_key: '',
-});
-
 const hasDomains = computed(() => props.domainRecords.data.length > 0);
 const hasCertificates = computed(() => props.certificates.data.length > 0);
 
@@ -95,24 +78,6 @@ function submitAddDomain() {
     addDomainForm.post(store.url({ site: props.site }), {
         preserveScroll: true,
         onSuccess: () => addDomainForm.reset(),
-    });
-}
-
-function openAddCertificateModal() {
-    addCertificateForm.reset();
-    addCertificateForm.type = 'letsencrypt';
-    addCertificateForm.domains = [];
-    addCertificateForm.certificate = '';
-    addCertificateForm.private_key = '';
-    showAddCertificateModal.value = true;
-}
-
-function submitAddCertificate() {
-    addCertificateForm.post(storeCertificate.url({ site: props.site }), {
-        preserveScroll: true,
-        onSuccess: () => {
-            showAddCertificateModal.value = false;
-        },
     });
 }
 </script>
@@ -219,7 +184,7 @@ function submitAddCertificate() {
                         <Button
                             v-if="can.certificates.create && hasDomains"
                             variant="outline"
-                            @click="openAddCertificateModal"
+                            @click="showAddCertificateModal = true"
                         >
                             Add certificate
                         </Button>
@@ -235,7 +200,7 @@ function submitAddCertificate() {
                         />
                     </div>
                     <div v-else class="rounded-lg border p-8 text-center">
-                        <h3 class="font-medium">No custom domains yet</h3>
+                        <h3 class="font-medium">No certificates yet</h3>
                         <p class="mt-1 text-sm text-muted-foreground">
                             Add a custom domain to generate and manage
                             certificates here.
@@ -246,114 +211,14 @@ function submitAddCertificate() {
         </div>
 
         <!-- Add Certificate Modal -->
-        <Dialog v-model:open="showAddCertificateModal">
-            <DialogContent class="max-w-2xl">
-                <DialogHeader>
-                    <DialogTitle>Add SSL certificate</DialogTitle>
-                    <DialogDescription>
-                        Install an SSL certificate for your domains.
-                    </DialogDescription>
-                </DialogHeader>
-
-                <form @submit.prevent="submitAddCertificate" class="space-y-4">
-                    <div class="space-y-2">
-                        <Label for="cert-type">Certificate type</Label>
-                        <Select v-model="addCertificateForm.type">
-                            <SelectTrigger id="cert-type">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem
-                                    v-for="type in certificateTypes"
-                                    :key="type.value"
-                                    :value="type.value"
-                                >
-                                    {{ type.label }}
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <p
-                            v-if="addCertificateForm.errors.type"
-                            class="text-sm text-destructive"
-                        >
-                            {{ addCertificateForm.errors.type }}
-                        </p>
-                    </div>
-
-                    <div
-                        v-if="addCertificateForm.type === 'letsencrypt'"
-                        class="space-y-2"
-                    >
-                        <Label for="cert-domains">Domains</Label>
-                        <Input
-                            id="cert-domains"
-                            type="text"
-                            placeholder="example.com, www.example.com (comma-separated)"
-                        />
-                        <p class="text-sm text-muted-foreground">
-                            Enter the domains to include in this certificate.
-                        </p>
-                    </div>
-
-                    <div
-                        v-if="addCertificateForm.type === 'existing'"
-                        class="space-y-4"
-                    >
-                        <div class="space-y-2">
-                            <Label for="cert-certificate">Certificate</Label>
-                            <Textarea
-                                id="cert-certificate"
-                                v-model="addCertificateForm.certificate"
-                                placeholder="-----BEGIN CERTIFICATE-----"
-                                rows="6"
-                            />
-                            <p
-                                v-if="addCertificateForm.errors.certificate"
-                                class="text-sm text-destructive"
-                            >
-                                {{ addCertificateForm.errors.certificate }}
-                            </p>
-                        </div>
-
-                        <div class="space-y-2">
-                            <Label for="cert-private-key">Private key</Label>
-                            <Textarea
-                                id="cert-private-key"
-                                v-model="addCertificateForm.private_key"
-                                placeholder="-----BEGIN PRIVATE KEY-----"
-                                rows="6"
-                            />
-                            <p
-                                v-if="addCertificateForm.errors.private_key"
-                                class="text-sm text-destructive"
-                            >
-                                {{ addCertificateForm.errors.private_key }}
-                            </p>
-                        </div>
-                    </div>
-
-                    <DialogFooter>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            @click="showAddCertificateModal = false"
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            type="submit"
-                            :disabled="addCertificateForm.processing"
-                        >
-                            {{
-                                addCertificateForm.processing
-                                    ? 'Installing...'
-                                    : 'Install certificate'
-                            }}
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
+        <AddCertificateModal
+            v-model:open="showAddCertificateModal"
+            :site="site"
+            :domain-records="domainRecords.data"
+            :certificates="certificates.data"
+            :certificate-types="certificateTypes"
+            :countries="countries"
+        />
 
         <!-- Configure Domain Modal -->
         <ConfigureDomainModal

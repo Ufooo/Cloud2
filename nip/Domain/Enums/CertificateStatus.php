@@ -9,6 +9,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 enum CertificateStatus: string implements HasStatusBadge
 {
     case Pending = 'pending';
+    case PendingVerification = 'pending_verification';
     case Installing = 'installing';
     case Installed = 'installed';
     case Renewing = 'renewing';
@@ -19,6 +20,7 @@ enum CertificateStatus: string implements HasStatusBadge
     {
         return match ($this) {
             self::Pending => 'Pending',
+            self::PendingVerification => 'Pending Verification',
             self::Installing => 'Installing',
             self::Installed => 'Installed',
             self::Renewing => 'Renewing',
@@ -31,7 +33,7 @@ enum CertificateStatus: string implements HasStatusBadge
     {
         return match ($this) {
             self::Installed => 'default',
-            self::Pending, self::Installing, self::Renewing => 'secondary',
+            self::Pending, self::PendingVerification, self::Installing, self::Renewing => 'secondary',
             self::Removing => 'outline',
             self::Failed => 'destructive',
         };

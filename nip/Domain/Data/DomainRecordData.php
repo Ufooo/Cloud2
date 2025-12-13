@@ -12,6 +12,8 @@ class DomainRecordData extends Data
         public string $id,
         public string $siteId,
         public ?string $certificateId,
+        public bool $isSecured,
+        public ?string $certificateType,
         public string $name,
         public string $type,
         public string $displayableType,

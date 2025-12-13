@@ -30,6 +30,16 @@ class Certificate extends Model
         'certificate',
         'private_key',
         'path',
+        'verification_method',
+        'key_algorithm',
+        'isrg_root_chain',
+        'verification_records',
+        'csr_country',
+        'csr_state',
+        'csr_city',
+        'csr_organization',
+        'csr_department',
+        'source_certificate_id',
         'issued_at',
         'expires_at',
     ];
@@ -49,6 +59,8 @@ class Certificate extends Model
             'status' => CertificateStatus::class,
             'domains' => 'array',
             'active' => 'boolean',
+            'isrg_root_chain' => 'boolean',
+            'verification_records' => 'array',
             'issued_at' => 'datetime',
             'expires_at' => 'datetime',
         ];
@@ -68,6 +80,14 @@ class Certificate extends Model
     public function domainRecords(): HasMany
     {
         return $this->hasMany(DomainRecord::class);
+    }
+
+    /**
+     * @return BelongsTo<Certificate, $this>
+     */
+    public function sourceCertificate(): BelongsTo
+    {
+        return $this->belongsTo(Certificate::class, 'source_certificate_id');
     }
 
     public function isExpiringSoon(): bool

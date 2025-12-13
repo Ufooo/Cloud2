@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { computed } from 'vue';
 
 interface Props {
-    status: string | null;
+    status: string;
     iconOnly?: boolean;
 }
 
@@ -48,15 +48,12 @@ const statusConfig = computed(() => {
         },
     };
 
-    const status = props.status ?? 'unknown';
-    return (
-        configs[status] || {
-            variant: 'secondary' as const,
-            class: '',
-            label: status.charAt(0).toUpperCase() + status.slice(1),
-            pulse: false,
-        }
-    );
+    return configs[props.status] ?? {
+        variant: 'secondary' as const,
+        class: '',
+        label: props.status.charAt(0).toUpperCase() + props.status.slice(1),
+        pulse: false,
+    };
 });
 </script>
 

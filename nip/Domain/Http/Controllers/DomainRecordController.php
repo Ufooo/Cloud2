@@ -13,6 +13,7 @@ use Nip\Domain\Http\Requests\StoreDomainRecordRequest;
 use Nip\Domain\Http\Requests\UpdateDomainRecordRequest;
 use Nip\Domain\Http\Resources\DomainRecordResource;
 use Nip\Domain\Models\DomainRecord;
+use Nip\Site\Data\SiteData;
 use Nip\Site\Enums\WwwRedirectType;
 use Nip\Site\Models\Site;
 
@@ -36,15 +37,12 @@ class DomainRecordController extends Controller
         $canUpdate = request()->user()?->can('update', $site->server);
 
         return Inertia::render('sites/domains/Index', [
-            'site' => [
-                'id' => $site->id,
-                'slug' => $site->slug,
-                'domain' => $site->domain,
-            ],
+            'site' => SiteData::fromModel($site->load('server')),
             'domainRecords' => DomainRecordResource::collection($domainRecords),
             'certificates' => \Nip\Domain\Http\Resources\CertificateResource::collection($certificates),
             'wwwRedirectTypes' => WwwRedirectType::options(),
             'certificateTypes' => \Nip\Domain\Enums\CertificateType::options(),
+            'countries' => $this->getCountries(),
             'can' => [
                 'domains' => ['create' => $canUpdate],
                 'certificates' => ['create' => $canUpdate],
@@ -118,5 +116,39 @@ class DomainRecordController extends Controller
 
         return redirect()->route('sites.domains.index', $site)
             ->with('success', "Domain {$domainRecord->name} is now the primary domain.");
+    }
+
+    /**
+     * @return array<int, array{code: string, name: string}>
+     */
+    private function getCountries(): array
+    {
+        return [
+            ['code' => 'US', 'name' => 'United States'],
+            ['code' => 'GB', 'name' => 'United Kingdom'],
+            ['code' => 'DE', 'name' => 'Germany'],
+            ['code' => 'FR', 'name' => 'France'],
+            ['code' => 'NL', 'name' => 'Netherlands'],
+            ['code' => 'AU', 'name' => 'Australia'],
+            ['code' => 'CA', 'name' => 'Canada'],
+            ['code' => 'HU', 'name' => 'Hungary'],
+            ['code' => 'AT', 'name' => 'Austria'],
+            ['code' => 'BE', 'name' => 'Belgium'],
+            ['code' => 'CH', 'name' => 'Switzerland'],
+            ['code' => 'CZ', 'name' => 'Czech Republic'],
+            ['code' => 'DK', 'name' => 'Denmark'],
+            ['code' => 'ES', 'name' => 'Spain'],
+            ['code' => 'FI', 'name' => 'Finland'],
+            ['code' => 'IE', 'name' => 'Ireland'],
+            ['code' => 'IT', 'name' => 'Italy'],
+            ['code' => 'JP', 'name' => 'Japan'],
+            ['code' => 'NO', 'name' => 'Norway'],
+            ['code' => 'PL', 'name' => 'Poland'],
+            ['code' => 'PT', 'name' => 'Portugal'],
+            ['code' => 'RO', 'name' => 'Romania'],
+            ['code' => 'SE', 'name' => 'Sweden'],
+            ['code' => 'SK', 'name' => 'Slovakia'],
+            ['code' => 'SI', 'name' => 'Slovenia'],
+        ];
     }
 }

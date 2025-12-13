@@ -22,17 +22,46 @@ class StoreCertificateRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $rules = [
             'type' => ['required', Rule::enum(CertificateType::class)],
-            'domains' => ['required', 'array', 'min:1'],
-            'domains.*' => [
-                'required',
-                'string',
-                'regex:/^[a-zA-Z0-9][a-zA-Z0-9\-\.]*[a-zA-Z0-9]$/',
-            ],
-            'certificate' => ['required_if:type,existing', 'string'],
-            'private_key' => ['required_if:type,existing', 'string'],
         ];
+
+        $type = $this->input('type');
+
+        // Let's Encrypt: requires domain and options
+        if ($type === CertificateType::LetsEncrypt->value) {
+            $rules['domain'] = ['required', 'string'];
+            $rules['verification_method'] = ['required', 'in:http,dns'];
+            $rules['key_algorithm'] = ['required', 'in:ecdsa,rsa'];
+            $rules['isrg_root_chain'] = ['boolean'];
+        }
+
+        // Existing certificate: requires certificate and private key
+        if ($type === CertificateType::Existing->value) {
+            $rules['domain'] = ['required', 'string'];
+            $rules['certificate'] = ['required', 'string'];
+            $rules['private_key'] = ['required', 'string'];
+            $rules['auto_activate'] = ['boolean'];
+        }
+
+        // CSR: requires all CSR fields
+        if ($type === CertificateType::Csr->value) {
+            $rules['domain'] = ['required', 'string'];
+            $rules['sans'] = ['nullable', 'string'];
+            $rules['csr_country'] = ['required', 'string', 'size:2'];
+            $rules['csr_state'] = ['required', 'string', 'max:255'];
+            $rules['csr_city'] = ['required', 'string', 'max:255'];
+            $rules['csr_organization'] = ['required', 'string', 'max:255'];
+            $rules['csr_department'] = ['required', 'string', 'max:255'];
+        }
+
+        // Clone: requires source certificate
+        if ($type === CertificateType::Clone->value) {
+            $rules['domain'] = ['required', 'string'];
+            $rules['source_certificate_id'] = ['required', 'integer', 'exists:certificates,id'];
+        }
+
+        return $rules;
     }
 
     /**
@@ -42,11 +71,21 @@ class StoreCertificateRequest extends FormRequest
     {
         return [
             'type.required' => 'Please select a certificate type.',
-            'domains.required' => 'Please provide at least one domain.',
-            'domains.min' => 'Please provide at least one domain.',
-            'domains.*.regex' => 'Invalid domain format.',
-            'certificate.required_if' => 'Certificate is required for existing certificates.',
-            'private_key.required_if' => 'Private key is required for existing certificates.',
+            'domain.required' => 'Please select a domain.',
+            'verification_method.required' => 'Please select a verification method.',
+            'verification_method.in' => 'Invalid verification method.',
+            'key_algorithm.required' => 'Please select a public key algorithm.',
+            'key_algorithm.in' => 'Invalid public key algorithm.',
+            'certificate.required' => 'Certificate is required.',
+            'private_key.required' => 'Private key is required.',
+            'csr_country.required' => 'Country is required.',
+            'csr_country.size' => 'Country must be a 2-letter code.',
+            'csr_state.required' => 'State is required.',
+            'csr_city.required' => 'City is required.',
+            'csr_organization.required' => 'Organization is required.',
+            'csr_department.required' => 'Department is required.',
+            'source_certificate_id.required' => 'Please select a certificate to clone.',
+            'source_certificate_id.exists' => 'The selected certificate does not exist.',
         ];
     }
 }

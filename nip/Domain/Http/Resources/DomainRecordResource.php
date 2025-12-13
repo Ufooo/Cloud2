@@ -4,6 +4,7 @@ namespace Nip\Domain\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Nip\Domain\Enums\CertificateStatus;
 use Nip\Domain\Enums\DomainRecordStatus;
 use Nip\Domain\Models\DomainRecord;
 
@@ -24,6 +25,8 @@ class DomainRecordResource extends JsonResource
             'id' => $this->id,
             'siteId' => $this->site_id,
             'certificateId' => $this->certificate_id,
+            'isSecured' => $this->certificate_id && $this->certificate?->status === CertificateStatus::Active,
+            'certificateType' => $this->certificate?->type?->label(),
             'name' => $this->name,
             'type' => $this->type->value,
             'displayableType' => $this->type->label(),

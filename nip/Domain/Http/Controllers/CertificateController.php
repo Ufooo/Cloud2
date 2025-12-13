@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Nip\Domain\Enums\CertificateStatus;
+use Nip\Domain\Enums\CertificateType;
 use Nip\Domain\Http\Requests\StoreCertificateRequest;
 use Nip\Domain\Models\Certificate;
 use Nip\Site\Models\Site;
@@ -17,18 +18,80 @@ class CertificateController extends Controller
         Gate::authorize('update', $site->server);
 
         $data = $request->validated();
+        $type = CertificateType::from($data['type']);
 
-        $certificate = $site->certificates()->create([
-            'type' => $data['type'],
-            'domains' => $data['domains'],
-            'certificate' => $data['certificate'] ?? null,
-            'private_key' => $data['private_key'] ?? null,
+        $certificateData = [
+            'type' => $type,
             'status' => CertificateStatus::Pending,
             'active' => false,
-        ]);
+        ];
+
+        // Handle domains based on type
+        if ($type === CertificateType::LetsEncrypt) {
+            $certificateData['domains'] = [$data['domain']];
+            $certificateData['verification_method'] = $data['verification_method'];
+            $certificateData['key_algorithm'] = $data['key_algorithm'];
+            $certificateData['isrg_root_chain'] = $data['isrg_root_chain'] ?? false;
+
+            // DNS-01 requires verification records
+            if ($data['verification_method'] === 'dns') {
+                $certificateData['status'] = CertificateStatus::PendingVerification;
+                $certificateData['verification_records'] = $this->generateVerificationRecords($data['domain']);
+            }
+        } else {
+            // For other types, single domain (plus SANs for CSR)
+            $domains = [$data['domain']];
+            if (! empty($data['sans'])) {
+                $sanDomains = array_filter(array_map('trim', explode("\n", $data['sans'])));
+                $domains = array_merge($domains, $sanDomains);
+            }
+            $certificateData['domains'] = array_unique($domains);
+        }
+
+        // Existing certificate specific
+        if ($type === CertificateType::Existing) {
+            $certificateData['certificate'] = $data['certificate'];
+            $certificateData['private_key'] = $data['private_key'];
+            $certificateData['status'] = CertificateStatus::Installing;
+
+            // Auto-activate if requested
+            if ($data['auto_activate'] ?? true) {
+                $site->certificates()->update(['active' => false]);
+                $certificateData['active'] = true;
+            }
+        }
+
+        // CSR specific
+        if ($type === CertificateType::Csr) {
+            $certificateData['csr_country'] = $data['csr_country'];
+            $certificateData['csr_state'] = $data['csr_state'];
+            $certificateData['csr_city'] = $data['csr_city'];
+            $certificateData['csr_organization'] = $data['csr_organization'];
+            $certificateData['csr_department'] = $data['csr_department'];
+        }
+
+        // Clone specific
+        if ($type === CertificateType::Clone) {
+            $sourceCert = Certificate::findOrFail($data['source_certificate_id']);
+            $certificateData['source_certificate_id'] = $sourceCert->id;
+            $certificateData['certificate'] = $sourceCert->certificate;
+            $certificateData['private_key'] = $sourceCert->private_key;
+            $certificateData['status'] = CertificateStatus::Installing;
+        }
+
+        $site->certificates()->create($certificateData);
+
+        $successMessage = match ($type) {
+            CertificateType::LetsEncrypt => ($data['verification_method'] ?? 'http') === 'dns'
+                ? 'Certificate created. Please add the DNS records to verify domain ownership.'
+                : 'Certificate is being installed.',
+            CertificateType::Existing => 'Certificate has been installed.',
+            CertificateType::Csr => 'Certificate signing request has been created.',
+            CertificateType::Clone => 'Certificate is being cloned.',
+        };
 
         return redirect()->route('sites.domains.index', $site)
-            ->with('success', 'Certificate is being installed.');
+            ->with('success', $successMessage);
     }
 
     public function destroy(Site $site, Certificate $certificate): RedirectResponse
@@ -86,5 +149,38 @@ class CertificateController extends Controller
 
         return redirect()->route('sites.domains.index', $site)
             ->with('success', 'Certificate is being renewed.');
+    }
+
+    /**
+     * Generate verification records for DNS-01 challenge.
+     * In a real implementation, these would come from the ACME client.
+     *
+     * @return array<int, array{type: string, name: string, value: string, ttl: string}>
+     */
+    private function generateVerificationRecords(string $domain): array
+    {
+        $token1 = substr(str_shuffle('abcdefghijklmnopqrstuvwxyz0123456789'), 0, 8);
+        $token2 = substr(str_shuffle('abcdefghijklmnopqrstuvwxyz0123456789'), 0, 8);
+
+        $records = [
+            [
+                'type' => 'CNAME',
+                'name' => "_acme-challenge.{$domain}",
+                'value' => "verify-{$token1}.ssl.cloud.test",
+                'ttl' => '60 seconds',
+            ],
+        ];
+
+        // Add www subdomain if the domain doesn't start with www
+        if (! str_starts_with($domain, 'www.')) {
+            $records[] = [
+                'type' => 'CNAME',
+                'name' => "_acme-challenge.www.{$domain}",
+                'value' => "verify-{$token2}.ssl.cloud.test",
+                'ttl' => '60 seconds',
+            ];
+        }
+
+        return $records;
     }
 }
