@@ -141,6 +141,14 @@ class Site extends Model
         return $this->hasMany(\Nip\Security\Models\SecurityRule::class);
     }
 
+    /**
+     * @return HasMany<\Nip\Redirect\Models\RedirectRule, $this>
+     */
+    public function redirectRules(): HasMany
+    {
+        return $this->hasMany(\Nip\Redirect\Models\RedirectRule::class);
+    }
+
     public function getFullPath(): string
     {
         return "/home/{$this->user}/{$this->domain}";

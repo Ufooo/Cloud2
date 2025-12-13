@@ -7,6 +7,7 @@ return [
     Nip\Domain\Providers\DomainServiceProvider::class,
     Nip\Network\Providers\NetworkServiceProvider::class,
     Nip\Php\Providers\PhpServiceProvider::class,
+    Nip\Redirect\Providers\RedirectServiceProvider::class,
     Nip\Process\Providers\ProcessServiceProvider::class,
     Nip\Scheduler\Providers\SchedulerServiceProvider::class,
     Nip\Security\Providers\SecurityServiceProvider::class,
