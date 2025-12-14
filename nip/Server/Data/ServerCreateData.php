@@ -28,6 +28,5 @@ class ServerCreateData extends Data
         public ?string $notes = null,
         public IdentityColor $avatarColor = IdentityColor::Blue,
         public ?array $services = null,
-        public ?array $region = null,
     ) {}
 }

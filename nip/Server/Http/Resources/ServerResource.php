@@ -34,7 +34,6 @@ class ServerResource extends JsonResource
             'notes' => $this->notes,
             'avatarColor' => $this->avatar_color,
             'services' => $this->services,
-            'region' => $this->region,
             'displayableProvider' => $this->displayable_provider,
             'displayableDatabaseType' => $this->displayable_database_type,
             'cloudProviderUrl' => $this->cloud_provider_url,

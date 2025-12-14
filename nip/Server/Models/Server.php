@@ -53,7 +53,6 @@ class Server extends Model
         'notes',
         'avatar_color',
         'services',
-        'region',
         'displayable_provider',
         'displayable_database_type',
         'cloud_provider_url',
@@ -67,10 +66,10 @@ class Server extends Model
             'provider' => ServerProvider::class,
             'type' => ServerType::class,
             'status' => ServerStatus::class,
+            'database_type' => DatabaseType::class,
             'timezone' => Timezone::class,
             'avatar_color' => IdentityColor::class,
             'services' => 'array',
-            'region' => 'array',
             'is_ready' => 'boolean',
             'provision_step' => 'integer',
             'last_connected_at' => 'datetime',
@@ -178,15 +177,7 @@ class Server extends Model
 
     protected function displayableDatabaseType(): Attribute
     {
-        return Attribute::get(function () {
-            if (! $this->database_type) {
-                return null;
-            }
-
-            $databaseType = DatabaseType::tryFrom($this->database_type);
-
-            return $databaseType?->label();
-        });
+        return Attribute::get(fn () => $this->database_type?->label());
     }
 
     protected function provisioningCommand(): Attribute

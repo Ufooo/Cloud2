@@ -34,7 +34,6 @@ class UpdateServerRequest extends FormRequest
             'notes' => ['nullable', 'string'],
             'avatar_color' => ['nullable', 'string', Rule::enum(IdentityColor::class)],
             'services' => ['nullable', 'array'],
-            'region' => ['nullable', 'array'],
         ];
     }
 

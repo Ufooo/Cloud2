@@ -32,7 +32,6 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->string('avatar_color')->default('blue');
             $table->json('services')->nullable();
-            $table->json('region')->nullable();
             $table->string('displayable_provider')->nullable();
             $table->string('displayable_database_type')->nullable();
             $table->string('cloud_provider_url')->nullable();

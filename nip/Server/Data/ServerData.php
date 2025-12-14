@@ -2,6 +2,7 @@
 
 namespace Nip\Server\Data;
 
+use Nip\Server\Enums\DatabaseType;
 use Nip\Server\Enums\IdentityColor;
 use Nip\Server\Enums\ServerProvider;
 use Nip\Server\Enums\ServerStatus;
@@ -36,14 +37,13 @@ class ServerData extends Data
         public string $sshPort,
         public string $phpVersion,
         public ?string $displayablePhpVersion,
-        public ?string $databaseType,
+        public ?DatabaseType $databaseType,
         public ?string $dbStatus,
         public ?string $ubuntuVersion,
         public Timezone $timezone,
         public ?string $notes,
         public IdentityColor $avatarColor,
         public ?array $services,
-        public ?array $region,
         public ?string $displayableProvider,
         public ?string $displayableDatabaseType,
         public ?string $cloudProviderUrl,

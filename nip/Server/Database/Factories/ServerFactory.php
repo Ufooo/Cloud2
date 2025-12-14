@@ -48,10 +48,6 @@ class ServerFactory extends Factory
                 'mysql' => fake()->boolean(),
                 'redis' => fake()->boolean(),
             ],
-            'region' => [
-                'name' => fake()->city(),
-                'code' => fake()->countryCode(),
-            ],
             'displayable_provider' => fake()->company(),
             'displayable_database_type' => 'MySQL 8.0',
             'cloud_provider_url' => fake()->url(),
