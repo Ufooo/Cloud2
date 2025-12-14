@@ -11,6 +11,11 @@ it('server slug is auto-generated from name', function () {
         'name' => 'My Production Server',
         'provider' => 'digitalocean',
         'type' => 'app',
+        'ip_address' => '192.168.1.1',
+        'ssh_port' => '22',
+        'php_version' => 'php83',
+        'ubuntu_version' => '24.04',
+        'timezone' => 'UTC',
     ];
 
     $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class)
