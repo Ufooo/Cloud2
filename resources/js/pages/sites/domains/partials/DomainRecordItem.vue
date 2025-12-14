@@ -116,7 +116,7 @@ function handleDelete() {
                     </Badge>
                     <Badge
                         v-if="domain.status !== 'enabled'"
-                        :variant="domain.statusBadgeVariant as 'default' | 'secondary' | 'destructive' | 'outline'"
+                        :variant="domain.statusBadgeVariant"
                     >
                         {{ domain.displayableStatus }}
                     </Badge>

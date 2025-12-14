@@ -181,8 +181,9 @@ function getStatusClass(status: string) {
                         <Link
                             v-if="link.url"
                             :href="link.url"
-                            v-html="link.label"
-                        />
+                        >
+                            <span v-html="link.label" />
+                        </Link>
                         <span v-else v-html="link.label" />
                     </Button>
                 </div>

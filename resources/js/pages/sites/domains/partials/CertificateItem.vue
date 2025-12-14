@@ -86,7 +86,7 @@ function handleDelete() {
                         <span class="font-medium">
                             {{ certificate.displayableType }}
                         </span>
-                        <Badge :variant="certificate.statusBadgeVariant as 'default' | 'secondary' | 'destructive' | 'outline'">
+                        <Badge :variant="certificate.statusBadgeVariant">
                             <Loader2 v-if="isPendingVerification" class="mr-1 size-3 animate-spin" />
                             {{ certificate.displayableStatus }}
                         </Badge>
