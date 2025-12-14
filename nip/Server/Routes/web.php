@@ -8,7 +8,7 @@ use Nip\Server\Http\Controllers\ServerController;
 Route::middleware(['web'])->group(function () {
     Route::get('/servers/{server:id}/provision', [ProvisioningController::class, 'script'])
         ->name('provisioning.script');
-    Route::post('/provisioning/callback', [ProvisioningController::class, 'callback'])
+    Route::post('/provisioning/callback/status', [ProvisioningController::class, 'callback'])
         ->name('provisioning.callback');
 });
 
