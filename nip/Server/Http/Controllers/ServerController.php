@@ -9,11 +9,13 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use Nip\Php\Actions\CreatePhpVersion;
+use Nip\Php\Enums\PhpVersion;
+use Nip\Php\Enums\PhpVersionStatus;
 use Nip\Server\Data\ServerData;
 use Nip\Server\Data\ServerPermissionsData;
 use Nip\Server\Enums\DatabaseType;
 use Nip\Server\Enums\IdentityColor;
-use Nip\Server\Enums\PhpVersion;
 use Nip\Server\Enums\ServerProvider;
 use Nip\Server\Enums\ServerStatus;
 use Nip\Server\Enums\ServerType;
@@ -23,6 +25,12 @@ use Nip\Server\Http\Requests\StoreServerRequest;
 use Nip\Server\Http\Requests\UpdateServerSettingsRequest;
 use Nip\Server\Http\Resources\ServerListResource;
 use Nip\Server\Models\Server;
+use Nip\SshKey\Actions\CreateSshKey;
+use Nip\SshKey\Http\Resources\UserSshKeyResource;
+use Nip\SshKey\Models\UserSshKey;
+use Nip\UnixUser\Actions\CreateUnixUser;
+use Nip\UnixUser\Enums\UserStatus;
+use Nip\UnixUser\Models\UnixUser;
 
 class ServerController extends Controller
 {
@@ -41,6 +49,12 @@ class ServerController extends Controller
 
     public function create(): Response
     {
+        $userSshKeys = UserSshKey::query()
+            ->with('user')
+            ->where('user_id', auth()->id())
+            ->orderBy('name')
+            ->get();
+
         return Inertia::render('servers/Create', [
             'providers' => ServerProvider::options(),
             'serverTypes' => ServerType::options(),
@@ -48,6 +62,7 @@ class ServerController extends Controller
             'databaseTypes' => DatabaseType::options(),
             'ubuntuVersions' => UbuntuVersion::options(),
             'timezones' => Timezone::options(),
+            'userSshKeys' => UserSshKeyResource::collection($userSshKeys)->resolve(),
         ]);
     }
 
@@ -69,6 +84,10 @@ class ServerController extends Controller
             'status' => ServerStatus::Provisioning,
             'provisioning_token' => Str::random(64),
         ]);
+
+        [$rootUser, $netiparUser] = $this->createDefaultUnixUsers($server);
+        $this->createPhpVersionIfNeeded($server);
+        $this->createSshKeysFromRequest($request, $server, $rootUser, $netiparUser);
 
         return redirect()
             ->route('servers.show', $server)
@@ -119,6 +138,70 @@ class ServerController extends Controller
 
         if ($server->status === ServerStatus::Provisioning) {
             $server->provisioning_steps = $server->getProvisioningSteps();
+        }
+    }
+
+    /**
+     * @return array{UnixUser, UnixUser}
+     */
+    private function createDefaultUnixUsers(Server $server): array
+    {
+        $createUnixUser = new CreateUnixUser;
+
+        return [
+            $createUnixUser->handle($server, 'root', UserStatus::Installing),
+            $createUnixUser->handle($server, 'netipar', UserStatus::Installing),
+        ];
+    }
+
+    private function createPhpVersionIfNeeded(Server $server): void
+    {
+        if (! in_array($server->type, [ServerType::App, ServerType::Web, ServerType::Worker])) {
+            return;
+        }
+
+        $phpVersion = $server->php_version instanceof PhpVersion
+            ? $server->php_version
+            : PhpVersion::tryFrom($server->php_version);
+
+        $version = $phpVersion?->version() ?? '8.4';
+
+        (new CreatePhpVersion)->handle(
+            $server,
+            $version,
+            PhpVersionStatus::Installing,
+            isCliDefault: true,
+            isSiteDefault: true,
+        );
+    }
+
+    private function createSshKeysFromRequest(
+        StoreServerRequest $request,
+        Server $server,
+        UnixUser $rootUser,
+        UnixUser $netiparUser,
+    ): void {
+        if (! $request->filled('ssh_key_ids')) {
+            return;
+        }
+
+        $userSshKeys = UserSshKey::query()
+            ->whereIn('id', $request->input('ssh_key_ids'))
+            ->where('user_id', auth()->id())
+            ->get();
+
+        $createSshKey = new CreateSshKey;
+
+        foreach ($userSshKeys as $userSshKey) {
+            foreach ([$rootUser, $netiparUser] as $unixUser) {
+                $createSshKey->handle(
+                    $server,
+                    $unixUser,
+                    $userSshKey->name,
+                    $userSshKey->public_key,
+                    $userSshKey->fingerprint,
+                );
+            }
         }
     }
 }

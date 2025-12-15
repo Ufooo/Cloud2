@@ -3,9 +3,9 @@
 namespace Nip\Php\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Nip\Php\Enums\PhpVersion as PhpVersionEnum;
 use Nip\Php\Enums\PhpVersionStatus;
 use Nip\Php\Models\PhpVersion;
-use Nip\Server\Enums\PhpVersion as PhpVersionEnum;
 use Nip\Server\Models\Server;
 
 /**

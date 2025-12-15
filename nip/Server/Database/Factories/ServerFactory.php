@@ -3,9 +3,9 @@
 namespace Nip\Server\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Nip\Php\Enums\PhpVersion;
 use Nip\Server\Enums\DatabaseType;
 use Nip\Server\Enums\IdentityColor;
-use Nip\Server\Enums\PhpVersion;
 use Nip\Server\Enums\ServerProvider;
 use Nip\Server\Enums\ServerStatus;
 use Nip\Server\Enums\ServerType;

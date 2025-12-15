@@ -2,8 +2,8 @@
 
 namespace Nip\Site\Data;
 
+use Nip\Php\Enums\PhpVersion;
 use Nip\Server\Enums\IdentityColor;
-use Nip\Server\Enums\PhpVersion;
 use Nip\Site\Enums\SiteStatus;
 use Nip\Site\Models\Site;
 use Spatie\LaravelData\Data;

@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
+use Nip\Php\Actions\CreatePhpVersion;
+use Nip\Php\Enums\PhpVersion as PhpVersionEnum;
 use Nip\Php\Enums\PhpVersionStatus;
 use Nip\Php\Http\Requests\InstallPhpVersionRequest;
 use Nip\Php\Http\Requests\SetDefaultPhpVersionRequest;
@@ -17,7 +19,6 @@ use Nip\Php\Http\Resources\PhpSettingResource;
 use Nip\Php\Http\Resources\PhpVersionResource;
 use Nip\Php\Models\PhpVersion;
 use Nip\Server\Data\ServerData;
-use Nip\Server\Enums\PhpVersion as PhpVersionEnum;
 use Nip\Server\Models\Server;
 
 class PhpController extends Controller
@@ -35,7 +36,7 @@ class PhpController extends Controller
 
         $availableVersions = collect(PhpVersionEnum::cases())
             ->map(fn ($version) => [
-                'value' => $version->value,
+                'value' => $version->version(),
                 'label' => $version->label(),
             ])
             ->values()
@@ -67,7 +68,7 @@ class PhpController extends Controller
     {
         Gate::authorize('update', $server);
 
-        $version = $request->validated()['version'];
+        $version = $request->validated('version');
 
         $existing = $server->phpVersions()
             ->where('version', $version)
@@ -79,12 +80,7 @@ class PhpController extends Controller
                 ->withErrors(['version' => 'This PHP version is already installed on this server.']);
         }
 
-        $server->phpVersions()->create([
-            'version' => $version,
-            'status' => PhpVersionStatus::Pending,
-            'is_cli_default' => false,
-            'is_site_default' => false,
-        ]);
+        (new CreatePhpVersion)->handle($server, $version);
 
         return redirect()
             ->route('servers.php', $server)

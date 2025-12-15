@@ -4,9 +4,9 @@ namespace Nip\Server\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Nip\Php\Enums\PhpVersion;
 use Nip\Server\Enums\DatabaseType;
 use Nip\Server\Enums\IdentityColor;
-use Nip\Server\Enums\PhpVersion;
 use Nip\Server\Enums\ServerProvider;
 use Nip\Server\Enums\ServerType;
 use Nip\Server\Enums\UbuntuVersion;

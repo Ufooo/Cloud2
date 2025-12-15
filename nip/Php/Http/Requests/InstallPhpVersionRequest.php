@@ -4,7 +4,7 @@ namespace Nip\Php\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Nip\Server\Enums\PhpVersion;
+use Nip\Php\Enums\PhpVersion;
 
 class InstallPhpVersionRequest extends FormRequest
 {
@@ -22,7 +22,7 @@ class InstallPhpVersionRequest extends FormRequest
             'version' => [
                 'required',
                 'string',
-                Rule::in(array_map(fn ($v) => $v->value, PhpVersion::cases())),
+                Rule::in(array_map(fn ($v) => $v->version(), PhpVersion::cases())),
             ],
         ];
     }

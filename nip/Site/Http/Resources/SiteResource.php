@@ -4,7 +4,7 @@ namespace Nip\Site\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Nip\Server\Enums\PhpVersion;
+use Nip\Php\Enums\PhpVersion;
 use Nip\Site\Enums\SiteStatus;
 use Nip\Site\Models\Site;
 
