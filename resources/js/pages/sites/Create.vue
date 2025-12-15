@@ -323,7 +323,7 @@ function navigateToSites() {
                             </div>
                             <Switch
                                 id="install_composer"
-                                v-model:checked="installComposer"
+                                v-model="installComposer"
                             />
                         </div>
 
@@ -337,7 +337,7 @@ function navigateToSites() {
                             </div>
                             <Switch
                                 id="create_database"
-                                v-model:checked="createDatabase"
+                                v-model="createDatabase"
                             />
                         </div>
 

@@ -451,7 +451,7 @@ watch(
                             <Switch
                                 id="heartbeat_enabled"
                                 name="heartbeat_enabled"
-                                v-model:checked="addFormHeartbeat"
+                                v-model="addFormHeartbeat"
                             />
                         </div>
 
@@ -628,7 +628,7 @@ watch(
                             <Switch
                                 id="edit-heartbeat_enabled"
                                 name="heartbeat_enabled"
-                                v-model:checked="editFormHeartbeat"
+                                v-model="editFormHeartbeat"
                             />
                         </div>
 

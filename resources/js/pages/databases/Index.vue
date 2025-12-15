@@ -593,7 +593,7 @@ function submitEditUser() {
                                 </div>
                                 <Switch
                                     id="readonly"
-                                    v-model:checked="userForm.readonly"
+                                    v-model="userForm.readonly"
                                 />
                             </div>
                         </div>
@@ -714,7 +714,7 @@ function submitEditUser() {
                                 </div>
                                 <Switch
                                     id="edit-readonly"
-                                    v-model:checked="editUserForm.readonly"
+                                    v-model="editUserForm.readonly"
                                 />
                             </div>
                         </div>

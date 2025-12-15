@@ -32,7 +32,7 @@ function isActive(stepValue: number): boolean {
 }
 
 // Echo listener for real-time updates (useEcho handles lifecycle automatically)
-useEcho(`servers.${props.server.id}`, 'ServerProvisioningUpdated', () => {
+useEcho(`servers.${props.server.id}`, '.ServerProvisioningUpdated', () => {
     router.reload({ only: ['server'] });
 });
 
@@ -56,7 +56,11 @@ async function handleCancelProvisioning() {
             <!-- Server Header -->
             <Card>
                 <CardContent class="flex items-center gap-4 p-6">
-                    <Avatar :name="server.name" :color="server.avatarColor" size="lg" />
+                    <Avatar
+                        :name="server.name"
+                        :color="server.avatarColor"
+                        size="lg"
+                    />
 
                     <div class="flex-1 space-y-1">
                         <div class="flex items-center gap-3">

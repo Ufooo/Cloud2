@@ -437,7 +437,7 @@ function close() {
                             </div>
                             <Switch
                                 id="isrg-root-chain"
-                                v-model:checked="form.isrg_root_chain"
+                                v-model="form.isrg_root_chain"
                             />
                         </div>
                     </template>
@@ -505,7 +505,7 @@ function close() {
                             </div>
                             <Switch
                                 id="auto-activate"
-                                v-model:checked="form.auto_activate"
+                                v-model="form.auto_activate"
                             />
                         </div>
                     </template>

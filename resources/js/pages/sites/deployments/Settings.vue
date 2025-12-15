@@ -94,8 +94,7 @@ function copyDeployHookUrl() {
                                 </p>
                             </div>
                             <Switch
-                                :checked="form.push_to_deploy"
-                                @update:checked="form.push_to_deploy = $event"
+                                v-model="form.push_to_deploy"
                             />
                         </div>
 
@@ -119,8 +118,8 @@ function copyDeployHookUrl() {
                         <div class="flex items-center space-x-2">
                             <Checkbox
                                 id="auto_source"
-                                :checked="form.auto_source"
-                                @update:checked="form.auto_source = $event"
+                                :model-value="form.auto_source"
+                                @update:model-value="form.auto_source = $event"
                             />
                             <Label for="auto_source" class="font-normal">
                                 Make
