@@ -10,9 +10,11 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Nip\Server\Data\ServerData;
 use Nip\Server\Models\Server;
+use Nip\SshKey\Actions\CreateSshKey;
 use Nip\SshKey\Http\Requests\StoreSshKeyRequest;
 use Nip\SshKey\Http\Resources\SshKeyResource;
 use Nip\SshKey\Models\SshKey;
+use Nip\UnixUser\Models\UnixUser;
 
 class SshKeyController extends Controller
 {
@@ -44,7 +46,14 @@ class SshKeyController extends Controller
     {
         Gate::authorize('update', $server);
 
-        $server->sshKeys()->create($request->validated());
+        $unixUser = UnixUser::findOrFail($request->validated('unix_user_id'));
+
+        (new CreateSshKey)->handle(
+            $server,
+            $unixUser,
+            $request->validated('name'),
+            $request->validated('public_key'),
+        );
 
         return redirect()
             ->route('servers.ssh-keys', $server)

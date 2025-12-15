@@ -10,6 +10,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Nip\Server\Data\ServerData;
 use Nip\Server\Models\Server;
+use Nip\UnixUser\Actions\CreateUnixUser;
 use Nip\UnixUser\Enums\UserStatus;
 use Nip\UnixUser\Http\Requests\StoreUnixUserRequest;
 use Nip\UnixUser\Http\Resources\UnixUserResource;
@@ -37,10 +38,7 @@ class UnixUserController extends Controller
 
     public function store(StoreUnixUserRequest $request, Server $server): RedirectResponse
     {
-        $server->unixUsers()->create([
-            ...$request->validated(),
-            'status' => UserStatus::Pending,
-        ]);
+        (new CreateUnixUser)->handle($server, $request->validated('username'));
 
         return redirect()
             ->route('servers.unix-users', $server)
