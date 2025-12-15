@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Nip\Server\Models\Server;
 use Nip\SshKey\Concerns\GeneratesSshKeyFingerprint;
 use Nip\SshKey\Database\Factories\SshKeyFactory;
+use Nip\SshKey\Enums\SshKeyStatus;
 use Nip\UnixUser\Models\UnixUser;
 
 class SshKey extends Model
@@ -26,7 +27,15 @@ class SshKey extends Model
         'name',
         'public_key',
         'fingerprint',
+        'status',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'status' => SshKeyStatus::class,
+        ];
+    }
 
     /**
      * @return BelongsTo<Server, $this>

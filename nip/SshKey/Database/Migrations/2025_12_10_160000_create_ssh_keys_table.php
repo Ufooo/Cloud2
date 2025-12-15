@@ -19,14 +19,10 @@ return new class extends Migration
             $table->string('name');
             $table->text('public_key');
             $table->string('fingerprint');
+            $table->string('status')->default('pending');
             $table->timestamps();
 
-            $table->unique(['server_id', 'fingerprint']);
+            $table->unique(['server_id', 'unix_user_id', 'fingerprint']);
         });
-    }
-
-    public function down(): void
-    {
-        Schema::dropIfExists('ssh_keys');
     }
 };

@@ -20,6 +20,7 @@ class UserSshKeyResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'fingerprint' => $this->fingerprint,
+            'userName' => $this->user?->name,
             'createdAt' => $this->created_at?->format('M j, Y'),
         ];
     }

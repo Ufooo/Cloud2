@@ -16,6 +16,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -25,6 +26,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import AppLayout from '@/layouts/AppLayout.vue';
 import {
     ServerProvider,
@@ -32,9 +34,10 @@ import {
     type BreadcrumbItem,
     type ServerProviderOptionData,
     type ServerTypeOptionData,
+    type UserSshKeyData,
 } from '@/types';
 import { Head, useForm } from '@inertiajs/vue3';
-import { computed, type Component } from 'vue';
+import { computed, ref, watch, type Component } from 'vue';
 
 interface SelectOption {
     value: string | null;
@@ -48,6 +51,7 @@ interface Props {
     databaseTypes: SelectOption[];
     ubuntuVersions: SelectOption[];
     timezones: SelectOption[];
+    userSshKeys: UserSshKeyData[];
 }
 
 const props = defineProps<Props>();
@@ -76,6 +80,10 @@ const form = useForm({
     timezone: 'UTC',
 });
 
+// SSH Keys state - separate refs for UI
+const addSshKeys = ref(false);
+const selectedSshKeyIds = ref<number[]>([]);
+
 // Logo mapping for providers
 const providerLogos: Record<ServerProvider, Component> = {
     [ServerProvider.DigitalOcean]: DigitalOceanLogo,
@@ -100,6 +108,22 @@ const canSubmit = computed(
     () => form.provider !== '' && form.name.trim().length > 0,
 );
 
+// Clear selected SSH keys when toggle is turned off
+watch(addSshKeys, (newValue) => {
+    if (!newValue) {
+        selectedSshKeyIds.value = [];
+    }
+});
+
+function toggleSshKey(keyId: number) {
+    const index = selectedSshKeyIds.value.indexOf(keyId);
+    if (index === -1) {
+        selectedSshKeyIds.value.push(keyId);
+    } else {
+        selectedSshKeyIds.value.splice(index, 1);
+    }
+}
+
 function submitForm() {
     form.transform((data) => ({
         ...data,
@@ -107,6 +131,10 @@ function submitForm() {
         private_ip_address: data.private_ip_address || null,
         ssh_port: data.ssh_port || '22',
         database_type: data.database_type || null,
+        ssh_key_ids:
+            addSshKeys.value && selectedSshKeyIds.value.length > 0
+                ? selectedSshKeyIds.value
+                : undefined,
     })).post(store.url());
 }
 </script>
@@ -394,6 +422,75 @@ function submitForm() {
                                     placeholder="22"
                                 />
                                 <InputError :message="form.errors.ssh_port" />
+                            </div>
+                        </div>
+
+                        <!-- SSH Keys -->
+                        <div class="space-y-4">
+                            <div class="flex items-center gap-3">
+                                <Switch
+                                    id="add_ssh_keys"
+                                    v-model="addSshKeys"
+                                />
+                                <Label for="add_ssh_keys" class="cursor-pointer">
+                                    Add my SSH keys to this server
+                                </Label>
+                            </div>
+
+                            <p class="text-sm text-muted-foreground">
+                                Selected keys will be added to both root and
+                                netipar users during provisioning
+                            </p>
+
+                            <div v-if="addSshKeys" class="space-y-3">
+                                <div
+                                    v-if="props.userSshKeys.length === 0"
+                                    class="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground"
+                                >
+                                    No SSH keys in your account. Add keys in your
+                                    account settings.
+                                </div>
+
+                                <div
+                                    v-else
+                                    class="space-y-2 rounded-lg border p-4"
+                                >
+                                    <div
+                                        v-for="key in props.userSshKeys"
+                                        :key="key.id"
+                                        class="flex items-start gap-3"
+                                    >
+                                        <Checkbox
+                                            :id="`ssh-key-${key.id}`"
+                                            :model-value="
+                                                selectedSshKeyIds.includes(
+                                                    key.id,
+                                                )
+                                            "
+                                            @update:model-value="
+                                                toggleSshKey(key.id)
+                                            "
+                                        />
+                                        <div class="flex-1 space-y-1">
+                                            <Label
+                                                :for="`ssh-key-${key.id}`"
+                                                class="cursor-pointer font-medium"
+                                            >
+                                                {{ key.name }}
+                                                <span
+                                                    class="font-normal text-muted-foreground"
+                                                >
+                                                    ({{ key.userName }})
+                                                </span>
+                                            </Label>
+                                            <p
+                                                class="truncate font-mono text-xs text-muted-foreground"
+                                            >
+                                                {{ key.fingerprint }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

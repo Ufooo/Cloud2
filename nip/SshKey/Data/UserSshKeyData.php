@@ -12,5 +12,7 @@ class UserSshKeyData extends Data
         public int $id,
         public string $name,
         public string $fingerprint,
+        public ?string $userName = null,
+        public ?string $createdAt = null,
     ) {}
 }
