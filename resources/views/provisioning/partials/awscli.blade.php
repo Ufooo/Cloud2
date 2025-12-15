@@ -1,5 +1,5 @@
-    # Install AWSCLI
-pip3 install httpie
+    # Install AWSCLI & HTTPie
+apt-get install -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -y --force-yes httpie
 
 case "$(dpkg --print-architecture)" in
     amd64) AWSCLI_ARCH="x86_64" ;;

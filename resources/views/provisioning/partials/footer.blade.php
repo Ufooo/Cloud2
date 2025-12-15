@@ -1,3 +1,4 @@
-curl --insecure --data "event_id={{ $eventId }}&server_id={{ $server->id }}&recipe_id=" {{ $callbackUrl }}
+# Final provisioning callback - status 10 marks completion
+provisionPing {{ $server->id }} 10
 
 touch /root/.netipar-provisioned

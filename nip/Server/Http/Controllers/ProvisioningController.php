@@ -13,6 +13,8 @@ use Nip\Server\Enums\ServerStatus;
 use Nip\Server\Enums\ServerType;
 use Nip\Server\Events\ServerProvisioningUpdated;
 use Nip\Server\Models\Server;
+use Nip\SshKey\Enums\SshKeyStatus;
+use Nip\SshKey\Models\SshKey;
 use Nip\UnixUser\Enums\UserStatus;
 use Nip\UnixUser\Models\UnixUser;
 
@@ -48,35 +50,6 @@ class ProvisioningController extends Controller
             'provision_step' => $validated['status'],
         ]);
 
-        // Create unix user when status >= 2 (after PreparingServer step)
-        if ($validated['status'] >= 2) {
-            UnixUser::query()->firstOrCreate(
-                [
-                    'server_id' => $server->id,
-                    'username' => 'netipar',
-                ],
-                [
-                    'status' => UserStatus::Installed,
-                ]
-            );
-        }
-
-        // Create PHP version when status >= 5 (after InstallingPhp step)
-        if ($validated['status'] >= 5) {
-            $phpVersion = $server->php_version ? str_replace('php', '', $server->php_version) : '8.4';
-            PhpVersion::query()->firstOrCreate(
-                [
-                    'server_id' => $server->id,
-                    'version' => $phpVersion,
-                ],
-                [
-                    'is_cli_default' => true,
-                    'is_site_default' => true,
-                    'status' => PhpVersionStatus::Installed,
-                ]
-            );
-        }
-
         // Mark database as installed when status >= 7 (after InstallingDatabase step)
         if ($validated['status'] >= 7 && $server->database_type !== null) {
             $server->update(['db_status' => 'installed']);
@@ -88,6 +61,24 @@ class ProvisioningController extends Controller
                 'status' => ServerStatus::Connected,
                 'is_ready' => true,
             ]);
+
+            // Mark all unix users as installed
+            UnixUser::query()
+                ->where('server_id', $server->id)
+                ->where('status', UserStatus::Installing)
+                ->update(['status' => UserStatus::Installed]);
+
+            // Mark all PHP versions as installed
+            PhpVersion::query()
+                ->where('server_id', $server->id)
+                ->where('status', PhpVersionStatus::Installing)
+                ->update(['status' => PhpVersionStatus::Installed]);
+
+            // Mark all SSH keys as installed
+            SshKey::query()
+                ->where('server_id', $server->id)
+                ->where('status', SshKeyStatus::Pending)
+                ->update(['status' => SshKeyStatus::Installed]);
         }
 
         broadcast(new ServerProvisioningUpdated($server));

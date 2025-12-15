@@ -30,4 +30,9 @@ class ServerProvisioningUpdated implements ShouldBroadcastNow
             'provisionStep' => $this->server->provision_step,
         ];
     }
+
+    public function broadcastAs(): string
+    {
+        return 'ServerProvisioningUpdated';
+    }
 }
