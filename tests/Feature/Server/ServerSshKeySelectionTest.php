@@ -45,7 +45,7 @@ it('can create server with selected user ssh keys', function () {
 
     expect($server)->not->toBeNull();
 
-    // 2 keys × 2 unix users (root + netipar) = 4 SSH key records
+    // 2 user keys × 2 unix users (root + netipar) = 4 SSH key records
     expect($server->sshKeys)->toHaveCount(4);
 
     // Get the unix users
@@ -109,6 +109,8 @@ it('can create server without selecting any ssh keys', function () {
     $server = Server::query()->where('name', 'Production Server')->first();
 
     expect($server)->not->toBeNull();
+
+    // No user-selected keys, and server's internal SSH key is not linked to unix users
     expect($server->sshKeys)->toHaveCount(0);
 
     // Unix users should still be created

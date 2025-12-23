@@ -12,6 +12,7 @@ use Inertia\Response;
 use Nip\Php\Actions\CreatePhpVersion;
 use Nip\Php\Enums\PhpVersion;
 use Nip\Php\Enums\PhpVersionStatus;
+use Nip\Server\Actions\GenerateServerSshKey;
 use Nip\Server\Data\ServerData;
 use Nip\Server\Data\ServerPermissionsData;
 use Nip\Server\Enums\DatabaseType;
@@ -85,6 +86,7 @@ class ServerController extends Controller
             'provisioning_token' => Str::random(64),
         ]);
 
+        $this->generateServerSshKey($server);
         [$rootUser, $netiparUser] = $this->createDefaultUnixUsers($server);
         $this->createPhpVersionIfNeeded($server);
         $this->createSshKeysFromRequest($request, $server, $rootUser, $netiparUser);
@@ -203,5 +205,10 @@ class ServerController extends Controller
                 );
             }
         }
+    }
+
+    private function generateServerSshKey(Server $server): void
+    {
+        (new GenerateServerSshKey)->handle($server);
     }
 }

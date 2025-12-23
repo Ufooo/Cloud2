@@ -45,6 +45,8 @@ class Server extends Model
         'ip_address',
         'private_ip_address',
         'ssh_port',
+        'ssh_public_key',
+        'ssh_private_key',
         'php_version',
         'database_type',
         'db_status',
@@ -58,6 +60,10 @@ class Server extends Model
         'cloud_provider_url',
         'is_ready',
         'last_connected_at',
+    ];
+
+    protected $hidden = [
+        'ssh_private_key',
     ];
 
     protected function casts(): array
