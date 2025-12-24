@@ -87,9 +87,9 @@ class ServerController extends Controller
         ]);
 
         $this->generateServerSshKey($server);
-        [$rootUser, $netiparUser] = $this->createDefaultUnixUsers($server);
+        [, $netiparUser] = $this->createDefaultUnixUsers($server);
         $this->createPhpVersionIfNeeded($server);
-        $this->createSshKeysFromRequest($request, $server, $rootUser, $netiparUser);
+        $this->createSshKeysFromRequest($request, $server, $netiparUser);
 
         return redirect()
             ->route('servers.show', $server)
@@ -180,7 +180,6 @@ class ServerController extends Controller
     private function createSshKeysFromRequest(
         StoreServerRequest $request,
         Server $server,
-        UnixUser $rootUser,
         UnixUser $netiparUser,
     ): void {
         if (! $request->filled('ssh_key_ids')) {
@@ -195,15 +194,13 @@ class ServerController extends Controller
         $createSshKey = new CreateSshKey;
 
         foreach ($userSshKeys as $userSshKey) {
-            foreach ([$rootUser, $netiparUser] as $unixUser) {
-                $createSshKey->handle(
-                    $server,
-                    $unixUser,
-                    $userSshKey->name,
-                    $userSshKey->public_key,
-                    $userSshKey->fingerprint,
-                );
-            }
+            $createSshKey->handle(
+                $server,
+                $netiparUser,
+                $userSshKey->name,
+                $userSshKey->public_key,
+                $userSshKey->fingerprint,
+            );
         }
     }
 

@@ -118,7 +118,6 @@ class ProvisioningController extends Controller
      */
     private function getTemplateVariables(Server $server): array
     {
-        $sshPublicKey = $this->formatSshKeys($server);
         $phpVersion = $server->php_version ? str_replace('php', '', $server->php_version) : '8.4';
         $sudoPassword = Str::random(20);
         $databasePassword = Str::random(20);
@@ -128,7 +127,8 @@ class ProvisioningController extends Controller
         return [
             'server' => $server,
             'callbackUrl' => $this->getCallbackUrl(),
-            'sshPublicKey' => $sshPublicKey,
+            'rootSshKeys' => $this->formatSshKeysForUser($server, 'root'),
+            'netiparSshKeys' => $this->formatSshKeysForUser($server, 'netipar'),
             'phpVersion' => $phpVersion,
             'sudoPassword' => $sudoPassword,
             'databasePassword' => $databasePassword,
@@ -149,18 +149,24 @@ class ProvisioningController extends Controller
     }
 
     /**
-     * Format SSH keys with identifying comments for authorized_keys.
+     * Format SSH keys for a specific unix user with identifying comments.
      */
-    private function formatSshKeys(Server $server): string
+    private function formatSshKeysForUser(Server $server, string $username): string
     {
         $lines = [];
 
+        // Server's own key always goes to all users
         if ($server->ssh_public_key) {
             $lines[] = '# NETipar Cloud';
             $lines[] = $server->ssh_public_key;
         }
 
-        foreach ($server->sshKeys as $sshKey) {
+        // User-specific SSH keys
+        $userSshKeys = $server->sshKeys()
+            ->whereHas('unixUser', fn ($query) => $query->where('username', $username))
+            ->get();
+
+        foreach ($userSshKeys as $sshKey) {
             $lines[] = "# Key {$sshKey->id}";
             $lines[] = $sshKey->public_key;
         }

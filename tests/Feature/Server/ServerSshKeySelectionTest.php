@@ -45,8 +45,8 @@ it('can create server with selected user ssh keys', function () {
 
     expect($server)->not->toBeNull();
 
-    // 2 user keys × 2 unix users (root + netipar) = 4 SSH key records
-    expect($server->sshKeys)->toHaveCount(4);
+    // 2 user keys for netipar user only (not duplicated for root)
+    expect($server->sshKeys)->toHaveCount(2);
 
     // Get the unix users
     $rootUser = UnixUser::where('server_id', $server->id)->where('username', 'root')->first();
@@ -55,22 +55,7 @@ it('can create server with selected user ssh keys', function () {
     expect($rootUser)->not->toBeNull();
     expect($netiparUser)->not->toBeNull();
 
-    // SSH keys should be linked to root user
-    assertDatabaseHas('ssh_keys', [
-        'server_id' => $server->id,
-        'unix_user_id' => $rootUser->id,
-        'name' => 'My Laptop Key',
-        'status' => 'pending',
-    ]);
-
-    assertDatabaseHas('ssh_keys', [
-        'server_id' => $server->id,
-        'unix_user_id' => $rootUser->id,
-        'name' => 'My Desktop Key',
-        'status' => 'pending',
-    ]);
-
-    // SSH keys should also be linked to netipar user
+    // SSH keys should be linked to netipar user only
     assertDatabaseHas('ssh_keys', [
         'server_id' => $server->id,
         'unix_user_id' => $netiparUser->id,
@@ -84,6 +69,9 @@ it('can create server with selected user ssh keys', function () {
         'name' => 'My Desktop Key',
         'status' => 'pending',
     ]);
+
+    // Root user should NOT have these SSH keys (only server's own key via servers.ssh_public_key)
+    expect(SshKey::where('server_id', $server->id)->where('unix_user_id', $rootUser->id)->count())->toBe(0);
 });
 
 it('can create server without selecting any ssh keys', function () {

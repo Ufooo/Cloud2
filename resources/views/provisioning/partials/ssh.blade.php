@@ -36,13 +36,15 @@ chmod -R 755 /home/netipar
 # Disable MOTD
 touch /home/netipar/.hushlogin
 
-# Authorize Server Public Key
+# Authorize Root SSH Keys
 cat > /root/.ssh/authorized_keys << EOF
-{!! $sshPublicKey !!}
+{!! $rootSshKeys !!}
 EOF
 
-# Copy Root SSH Keys To netipar User
-cp /root/.ssh/authorized_keys /home/netipar/.ssh/authorized_keys
+# Authorize netipar SSH Keys
+cat > /home/netipar/.ssh/authorized_keys << EOF
+{!! $netiparSshKeys !!}
+EOF
 chmod 600 /home/netipar/.ssh/authorized_keys
 chown -R netipar:netipar /home/netipar/.ssh
 
