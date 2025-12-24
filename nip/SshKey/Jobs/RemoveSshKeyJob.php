@@ -37,11 +37,9 @@ class RemoveSshKeyJob extends BaseProvisionJob
     {
         $unixUser = $this->sshKey->unixUser;
         $username = $unixUser->username;
-        $publicKey = trim($this->sshKey->public_key);
-        $keyName = $this->sshKey->name;
+        $keyId = $this->sshKey->id;
 
         $homeDir = $username === 'root' ? '/root' : "/home/{$username}";
-        $escapedKey = addslashes($publicKey);
 
         return <<<BASH
 #!/bin/bash
@@ -50,9 +48,8 @@ set -e
 AUTH_KEYS="{$homeDir}/.ssh/authorized_keys"
 
 if [ -f "\${AUTH_KEYS}" ]; then
-    # Create temp file without the key and its comment
-    grep -v "# Netipar: {$keyName}" "\${AUTH_KEYS}" | grep -v "{$escapedKey}" > "\${AUTH_KEYS}.tmp" || true
-    mv "\${AUTH_KEYS}.tmp" "\${AUTH_KEYS}"
+    # Remove the comment line and the key line (next line after comment)
+    sed -i '/# Netipar\\[{$keyId}\\]:/,+1d' "\${AUTH_KEYS}"
     chown {$username}:{$username} "\${AUTH_KEYS}"
     chmod 600 "\${AUTH_KEYS}"
     echo "SSH key removed successfully"
@@ -69,8 +66,9 @@ BASH;
 
     protected function handleFailure(\Throwable $exception): void
     {
+        // Restore to Installed - the key is still on the server
         $this->sshKey->update([
-            'status' => SshKeyStatus::Failed,
+            'status' => SshKeyStatus::Installed,
         ]);
     }
 

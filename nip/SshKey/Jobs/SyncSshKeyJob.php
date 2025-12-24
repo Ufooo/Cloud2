@@ -41,6 +41,7 @@ class SyncSshKeyJob extends BaseProvisionJob
         $keyName = $this->sshKey->name;
 
         $homeDir = $username === 'root' ? '/root' : "/home/{$username}";
+        $keyId = $this->sshKey->id;
 
         return <<<BASH
 #!/bin/bash
@@ -51,7 +52,7 @@ HOME_DIR="{$homeDir}"
 SSH_DIR="\${HOME_DIR}/.ssh"
 AUTH_KEYS="\${SSH_DIR}/authorized_keys"
 PUBLIC_KEY="{$publicKey}"
-KEY_COMMENT="# Netipar: {$keyName}"
+KEY_COMMENT="# Netipar[{$keyId}]: {$keyName}"
 
 echo "Setting up SSH key for user: \${USERNAME}"
 
