@@ -118,7 +118,7 @@ class ProvisioningController extends Controller
      */
     private function getTemplateVariables(Server $server): array
     {
-        $sshPublicKey = $server->sshKeys()->pluck('public_key')->implode("\n");
+        $sshPublicKey = $this->formatSshKeys($server);
         $phpVersion = $server->php_version ? str_replace('php', '', $server->php_version) : '8.4';
         $sudoPassword = Str::random(20);
         $databasePassword = Str::random(20);
@@ -146,5 +146,25 @@ class ProvisioningController extends Controller
     private function getCallbackUrl(): string
     {
         return rtrim(config('app.url'), '/').'/provisioning/callback/status';
+    }
+
+    /**
+     * Format SSH keys with identifying comments for authorized_keys.
+     */
+    private function formatSshKeys(Server $server): string
+    {
+        $lines = [];
+
+        if ($server->ssh_public_key) {
+            $lines[] = '# NETipar Cloud';
+            $lines[] = $server->ssh_public_key;
+        }
+
+        foreach ($server->sshKeys as $sshKey) {
+            $lines[] = "# Key {$sshKey->id}";
+            $lines[] = $sshKey->public_key;
+        }
+
+        return implode("\n", $lines);
     }
 }
