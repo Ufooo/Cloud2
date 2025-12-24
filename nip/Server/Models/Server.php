@@ -250,4 +250,9 @@ class Server extends Model
 
         return $step->label();
     }
+
+    public function getSshPrivateKey(): ?string
+    {
+        return $this->ssh_private_key;
+    }
 }
