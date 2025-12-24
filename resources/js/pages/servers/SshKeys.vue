@@ -34,19 +34,26 @@ import { useResourceDelete } from '@/composables/useResourceDelete';
 import ServerLayout from '@/layouts/ServerLayout.vue';
 import type { Server } from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
-import { Head } from '@inertiajs/vue3';
+import { Head, usePoll } from '@inertiajs/vue3';
 import { Key, MoreHorizontal, Plus, Trash2 } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 interface UnixUser {
     id: number;
     username: string;
 }
 
+interface SshKeyStatus {
+    value: 'pending' | 'installed' | 'failed' | 'deleting';
+    label: string;
+    variant: 'default' | 'secondary' | 'destructive';
+}
+
 interface SshKey {
     id: number;
     name: string;
     fingerprint: string;
+    status: SshKeyStatus;
     createdAt: string | null;
     unixUser: {
         id: number;
@@ -66,6 +73,33 @@ interface Props {
 const props = defineProps<Props>();
 
 const addKeyDialog = ref<InstanceType<typeof ResourceFormDialog>>();
+
+// Poll while there are pending or deleting keys
+const hasPendingKeys = computed(() =>
+    props.keys.data.some(
+        (key) =>
+            key.status.value === 'pending' ||
+            key.status.value === 'deleting',
+    ),
+);
+
+const { start: startPolling, stop: stopPolling } = usePoll(
+    3000,
+    { only: ['keys'] },
+    { autoStart: false },
+);
+
+watch(
+    hasPendingKeys,
+    (pending) => {
+        if (pending) {
+            startPolling();
+        } else {
+            stopPolling();
+        }
+    },
+    { immediate: true },
+);
 
 const { deleteResource: deleteKey } = useResourceDelete<SshKey>({
     resourceName: 'SSH Key',
@@ -136,6 +170,12 @@ const { deleteResource: deleteKey } = useResourceDelete<SshKey>({
                                     <Badge variant="secondary">
                                         {{ key.unixUser.username }}
                                     </Badge>
+                                    <Badge
+                                        v-if="key.status.value !== 'installed'"
+                                        :variant="key.status.variant"
+                                    >
+                                        {{ key.status.label }}
+                                    </Badge>
                                 </div>
                                 <p
                                     class="font-mono text-sm text-muted-foreground"
@@ -158,7 +198,7 @@ const { deleteResource: deleteKey } = useResourceDelete<SshKey>({
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuItem
-                                            v-if="key.can.delete"
+                                            v-if="key.can.delete && key.status.value !== 'deleting'"
                                             class="text-destructive focus:text-destructive"
                                             @click="deleteKey(key)"
                                         >

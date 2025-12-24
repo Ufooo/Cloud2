@@ -20,7 +20,11 @@ class SshKeyResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'fingerprint' => $this->fingerprint,
-            'status' => $this->status?->value,
+            'status' => [
+                'value' => $this->status?->value,
+                'label' => $this->status?->label(),
+                'variant' => $this->status?->badgeVariant(),
+            ],
             'createdAt' => $this->created_at?->format('M j, Y'),
             'unixUser' => $this->whenLoaded('unixUser', fn () => [
                 'id' => $this->unixUser->id,

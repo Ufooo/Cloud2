@@ -56,14 +56,13 @@ it('dispatches RemoveSshKeyJob when deleting an SSH key', function () {
 
     $response->assertRedirect();
 
-    Queue::assertPushed(RemoveSshKeyJob::class, function ($job) use ($server, $unixUser) {
-        return $job->server->id === $server->id
-            && $job->username === $unixUser->username
-            && $job->keyName === 'Key to Delete';
+    Queue::assertPushed(RemoveSshKeyJob::class, function ($job) use ($sshKey) {
+        return $job->sshKey->id === $sshKey->id;
     });
 
-    $this->assertDatabaseMissing('ssh_keys', [
+    $this->assertDatabaseHas('ssh_keys', [
         'id' => $sshKey->id,
+        'status' => SshKeyStatus::Deleting->value,
     ]);
 });
 

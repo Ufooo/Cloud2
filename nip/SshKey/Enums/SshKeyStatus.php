@@ -8,12 +8,16 @@ enum SshKeyStatus: string implements HasStatusBadge
 {
     case Pending = 'pending';
     case Installed = 'installed';
+    case Failed = 'failed';
+    case Deleting = 'deleting';
 
     public function label(): string
     {
         return match ($this) {
-            self::Pending => 'Pending',
+            self::Pending => 'Installing...',
             self::Installed => 'Installed',
+            self::Failed => 'Failed',
+            self::Deleting => 'Deleting...',
         };
     }
 
@@ -21,7 +25,8 @@ enum SshKeyStatus: string implements HasStatusBadge
     {
         return match ($this) {
             self::Installed => 'default',
-            self::Pending => 'secondary',
+            self::Pending, self::Deleting => 'secondary',
+            self::Failed => 'destructive',
         };
     }
 }

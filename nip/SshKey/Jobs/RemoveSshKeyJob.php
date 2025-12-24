@@ -2,81 +2,76 @@
 
 namespace Nip\SshKey\Jobs;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
+use Nip\Server\Jobs\BaseProvisionJob;
 use Nip\Server\Models\Server;
-use Nip\Server\Services\SSH\SSHService;
+use Nip\Server\Services\SSH\ExecutionResult;
+use Nip\SshKey\Enums\SshKeyStatus;
+use Nip\SshKey\Models\SshKey;
 
-class RemoveSshKeyJob implements ShouldQueue
+class RemoveSshKeyJob extends BaseProvisionJob
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
-    public int $tries = 3;
-
     public int $timeout = 120;
 
-    /** @var array<int> */
-    public array $backoff = [30, 60, 120];
-
     public function __construct(
-        public Server $server,
-        public string $username,
-        public string $publicKey,
-        public string $keyName
+        public SshKey $sshKey
     ) {
         $this->onQueue('provisioning');
     }
 
-    public function handle(SSHService $ssh): void
+    protected function getResourceType(): string
     {
-        try {
-            Log::info("Removing SSH key '{$this->keyName}' for user {$this->username} on server {$this->server->id}");
+        return 'ssh_key';
+    }
 
-            $ssh->connect($this->server);
+    protected function getResourceId(): ?int
+    {
+        return $this->sshKey->id;
+    }
 
-            $script = $this->generateScript();
-            $result = $ssh->exec($script);
-
-            if ($result->isSuccessful()) {
-                Log::info("SSH key '{$this->keyName}' successfully removed for user {$this->username}");
-            } else {
-                Log::warning("Failed to remove SSH key: {$result->output}");
-            }
-
-        } catch (\Exception $e) {
-            Log::error('Failed to remove SSH key: '.$e->getMessage());
-
-            if ($this->attempts() < $this->tries) {
-                $this->release($this->backoff[$this->attempts() - 1] ?? 120);
-            }
-        } finally {
-            $ssh->disconnect();
-        }
+    protected function getServer(): Server
+    {
+        return $this->sshKey->server;
     }
 
     protected function generateScript(): string
     {
-        $homeDir = $this->username === 'root' ? '/root' : "/home/{$this->username}";
-        $escapedKey = addslashes($this->publicKey);
+        $unixUser = $this->sshKey->unixUser;
+        $username = $unixUser->username;
+        $publicKey = trim($this->sshKey->public_key);
+        $keyName = $this->sshKey->name;
+
+        $homeDir = $username === 'root' ? '/root' : "/home/{$username}";
+        $escapedKey = addslashes($publicKey);
 
         return <<<BASH
+#!/bin/bash
+set -e
+
 AUTH_KEYS="{$homeDir}/.ssh/authorized_keys"
 
 if [ -f "\${AUTH_KEYS}" ]; then
     # Create temp file without the key and its comment
-    grep -v "# Netipar: {$this->keyName}" "\${AUTH_KEYS}" | grep -v "{$escapedKey}" > "\${AUTH_KEYS}.tmp" || true
+    grep -v "# Netipar: {$keyName}" "\${AUTH_KEYS}" | grep -v "{$escapedKey}" > "\${AUTH_KEYS}.tmp" || true
     mv "\${AUTH_KEYS}.tmp" "\${AUTH_KEYS}"
-    chown {$this->username}:{$this->username} "\${AUTH_KEYS}"
+    chown {$username}:{$username} "\${AUTH_KEYS}"
     chmod 600 "\${AUTH_KEYS}"
     echo "SSH key removed successfully"
 else
     echo "authorized_keys file not found"
 fi
 BASH;
+    }
+
+    protected function handleSuccess(ExecutionResult $result): void
+    {
+        $this->sshKey->delete();
+    }
+
+    protected function handleFailure(\Throwable $exception): void
+    {
+        $this->sshKey->update([
+            'status' => SshKeyStatus::Failed,
+        ]);
     }
 
     /**
@@ -86,8 +81,9 @@ BASH;
     {
         return [
             'ssh_key_remove',
-            'server:'.$this->server->id,
-            'user:'.$this->username,
+            'ssh_key:'.$this->sshKey->id,
+            'server:'.$this->sshKey->server_id,
+            'unix_user:'.$this->sshKey->unix_user_id,
         ];
     }
 }

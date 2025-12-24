@@ -11,8 +11,11 @@ use Inertia\Response;
 use Nip\Server\Data\ServerData;
 use Nip\Server\Models\Server;
 use Nip\SshKey\Actions\CreateSshKey;
+use Nip\SshKey\Enums\SshKeyStatus;
 use Nip\SshKey\Http\Requests\StoreSshKeyRequest;
 use Nip\SshKey\Http\Resources\SshKeyResource;
+use Nip\SshKey\Jobs\RemoveSshKeyJob;
+use Nip\SshKey\Jobs\SyncSshKeyJob;
 use Nip\SshKey\Models\SshKey;
 use Nip\UnixUser\Models\UnixUser;
 
@@ -48,16 +51,18 @@ class SshKeyController extends Controller
 
         $unixUser = UnixUser::findOrFail($request->validated('unix_user_id'));
 
-        (new CreateSshKey)->handle(
+        $sshKey = (new CreateSshKey)->handle(
             $server,
             $unixUser,
             $request->validated('name'),
             $request->validated('public_key'),
         );
 
+        SyncSshKeyJob::dispatch($sshKey);
+
         return redirect()
             ->route('servers.ssh-keys', $server)
-            ->with('success', 'SSH key created successfully.');
+            ->with('success', 'SSH key created. Deploying to server...');
     }
 
     public function destroy(Server $server, SshKey $sshKey): RedirectResponse
@@ -66,10 +71,12 @@ class SshKeyController extends Controller
 
         abort_unless($sshKey->server_id === $server->id, 403);
 
-        $sshKey->delete();
+        $sshKey->update(['status' => SshKeyStatus::Deleting]);
+
+        RemoveSshKeyJob::dispatch($sshKey);
 
         return redirect()
             ->route('servers.ssh-keys', $server)
-            ->with('success', 'SSH key deleted successfully.');
+            ->with('success', 'Removing SSH key from server...');
     }
 }

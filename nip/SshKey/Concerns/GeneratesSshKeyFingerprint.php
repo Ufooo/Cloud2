@@ -15,9 +15,17 @@ trait GeneratesSshKeyFingerprint
 
     public static function generateFingerprint(string $publicKey): string
     {
-        $keyData = preg_replace('/^(ssh-rsa|ssh-ed25519|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521)\s+/', '', trim($publicKey));
-        $keyData = preg_replace('/\s+.*$/', '', $keyData);
+        // Normalize: remove newlines and extra whitespace
+        $publicKey = preg_replace('/\s+/', ' ', trim($publicKey));
 
+        // Extract the base64 key data (second part after key type)
+        $parts = explode(' ', $publicKey);
+
+        if (count($parts) < 2) {
+            return 'Invalid key';
+        }
+
+        $keyData = $parts[1];
         $decoded = base64_decode($keyData, true);
 
         if ($decoded === false) {
