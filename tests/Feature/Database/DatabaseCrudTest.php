@@ -1,6 +1,8 @@
 <?php
 
 use App\Models\User;
+use Nip\Database\Enums\DatabaseStatus;
+use Nip\Database\Enums\DatabaseUserStatus;
 use Nip\Database\Models\Database;
 use Nip\Database\Models\DatabaseUser;
 use Nip\Server\Models\Server;
@@ -56,9 +58,7 @@ it('can delete a database', function () {
         ->delete(route('servers.databases.destroy', [$this->server, $database]))
         ->assertRedirect();
 
-    $this->assertDatabaseMissing('databases', [
-        'id' => $database->id,
-    ]);
+    expect($database->fresh()->status)->toBe(DatabaseStatus::Deleting);
 });
 
 it('can create a database user on a server', function () {
@@ -84,9 +84,7 @@ it('can delete a database user', function () {
         ->delete(route('servers.databases.users.destroy', [$this->server, $databaseUser]))
         ->assertRedirect();
 
-    $this->assertDatabaseMissing('database_users', [
-        'id' => $databaseUser->id,
-    ]);
+    expect($databaseUser->fresh()->status)->toBe(DatabaseUserStatus::Deleting);
 });
 
 it('can view site databases', function () {

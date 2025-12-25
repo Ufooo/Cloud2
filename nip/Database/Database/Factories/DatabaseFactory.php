@@ -3,6 +3,7 @@
 namespace Nip\Database\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Nip\Database\Enums\DatabaseStatus;
 use Nip\Database\Models\Database;
 use Nip\Server\Models\Server;
 use Nip\Site\Models\Site;
@@ -24,6 +25,7 @@ class DatabaseFactory extends Factory
             'site_id' => null,
             'name' => fake()->unique()->word().'_db',
             'size' => fake()->optional(0.7)->numberBetween(1024, 10737418240),
+            'status' => DatabaseStatus::Installed,
         ];
     }
 
@@ -39,6 +41,13 @@ class DatabaseFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'server_id' => $server->id,
+        ]);
+    }
+
+    public function installing(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => DatabaseStatus::Installing,
         ]);
     }
 }
