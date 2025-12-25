@@ -126,9 +126,14 @@ class ProvisioningController extends Controller
     {
         $phpVersion = $server->php_version ? str_replace('php', '', $server->php_version) : '8.4';
         $sudoPassword = Str::random(20);
-        $databasePassword = Str::random(20);
+        $databasePassword = $server->database_password ?? Str::random(20);
         $meilisearchKey = Str::random(20);
         $eventId = time();
+
+        // Store database password if not already set
+        if (! $server->database_password && $server->database_type) {
+            $server->update(['database_password' => $databasePassword]);
+        }
 
         return [
             'server' => $server,

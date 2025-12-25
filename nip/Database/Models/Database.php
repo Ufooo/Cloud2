@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Nip\Database\Database\Factories\DatabaseFactory;
+use Nip\Database\Enums\DatabaseStatus;
 use Nip\Server\Models\Server;
 use Nip\Site\Models\Site;
 
@@ -27,6 +28,7 @@ class Database extends Model
         'site_id',
         'name',
         'size',
+        'status',
     ];
 
     /**
@@ -36,6 +38,7 @@ class Database extends Model
     {
         return [
             'size' => 'integer',
+            'status' => DatabaseStatus::class,
         ];
     }
 

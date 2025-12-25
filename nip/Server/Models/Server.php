@@ -49,6 +49,7 @@ class Server extends Model
         'ssh_private_key',
         'php_version',
         'database_type',
+        'database_password',
         'db_status',
         'ubuntu_version',
         'timezone',
@@ -64,6 +65,7 @@ class Server extends Model
 
     protected $hidden = [
         'ssh_private_key',
+        'database_password',
     ];
 
     protected function casts(): array
@@ -73,6 +75,7 @@ class Server extends Model
             'type' => ServerType::class,
             'status' => ServerStatus::class,
             'database_type' => DatabaseType::class,
+            'database_password' => 'encrypted',
             'timezone' => Timezone::class,
             'avatar_color' => IdentityColor::class,
             'services' => 'array',

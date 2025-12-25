@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Nip\Database\Database\Factories\DatabaseUserFactory;
+use Nip\Database\Enums\DatabaseUserStatus;
 use Nip\Server\Models\Server;
 
 class DatabaseUser extends Model
@@ -24,17 +25,29 @@ class DatabaseUser extends Model
     protected $fillable = [
         'server_id',
         'username',
+        'password',
         'readonly',
+        'status',
     ];
 
     /**
-     * @return array<string, string>
+     * @return array<string, mixed>
      */
     protected function casts(): array
     {
         return [
+            'password' => 'encrypted',
             'readonly' => 'boolean',
+            'status' => DatabaseUserStatus::class,
         ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function hidden(): array
+    {
+        return ['password'];
     }
 
     /**
