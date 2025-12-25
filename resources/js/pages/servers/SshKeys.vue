@@ -31,12 +31,13 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useResourceDelete } from '@/composables/useResourceDelete';
+import { useStatusPolling } from '@/composables/useStatusPolling';
 import ServerLayout from '@/layouts/ServerLayout.vue';
 import type { Server } from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
-import { Head, usePoll } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
 import { Key, MoreHorizontal, Plus, Trash2 } from 'lucide-vue-next';
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 
 interface UnixUser {
     id: number;
@@ -74,32 +75,14 @@ const props = defineProps<Props>();
 
 const addKeyDialog = ref<InstanceType<typeof ResourceFormDialog>>();
 
-// Poll while there are pending or deleting keys
-const hasPendingKeys = computed(() =>
-    props.keys.data.some(
-        (key) =>
-            key.status.value === 'pending' ||
-            key.status.value === 'deleting',
-    ),
-);
+const keys = computed(() => props.keys.data);
 
-const { start: startPolling, stop: stopPolling } = usePoll(
-    3000,
-    { only: ['keys'] },
-    { autoStart: false },
-);
-
-watch(
-    hasPendingKeys,
-    (pending) => {
-        if (pending) {
-            startPolling();
-        } else {
-            stopPolling();
-        }
-    },
-    { immediate: true },
-);
+useStatusPolling({
+    items: keys,
+    getStatus: (key) => key.status.value,
+    propName: 'keys',
+    pendingStatuses: ['pending', 'deleting'],
+});
 
 const { deleteResource: deleteKey } = useResourceDelete<SshKey>({
     resourceName: 'SSH Key',

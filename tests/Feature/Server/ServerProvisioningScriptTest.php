@@ -17,7 +17,7 @@ it('includes server own ssh key with netipar cloud comment for root', function (
     ]));
 
     $response->assertOk();
-    $response->assertSee('# NETipar Cloud', escape: false);
+    $response->assertSee('# Netipar[server]: Cloud Management Key', escape: false);
     $response->assertSee($server->ssh_public_key, escape: false);
 });
 
@@ -82,10 +82,10 @@ it('includes server ssh key for both users', function () {
     $rootSection = extractAuthorizedKeysSection($content, 'root');
     $netiparSection = extractAuthorizedKeysSection($content, 'netipar');
 
-    expect($rootSection)->toContain('# NETipar Cloud');
+    expect($rootSection)->toContain('# Netipar[server]: Cloud Management Key');
     expect($rootSection)->toContain($server->ssh_public_key);
 
-    expect($netiparSection)->toContain('# NETipar Cloud');
+    expect($netiparSection)->toContain('# Netipar[server]: Cloud Management Key');
     expect($netiparSection)->toContain($server->ssh_public_key);
 });
 
@@ -107,7 +107,7 @@ it('includes key id comment for user ssh keys', function () {
     ]));
 
     $response->assertOk();
-    $response->assertSee("# Key {$sshKey->id}");
+    $response->assertSee("# Netipar[{$sshKey->id}]: {$sshKey->name}");
     $response->assertSee($sshKey->public_key);
 });
 

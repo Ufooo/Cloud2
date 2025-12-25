@@ -41,15 +41,16 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useConfirmation } from '@/composables/useConfirmation';
+import { useStatusPolling } from '@/composables/useStatusPolling';
 import ServerLayout from '@/layouts/ServerLayout.vue';
 import type { Server } from '@/types';
 import type {
     PhpSettingData,
     PhpVersionData,
 } from '@/types/generated';
-import { Form, Head, router, usePoll } from '@inertiajs/vue3';
+import { Form, Head, router } from '@inertiajs/vue3';
 import { Code, MoreHorizontal, Plus, Trash2 } from 'lucide-vue-next';
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, reactive, ref } from 'vue';
 
 // Extend PhpVersionData with resource-specific fields
 interface PhpVersionResource extends PhpVersionData {
@@ -82,33 +83,12 @@ const { confirmButton } = useConfirmation();
 // Unwrap phpVersions from { data: [] } format
 const phpVersions = computed(() => props.phpVersions?.data ?? []);
 
-// Poll while there are installing or uninstalling PHP versions
-const hasPendingVersions = computed(() =>
-    phpVersions.value.some(
-        (version) =>
-            version.status === 'installing' ||
-            version.status === 'uninstalling' ||
-            version.status === 'pending',
-    ),
-);
-
-const { start: startPolling, stop: stopPolling } = usePoll(
-    3000,
-    { only: ['phpVersions'] },
-    { autoStart: false },
-);
-
-watch(
-    hasPendingVersions,
-    (pending) => {
-        if (pending) {
-            startPolling();
-        } else {
-            stopPolling();
-        }
-    },
-    { immediate: true },
-);
+useStatusPolling({
+    items: phpVersions,
+    getStatus: (version) => version.status,
+    propName: 'phpVersions',
+    pendingStatuses: ['pending', 'installing', 'uninstalling'],
+});
 
 // Get initial setting values - access props directly
 const initialSetting = props.phpSetting?.data;

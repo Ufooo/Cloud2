@@ -30,10 +30,11 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { useResourceDelete } from '@/composables/useResourceDelete';
+import { useStatusPolling } from '@/composables/useStatusPolling';
 import ServerLayout from '@/layouts/ServerLayout.vue';
 import type { Server } from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
-import { Head, router, usePoll } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import {
     MoreHorizontal,
     Plus,
@@ -41,7 +42,7 @@ import {
     Shield,
     Trash2,
 } from 'lucide-vue-next';
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 
 interface RuleStatus {
     value: 'pending' | 'installing' | 'installed' | 'failed' | 'deleting';
@@ -81,33 +82,13 @@ const props = defineProps<Props>();
 
 const addRuleDialog = ref<InstanceType<typeof ResourceFormDialog>>();
 
-// Poll while there are installing or deleting rules
-const hasPendingRules = computed(() =>
-    props.rules.data.some(
-        (rule) =>
-            rule.status.value === 'installing' ||
-            rule.status.value === 'deleting' ||
-            rule.status.value === 'pending',
-    ),
-);
+const rules = computed(() => props.rules.data);
 
-const { start: startPolling, stop: stopPolling } = usePoll(
-    3000,
-    { only: ['rules'] },
-    { autoStart: false },
-);
-
-watch(
-    hasPendingRules,
-    (pending) => {
-        if (pending) {
-            startPolling();
-        } else {
-            stopPolling();
-        }
-    },
-    { immediate: true },
-);
+useStatusPolling({
+    items: rules,
+    getStatus: (rule) => rule.status.value,
+    propName: 'rules',
+});
 
 const { deleteResource: deleteRule } = useResourceDelete<FirewallRule>({
     resourceName: 'Firewall Rule',

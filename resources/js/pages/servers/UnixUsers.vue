@@ -23,12 +23,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { useResourceDelete } from '@/composables/useResourceDelete';
+import { useStatusPolling } from '@/composables/useStatusPolling';
 import ServerLayout from '@/layouts/ServerLayout.vue';
 import type { Server } from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
-import { Head, usePoll } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
 import { MoreHorizontal, Plus, Trash2, Users } from 'lucide-vue-next';
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 
 interface UnixUserStatus {
     value: 'pending' | 'installing' | 'installed' | 'deleting' | 'failed';
@@ -55,33 +56,13 @@ const props = defineProps<Props>();
 
 const addUserDialog = ref<InstanceType<typeof ResourceFormDialog>>();
 
-// Poll while there are pending, installing, or deleting users
-const hasPendingUsers = computed(() =>
-    props.users.data.some(
-        (user) =>
-            user.status.value === 'pending' ||
-            user.status.value === 'installing' ||
-            user.status.value === 'deleting',
-    ),
-);
+const users = computed(() => props.users.data);
 
-const { start: startPolling, stop: stopPolling } = usePoll(
-    3000,
-    { only: ['users'] },
-    { autoStart: false },
-);
-
-watch(
-    hasPendingUsers,
-    (pending) => {
-        if (pending) {
-            startPolling();
-        } else {
-            stopPolling();
-        }
-    },
-    { immediate: true },
-);
+useStatusPolling({
+    items: users,
+    getStatus: (user) => user.status.value,
+    propName: 'users',
+});
 
 const { deleteResource: deleteUser } = useResourceDelete<UnixUser>({
     resourceName: 'Unix User',
