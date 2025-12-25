@@ -42,6 +42,7 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useConfirmation } from '@/composables/useConfirmation';
+import { useStatusPolling } from '@/composables/useStatusPolling';
 import SiteLayout from '@/layouts/SiteLayout.vue';
 import type { Site } from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
@@ -111,6 +112,15 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const jobs = computed(() => props.jobs.data);
+
+useStatusPolling({
+    items: jobs,
+    getStatus: (job) => job.status,
+    propName: 'jobs',
+    pendingStatuses: ['pending', 'installing', 'deleting'],
+});
 
 const { confirmButton } = useConfirmation();
 

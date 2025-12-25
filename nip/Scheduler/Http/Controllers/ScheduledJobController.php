@@ -14,6 +14,8 @@ use Nip\Scheduler\Enums\JobStatus;
 use Nip\Scheduler\Http\Requests\StoreScheduledJobRequest;
 use Nip\Scheduler\Http\Requests\UpdateScheduledJobRequest;
 use Nip\Scheduler\Http\Resources\ScheduledJobResource;
+use Nip\Scheduler\Jobs\RemoveScheduledJobJob;
+use Nip\Scheduler\Jobs\SyncScheduledJobJob;
 use Nip\Scheduler\Models\ScheduledJob;
 use Nip\Server\Data\ServerData;
 use Nip\Server\Models\Server;
@@ -55,14 +57,16 @@ class ScheduledJobController extends Controller
             $data['heartbeat_url'] = $this->generateHeartbeatUrl();
         }
 
-        $server->scheduledJobs()->create([
+        $job = $server->scheduledJobs()->create([
             ...$data,
-            'status' => JobStatus::Pending,
+            'status' => JobStatus::Installing,
         ]);
+
+        SyncScheduledJobJob::dispatch($job);
 
         return redirect()
             ->route('servers.scheduler', $server)
-            ->with('success', 'Scheduled job created successfully.');
+            ->with('success', 'Scheduled job creation started.');
     }
 
     public function update(UpdateScheduledJobRequest $request, Server $server, ScheduledJob $job): RedirectResponse
@@ -80,11 +84,16 @@ class ScheduledJobController extends Controller
             $data['grace_period'] = null;
         }
 
-        $job->update($data);
+        $job->update([
+            ...$data,
+            'status' => JobStatus::Installing,
+        ]);
+
+        SyncScheduledJobJob::dispatch($job);
 
         return redirect()
             ->route('servers.scheduler', $server)
-            ->with('success', 'Scheduled job updated successfully.');
+            ->with('success', 'Scheduled job update started.');
     }
 
     public function destroy(Server $server, ScheduledJob $job): RedirectResponse
@@ -97,12 +106,19 @@ class ScheduledJobController extends Controller
             403,
             'Cannot delete a job while installation is in progress.'
         );
+        abort_if(
+            $job->status === JobStatus::Deleting,
+            403,
+            'Job deletion is already in progress.'
+        );
 
-        $job->delete();
+        $job->update(['status' => JobStatus::Deleting]);
+
+        RemoveScheduledJobJob::dispatch($job);
 
         return redirect()
             ->route('servers.scheduler', $server)
-            ->with('success', 'Scheduled job deleted successfully.');
+            ->with('success', 'Scheduled job deletion started.');
     }
 
     public function pause(Server $server, ScheduledJob $job): RedirectResponse
@@ -114,11 +130,11 @@ class ScheduledJobController extends Controller
 
         $job->update(['status' => JobStatus::Paused]);
 
-        // TODO: Dispatch job to pause the cron on the server
+        RemoveScheduledJobJob::dispatch($job);
 
         return redirect()
             ->route('servers.scheduler', $server)
-            ->with('success', 'Scheduled job paused successfully.');
+            ->with('success', 'Scheduled job pause started.');
     }
 
     public function resume(Server $server, ScheduledJob $job): RedirectResponse
@@ -128,13 +144,13 @@ class ScheduledJobController extends Controller
         abort_unless($job->server_id === $server->id, 403);
         abort_unless($job->status === JobStatus::Paused, 403, 'Job must be paused to resume.');
 
-        $job->update(['status' => JobStatus::Installed]);
+        $job->update(['status' => JobStatus::Installing]);
 
-        // TODO: Dispatch job to resume the cron on the server
+        SyncScheduledJobJob::dispatch($job);
 
         return redirect()
             ->route('servers.scheduler', $server)
-            ->with('success', 'Scheduled job resumed successfully.');
+            ->with('success', 'Scheduled job resume started.');
     }
 
     private function generateHeartbeatUrl(): string

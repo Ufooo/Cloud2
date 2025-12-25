@@ -45,7 +45,9 @@ class ScheduledJobResource extends JsonResource
             'siteSlug' => $this->whenLoaded('site', fn () => $this->site?->slug),
             'can' => [
                 'update' => $canUpdate && ($isInstalled || $isPaused),
-                'delete' => $canUpdate && $this->status !== JobStatus::Installing,
+                'delete' => $canUpdate
+                    && $this->status !== JobStatus::Installing
+                    && $this->status !== JobStatus::Deleting,
                 'pause' => $canUpdate && $isInstalled,
                 'resume' => $canUpdate && $isPaused,
             ],

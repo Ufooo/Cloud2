@@ -10,6 +10,7 @@ enum JobStatus: string implements HasStatusBadge
     case Installing = 'installing';
     case Installed = 'installed';
     case Paused = 'paused';
+    case Deleting = 'deleting';
     case Failed = 'failed';
 
     public function label(): string
@@ -19,6 +20,7 @@ enum JobStatus: string implements HasStatusBadge
             self::Installing => 'Installing',
             self::Installed => 'Installed',
             self::Paused => 'Paused',
+            self::Deleting => 'Deleting',
             self::Failed => 'Failed',
         };
     }
@@ -28,7 +30,7 @@ enum JobStatus: string implements HasStatusBadge
         return match ($this) {
             self::Installed => 'default',
             self::Installing, self::Pending => 'secondary',
-            self::Paused => 'outline',
+            self::Paused, self::Deleting => 'outline',
             self::Failed => 'destructive',
         };
     }
