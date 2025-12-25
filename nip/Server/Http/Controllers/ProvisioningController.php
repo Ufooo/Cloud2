@@ -157,7 +157,7 @@ class ProvisioningController extends Controller
 
         // Server's own key always goes to all users
         if ($server->ssh_public_key) {
-            $lines[] = '# NETipar Cloud';
+            $lines[] = '# Netipar[server]: Cloud Management Key';
             $lines[] = $server->ssh_public_key;
         }
 
@@ -167,7 +167,7 @@ class ProvisioningController extends Controller
             ->get();
 
         foreach ($userSshKeys as $sshKey) {
-            $lines[] = "# Key {$sshKey->id}";
+            $lines[] = "# Netipar[{$sshKey->id}]: {$sshKey->name}";
             $lines[] = $sshKey->public_key;
         }
 
