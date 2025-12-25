@@ -8,6 +8,9 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Database, MoreHorizontal, Trash2 } from 'lucide-vue-next';
+import { computed } from 'vue';
+
+type BadgeVariant = 'default' | 'secondary' | 'destructive' | 'outline' | null | undefined;
 
 interface DatabaseItem {
     id: string;
@@ -20,8 +23,14 @@ interface DatabaseItem {
     name: string;
     size?: number;
     displayableSize?: string;
+    status?: string;
+    displayableStatus?: string;
+    statusBadgeVariant?: BadgeVariant;
     createdAt?: string;
     createdAtHuman?: string;
+    can?: {
+        delete: boolean;
+    };
 }
 
 interface Props {
@@ -38,6 +47,11 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
     delete: [database: DatabaseItem];
 }>();
+
+const canDelete = computed(() => props.database.can?.delete ?? true);
+const showStatusBadge = computed(() =>
+    props.database.status && props.database.status !== 'installed',
+);
 </script>
 
 <template>
@@ -66,11 +80,14 @@ const emit = defineEmits<{
 
         <!-- Right side -->
         <div class="flex items-center gap-4">
-            <Badge v-if="database.displayableSize" variant="secondary">
+            <Badge v-if="showStatusBadge" :variant="database.statusBadgeVariant">
+                {{ database.displayableStatus }}
+            </Badge>
+            <Badge v-else-if="database.displayableSize" variant="secondary">
                 {{ database.displayableSize }}
             </Badge>
 
-            <DropdownMenu>
+            <DropdownMenu v-if="canDelete">
                 <DropdownMenuTrigger as-child>
                     <Button variant="ghost" size="icon" class="size-8">
                         <MoreHorizontal class="size-4" />

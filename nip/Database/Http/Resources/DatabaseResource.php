@@ -4,6 +4,7 @@ namespace Nip\Database\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Nip\Database\Enums\DatabaseStatus;
 use Nip\Database\Models\Database;
 
 /**
@@ -16,6 +17,8 @@ class DatabaseResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $canUpdate = $request->user()?->can('update', $this->server);
+
         return [
             'id' => $this->id,
             'serverId' => $this->server_id,
@@ -27,8 +30,16 @@ class DatabaseResource extends JsonResource
             'name' => $this->name,
             'size' => $this->size,
             'displayableSize' => $this->getDisplayableSize(),
+            'status' => $this->status?->value,
+            'displayableStatus' => $this->status?->label(),
+            'statusBadgeVariant' => $this->status?->badgeVariant(),
             'createdAt' => $this->created_at?->toISOString(),
             'createdAtHuman' => $this->created_at?->diffForHumans(),
+            'can' => [
+                'delete' => $canUpdate
+                    && $this->status !== DatabaseStatus::Installing
+                    && $this->status !== DatabaseStatus::Deleting,
+            ],
         ];
     }
 

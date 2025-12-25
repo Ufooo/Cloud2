@@ -24,6 +24,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { useStatusPolling } from '@/composables/useStatusPolling';
 import AppLayout from '@/layouts/AppLayout.vue';
 import ServerLayout from '@/layouts/ServerLayout.vue';
 import SiteLayout from '@/layouts/SiteLayout.vue';
@@ -34,6 +35,8 @@ import { Database, Eye, EyeOff, Plus, User } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import DatabaseCardListItem from './partials/DatabaseCardListItem.vue';
 import DatabaseUserCardListItem from './partials/DatabaseUserCardListItem.vue';
+
+type BadgeVariant = 'default' | 'secondary' | 'destructive' | 'outline' | null | undefined;
 
 interface DatabaseItem {
     id: string;
@@ -46,8 +49,14 @@ interface DatabaseItem {
     name: string;
     size?: number;
     displayableSize?: string;
+    status?: string;
+    displayableStatus?: string;
+    statusBadgeVariant?: BadgeVariant;
     createdAt?: string;
     createdAtHuman?: string;
+    can?: {
+        delete: boolean;
+    };
 }
 
 interface DatabaseUserItem {
@@ -56,10 +65,17 @@ interface DatabaseUserItem {
     serverName?: string;
     username: string;
     readonly?: boolean;
+    status?: string;
+    displayableStatus?: string;
+    statusBadgeVariant?: BadgeVariant;
     databaseCount?: number;
     databaseIds?: string[];
     createdAt?: string;
     createdAtHuman?: string;
+    can?: {
+        update: boolean;
+        delete: boolean;
+    };
 }
 
 interface Props {
@@ -71,6 +87,28 @@ interface Props {
 
 const props = defineProps<Props>();
 
+const databases = computed(() => props.databases.data);
+const databaseUsers = computed(() => {
+    if (Array.isArray(props.databaseUsers)) {
+        return props.databaseUsers;
+    }
+    return props.databaseUsers.data;
+});
+
+useStatusPolling({
+    items: databases,
+    getStatus: (db) => db.status || 'installed',
+    propName: 'databases',
+    pendingStatuses: ['pending', 'installing', 'deleting'],
+});
+
+useStatusPolling({
+    items: databaseUsers,
+    getStatus: (user) => user.status || 'installed',
+    propName: 'databaseUsers',
+    pendingStatuses: ['pending', 'installing', 'syncing', 'deleting'],
+});
+
 const hasDatabases = computed(() => props.databases.data.length > 0);
 const hasDatabaseUsers = computed(() => {
     if (Array.isArray(props.databaseUsers)) {
@@ -79,12 +117,6 @@ const hasDatabaseUsers = computed(() => {
     return props.databaseUsers.data.length > 0;
 });
 
-const databaseUsersList = computed(() => {
-    if (Array.isArray(props.databaseUsers)) {
-        return props.databaseUsers;
-    }
-    return props.databaseUsers.data;
-});
 
 const pageTitle = computed(() => {
     if (props.site) {
@@ -372,7 +404,7 @@ function submitEditUser() {
                     />
                     <div v-else class="divide-y">
                         <DatabaseUserCardListItem
-                            v-for="user in databaseUsersList"
+                            v-for="user in databaseUsers"
                             :key="user.id"
                             :user="user"
                             :show-server="false"
@@ -782,7 +814,7 @@ function submitEditUser() {
                     />
                     <div v-else class="divide-y">
                         <DatabaseUserCardListItem
-                            v-for="user in databaseUsersList"
+                            v-for="user in databaseUsers"
                             :key="user.id"
                             :user="user"
                         />

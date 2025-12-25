@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -8,6 +9,9 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Pencil, Trash2, User } from 'lucide-vue-next';
+import { computed } from 'vue';
+
+type BadgeVariant = 'default' | 'secondary' | 'destructive' | 'outline' | null | undefined;
 
 interface DatabaseUserItem {
     id: string;
@@ -15,10 +19,17 @@ interface DatabaseUserItem {
     serverName?: string;
     username: string;
     readonly?: boolean;
+    status?: string;
+    displayableStatus?: string;
+    statusBadgeVariant?: BadgeVariant;
     databaseCount?: number;
     databaseIds?: string[];
     createdAt?: string;
     createdAtHuman?: string;
+    can?: {
+        update: boolean;
+        delete: boolean;
+    };
 }
 
 interface Props {
@@ -34,6 +45,13 @@ const emit = defineEmits<{
     edit: [user: DatabaseUserItem];
     delete: [user: DatabaseUserItem];
 }>();
+
+const canUpdate = computed(() => props.user.can?.update ?? true);
+const canDelete = computed(() => props.user.can?.delete ?? true);
+const showStatusBadge = computed(() =>
+    props.user.status && props.user.status !== 'installed',
+);
+const showDropdown = computed(() => canUpdate.value || canDelete.value);
 </script>
 
 <template>
@@ -65,19 +83,24 @@ const emit = defineEmits<{
 
         <!-- Right side -->
         <div class="flex items-center gap-4">
-            <DropdownMenu>
+            <Badge v-if="showStatusBadge" :variant="user.statusBadgeVariant">
+                {{ user.displayableStatus }}
+            </Badge>
+
+            <DropdownMenu v-if="showDropdown">
                 <DropdownMenuTrigger as-child>
                     <Button variant="ghost" size="icon" class="size-8">
                         <MoreHorizontal class="size-4" />
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                    <DropdownMenuItem @click="emit('edit', props.user)">
+                    <DropdownMenuItem v-if="canUpdate" @click="emit('edit', props.user)">
                         <Pencil class="mr-2 size-4" />
                         Edit
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
+                    <DropdownMenuSeparator v-if="canUpdate && canDelete" />
                     <DropdownMenuItem
+                        v-if="canDelete"
                         class="text-destructive focus:text-destructive"
                         @click="emit('delete', props.user)"
                     >
