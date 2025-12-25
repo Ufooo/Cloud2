@@ -7,6 +7,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Str;
+use Nip\Network\Enums\RuleStatus;
+use Nip\Network\Enums\RuleType;
+use Nip\Network\Models\FirewallRule;
 use Nip\Php\Enums\PhpVersionStatus;
 use Nip\Php\Models\PhpVersion;
 use Nip\Server\Enums\ServerStatus;
@@ -79,6 +82,9 @@ class ProvisioningController extends Controller
                 ->where('server_id', $server->id)
                 ->where('status', SshKeyStatus::Pending)
                 ->update(['status' => SshKeyStatus::Installed]);
+
+            // Create default firewall rules in database
+            $this->createDefaultFirewallRules($server);
         }
 
         broadcast(new ServerProvisioningUpdated($server));
@@ -146,6 +152,32 @@ class ProvisioningController extends Controller
     private function getCallbackUrl(): string
     {
         return rtrim(config('app.url'), '/').'/provisioning/callback/status';
+    }
+
+    /**
+     * Create default firewall rules in the database.
+     */
+    private function createDefaultFirewallRules(Server $server): void
+    {
+        $defaultRules = [
+            ['name' => 'SSH', 'port' => '22'],
+            ['name' => 'HTTP', 'port' => '80'],
+            ['name' => 'HTTPS', 'port' => '443'],
+        ];
+
+        foreach ($defaultRules as $rule) {
+            FirewallRule::firstOrCreate(
+                [
+                    'server_id' => $server->id,
+                    'port' => $rule['port'],
+                ],
+                [
+                    'name' => $rule['name'],
+                    'type' => RuleType::Allow,
+                    'status' => RuleStatus::Installed,
+                ]
+            );
+        }
     }
 
     /**

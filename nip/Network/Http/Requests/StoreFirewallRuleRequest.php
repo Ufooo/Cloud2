@@ -20,7 +20,13 @@ class StoreFirewallRuleRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'port' => ['nullable', 'string', 'max:10'],
+            'port' => [
+                'nullable',
+                'string',
+                'max:10',
+                Rule::unique('firewall_rules', 'port')
+                    ->where('server_id', $this->route('server')->id),
+            ],
             'ip_address' => ['nullable', 'string', 'ip'],
             'type' => ['required', Rule::enum(RuleType::class)],
         ];

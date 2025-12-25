@@ -21,12 +21,17 @@ class FirewallRuleResource extends JsonResource
             'name' => $this->name,
             'port' => $this->port,
             'ipAddress' => $this->ip_address,
-            'type' => $this->type,
-            'status' => $this->status,
-            'displayableType' => $this->type->label(),
-            'displayableStatus' => $this->status->label(),
+            'type' => [
+                'value' => $this->type->value,
+                'label' => $this->type->label(),
+            ],
+            'status' => [
+                'value' => $this->status->value,
+                'label' => $this->status->label(),
+                'variant' => $this->status->badgeVariant(),
+            ],
             'can' => [
-                'delete' => true,
+                'delete' => $request->user()?->can('update', $this->server) ?? false,
             ],
         ];
     }

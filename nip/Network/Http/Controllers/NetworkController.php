@@ -12,6 +12,8 @@ use Nip\Network\Enums\RuleStatus;
 use Nip\Network\Enums\RuleType;
 use Nip\Network\Http\Requests\StoreFirewallRuleRequest;
 use Nip\Network\Http\Resources\FirewallRuleResource;
+use Nip\Network\Jobs\RemoveFirewallRuleJob;
+use Nip\Network\Jobs\SyncFirewallRuleJob;
 use Nip\Network\Models\FirewallRule;
 use Nip\Server\Data\ServerData;
 use Nip\Server\Models\Server;
@@ -39,26 +41,32 @@ class NetworkController extends Controller
 
     public function store(StoreFirewallRuleRequest $request, Server $server): RedirectResponse
     {
-        $server->firewallRules()->create([
+        Gate::authorize('update', $server);
+
+        $rule = $server->firewallRules()->create([
             ...$request->validated(),
-            'status' => RuleStatus::Pending,
+            'status' => RuleStatus::Installing,
         ]);
+
+        SyncFirewallRuleJob::dispatch($rule);
 
         return redirect()
             ->route('servers.network', $server)
-            ->with('success', 'Firewall rule created successfully.');
+            ->with('success', 'Firewall rule created. Installing on server...');
     }
 
     public function destroy(Server $server, FirewallRule $rule): RedirectResponse
     {
-        Gate::authorize('view', $server);
+        Gate::authorize('update', $server);
 
         abort_unless($rule->server_id === $server->id, 403);
 
-        $rule->delete();
+        $rule->update(['status' => RuleStatus::Deleting]);
+
+        RemoveFirewallRuleJob::dispatch($rule);
 
         return redirect()
             ->route('servers.network', $server)
-            ->with('success', 'Firewall rule deleted successfully.');
+            ->with('success', 'Removing firewall rule from server...');
     }
 }

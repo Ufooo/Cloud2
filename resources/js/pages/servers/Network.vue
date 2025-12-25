@@ -33,8 +33,7 @@ import { useResourceDelete } from '@/composables/useResourceDelete';
 import ServerLayout from '@/layouts/ServerLayout.vue';
 import type { Server } from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
-import { RuleStatus, RuleType } from '@/types/generated';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, usePoll } from '@inertiajs/vue3';
 import {
     MoreHorizontal,
     Plus,
@@ -42,17 +41,26 @@ import {
     Shield,
     Trash2,
 } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { computed, ref, watch } from 'vue';
+
+interface RuleStatus {
+    value: 'pending' | 'installing' | 'installed' | 'failed' | 'deleting';
+    label: string;
+    variant: 'default' | 'secondary' | 'destructive';
+}
+
+interface RuleTypeObj {
+    value: 'allow' | 'deny';
+    label: string;
+}
 
 interface FirewallRule {
     id: number;
     name: string;
     port: string | null;
     ipAddress: string | null;
-    type: RuleType;
+    type: RuleTypeObj;
     status: RuleStatus;
-    displayableType: string;
-    displayableStatus: string;
     can: {
         delete: boolean;
     };
@@ -73,6 +81,34 @@ const props = defineProps<Props>();
 
 const addRuleDialog = ref<InstanceType<typeof ResourceFormDialog>>();
 
+// Poll while there are installing or deleting rules
+const hasPendingRules = computed(() =>
+    props.rules.data.some(
+        (rule) =>
+            rule.status.value === 'installing' ||
+            rule.status.value === 'deleting' ||
+            rule.status.value === 'pending',
+    ),
+);
+
+const { start: startPolling, stop: stopPolling } = usePoll(
+    3000,
+    { only: ['rules'] },
+    { autoStart: false },
+);
+
+watch(
+    hasPendingRules,
+    (pending) => {
+        if (pending) {
+            startPolling();
+        } else {
+            stopPolling();
+        }
+    },
+    { immediate: true },
+);
+
 const { deleteResource: deleteRule } = useResourceDelete<FirewallRule>({
     resourceName: 'Firewall Rule',
     getDisplayName: (rule) => rule.name,
@@ -83,11 +119,11 @@ function syncRules() {
     router.reload({ only: ['rules'] });
 }
 
-function getBadgeVariant(rule: FirewallRule) {
-    if (rule.status !== RuleStatus.Installed) {
-        return 'secondary';
+function getBadgeVariant(rule: FirewallRule): 'default' | 'secondary' | 'destructive' {
+    if (rule.status.value !== 'installed') {
+        return rule.status.variant;
     }
-    return rule.type === RuleType.Allow ? 'default' : 'destructive';
+    return rule.type.value === 'allow' ? 'default' : 'destructive';
 }
 </script>
 
@@ -170,15 +206,11 @@ function getBadgeVariant(rule: FirewallRule) {
                             </div>
                             <div class="flex items-center gap-2">
                                 <Badge :variant="getBadgeVariant(rule)">
-                                    <span
-                                        v-if="
-                                            rule.status === RuleStatus.Installed
-                                        "
-                                    >
-                                        {{ rule.displayableType }}
+                                    <span v-if="rule.status.value === 'installed'">
+                                        {{ rule.type.label }}
                                     </span>
                                     <span v-else>
-                                        {{ rule.displayableStatus }}
+                                        {{ rule.status.label }}
                                     </span>
                                 </Badge>
                                 <DropdownMenu>
@@ -189,12 +221,8 @@ function getBadgeVariant(rule: FirewallRule) {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuItem
-                                            v-if="rule.can.delete"
+                                            v-if="rule.can.delete && rule.status.value !== 'deleting'"
                                             class="text-destructive focus:text-destructive"
-                                            :disabled="
-                                                rule.status !==
-                                                RuleStatus.Installed
-                                            "
                                             @click="deleteRule(rule)"
                                         >
                                             <Trash2 class="mr-2 size-4" />
@@ -249,7 +277,7 @@ function getBadgeVariant(rule: FirewallRule) {
                 </FormField>
 
                 <FormField label="Type" name="type" :error="errors.type">
-                    <Select name="type" :default-value="RuleType.Allow">
+                    <Select name="type" default-value="allow">
                         <SelectTrigger id="type">
                             <SelectValue placeholder="Select type" />
                         </SelectTrigger>
