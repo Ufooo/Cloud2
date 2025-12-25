@@ -31,16 +31,18 @@ class StoreSshKeyRequest extends FormRequest
         $validator->after(function ($validator) {
             $publicKey = $this->input('public_key');
             $serverId = $this->route('server')->id;
+            $unixUserId = $this->input('unix_user_id');
 
-            if ($publicKey && $serverId) {
+            if ($publicKey && $serverId && $unixUserId) {
                 $fingerprint = SshKey::generateFingerprint($publicKey);
 
                 $exists = SshKey::where('server_id', $serverId)
+                    ->where('unix_user_id', $unixUserId)
                     ->where('fingerprint', $fingerprint)
                     ->exists();
 
                 if ($exists) {
-                    $validator->errors()->add('public_key', 'This SSH key already exists on this server.');
+                    $validator->errors()->add('public_key', 'This SSH key already exists for this user.');
                 }
             }
         });
