@@ -17,6 +17,9 @@ use Nip\Php\Http\Requests\SetDefaultPhpVersionRequest;
 use Nip\Php\Http\Requests\UpdatePhpSettingsRequest;
 use Nip\Php\Http\Resources\PhpSettingResource;
 use Nip\Php\Http\Resources\PhpVersionResource;
+use Nip\Php\Jobs\InstallPhpVersionJob;
+use Nip\Php\Jobs\RemovePhpVersionJob;
+use Nip\Php\Jobs\UpdatePhpSettingsJob;
 use Nip\Php\Models\PhpVersion;
 use Nip\Server\Data\ServerData;
 use Nip\Server\Models\Server;
@@ -54,14 +57,16 @@ class PhpController extends Controller
     {
         Gate::authorize('update', $server);
 
-        $server->phpSetting()->updateOrCreate(
+        $phpSetting = $server->phpSetting()->updateOrCreate(
             ['server_id' => $server->id],
             $request->validated()
         );
 
+        UpdatePhpSettingsJob::dispatch($phpSetting);
+
         return redirect()
             ->route('servers.php', $server)
-            ->with('success', 'PHP settings updated successfully.');
+            ->with('success', 'PHP settings update started.');
     }
 
     public function installVersion(InstallPhpVersionRequest $request, Server $server): RedirectResponse
@@ -80,16 +85,20 @@ class PhpController extends Controller
                 ->withErrors(['version' => 'This PHP version is already installed on this server.']);
         }
 
-        (new CreatePhpVersion)->handle($server, $version);
+        $phpVersion = (new CreatePhpVersion)->handle($server, $version, PhpVersionStatus::Installing);
+
+        InstallPhpVersionJob::dispatch($phpVersion);
 
         return redirect()
             ->route('servers.php', $server)
-            ->with('success', 'PHP version installation queued successfully.');
+            ->with('success', 'PHP version installation started. This may take a few minutes.');
     }
 
     public function uninstallVersion(Server $server, PhpVersion $phpVersion): RedirectResponse
     {
         Gate::authorize('update', $server);
+
+        abort_unless($phpVersion->server_id === $server->id, 403);
 
         if ($phpVersion->is_cli_default) {
             return redirect()
@@ -105,9 +114,11 @@ class PhpController extends Controller
 
         $phpVersion->update(['status' => PhpVersionStatus::Uninstalling]);
 
+        RemovePhpVersionJob::dispatch($phpVersion);
+
         return redirect()
             ->route('servers.php', $server)
-            ->with('success', 'PHP version uninstallation queued successfully.');
+            ->with('success', 'PHP version uninstallation started.');
     }
 
     public function setDefault(SetDefaultPhpVersionRequest $request, Server $server, PhpVersion $phpVersion): RedirectResponse
