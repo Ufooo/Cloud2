@@ -42,6 +42,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { useConfirmation } from '@/composables/useConfirmation';
+import { useStatusPolling } from '@/composables/useStatusPolling';
 import SiteLayout from '@/layouts/SiteLayout.vue';
 import type { Site } from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
@@ -56,7 +57,7 @@ import {
     RefreshCw,
     Trash2,
 } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 type BadgeVariant =
     | 'default'
@@ -105,6 +106,15 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const processes = computed(() => props.processes.data);
+
+useStatusPolling({
+    items: processes,
+    getStatus: (process) => process.status,
+    propName: 'processes',
+    pendingStatuses: ['pending', 'installing', 'deleting'],
+});
 
 const { confirmButton } = useConfirmation();
 

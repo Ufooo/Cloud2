@@ -12,6 +12,11 @@ use Nip\BackgroundProcess\Enums\StopSignal;
 use Nip\BackgroundProcess\Http\Requests\StoreSiteBackgroundProcessRequest;
 use Nip\BackgroundProcess\Http\Requests\UpdateSiteBackgroundProcessRequest;
 use Nip\BackgroundProcess\Http\Resources\BackgroundProcessResource;
+use Nip\BackgroundProcess\Jobs\RemoveBackgroundProcessJob;
+use Nip\BackgroundProcess\Jobs\RestartBackgroundProcessJob;
+use Nip\BackgroundProcess\Jobs\StartBackgroundProcessJob;
+use Nip\BackgroundProcess\Jobs\StopBackgroundProcessJob;
+use Nip\BackgroundProcess\Jobs\SyncBackgroundProcessJob;
 use Nip\BackgroundProcess\Models\BackgroundProcess;
 use Nip\Site\Data\SiteData;
 use Nip\Site\Models\Site;
@@ -43,26 +48,33 @@ class SiteBackgroundProcessController extends Controller
 
     public function store(StoreSiteBackgroundProcessRequest $request, Site $site): RedirectResponse
     {
-        $site->backgroundProcesses()->create([
+        $process = $site->backgroundProcesses()->create([
             ...$request->validated(),
             'server_id' => $site->server_id,
-            'status' => ProcessStatus::Pending,
+            'status' => ProcessStatus::Installing,
         ]);
+
+        SyncBackgroundProcessJob::dispatch($process);
 
         return redirect()
             ->route('sites.background-processes', $site)
-            ->with('success', 'Background process created successfully.');
+            ->with('success', 'Background process creation started.');
     }
 
     public function update(UpdateSiteBackgroundProcessRequest $request, Site $site, BackgroundProcess $process): RedirectResponse
     {
         abort_unless($process->site_id === $site->id, 403);
 
-        $process->update($request->validated());
+        $process->update([
+            ...$request->validated(),
+            'status' => ProcessStatus::Installing,
+        ]);
+
+        SyncBackgroundProcessJob::dispatch($process);
 
         return redirect()
             ->route('sites.background-processes', $site)
-            ->with('success', 'Background process updated successfully.');
+            ->with('success', 'Background process update started.');
     }
 
     public function destroy(Site $site, BackgroundProcess $process): RedirectResponse
@@ -75,12 +87,19 @@ class SiteBackgroundProcessController extends Controller
             403,
             'Cannot delete a process while installation is in progress.'
         );
+        abort_if(
+            $process->status === ProcessStatus::Deleting,
+            403,
+            'Process deletion is already in progress.'
+        );
 
-        $process->delete();
+        $process->update(['status' => ProcessStatus::Deleting]);
+
+        RemoveBackgroundProcessJob::dispatch($process);
 
         return redirect()
             ->route('sites.background-processes', $site)
-            ->with('success', 'Background process deleted successfully.');
+            ->with('success', 'Background process deletion started.');
     }
 
     public function restart(Site $site, BackgroundProcess $process): RedirectResponse
@@ -89,6 +108,8 @@ class SiteBackgroundProcessController extends Controller
 
         abort_unless($process->site_id === $site->id, 403);
         abort_unless($process->status === ProcessStatus::Installed, 403, 'Process must be installed to restart.');
+
+        RestartBackgroundProcessJob::dispatch($process);
 
         return redirect()
             ->route('sites.background-processes', $site)
@@ -102,6 +123,8 @@ class SiteBackgroundProcessController extends Controller
         abort_unless($process->site_id === $site->id, 403);
         abort_unless($process->status === ProcessStatus::Installed, 403, 'Process must be installed to start.');
 
+        StartBackgroundProcessJob::dispatch($process);
+
         return redirect()
             ->route('sites.background-processes', $site)
             ->with('success', 'Background process start initiated.');
@@ -113,6 +136,8 @@ class SiteBackgroundProcessController extends Controller
 
         abort_unless($process->site_id === $site->id, 403);
         abort_unless($process->status === ProcessStatus::Installed, 403, 'Process must be installed to stop.');
+
+        StopBackgroundProcessJob::dispatch($process);
 
         return redirect()
             ->route('sites.background-processes', $site)

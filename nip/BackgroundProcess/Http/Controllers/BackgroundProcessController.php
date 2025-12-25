@@ -13,6 +13,11 @@ use Nip\BackgroundProcess\Enums\StopSignal;
 use Nip\BackgroundProcess\Http\Requests\StoreBackgroundProcessRequest;
 use Nip\BackgroundProcess\Http\Requests\UpdateBackgroundProcessRequest;
 use Nip\BackgroundProcess\Http\Resources\BackgroundProcessResource;
+use Nip\BackgroundProcess\Jobs\RemoveBackgroundProcessJob;
+use Nip\BackgroundProcess\Jobs\RestartBackgroundProcessJob;
+use Nip\BackgroundProcess\Jobs\StartBackgroundProcessJob;
+use Nip\BackgroundProcess\Jobs\StopBackgroundProcessJob;
+use Nip\BackgroundProcess\Jobs\SyncBackgroundProcessJob;
 use Nip\BackgroundProcess\Models\BackgroundProcess;
 use Nip\Server\Data\ServerData;
 use Nip\Server\Models\Server;
@@ -47,25 +52,32 @@ class BackgroundProcessController extends Controller
 
     public function store(StoreBackgroundProcessRequest $request, Server $server): RedirectResponse
     {
-        $server->backgroundProcesses()->create([
+        $process = $server->backgroundProcesses()->create([
             ...$request->validated(),
-            'status' => ProcessStatus::Pending,
+            'status' => ProcessStatus::Installing,
         ]);
+
+        SyncBackgroundProcessJob::dispatch($process);
 
         return redirect()
             ->route('servers.background-processes', $server)
-            ->with('success', 'Background process created successfully.');
+            ->with('success', 'Background process creation started.');
     }
 
     public function update(UpdateBackgroundProcessRequest $request, Server $server, BackgroundProcess $process): RedirectResponse
     {
         abort_unless($process->server_id === $server->id, 403);
 
-        $process->update($request->validated());
+        $process->update([
+            ...$request->validated(),
+            'status' => ProcessStatus::Installing,
+        ]);
+
+        SyncBackgroundProcessJob::dispatch($process);
 
         return redirect()
             ->route('servers.background-processes', $server)
-            ->with('success', 'Background process updated successfully.');
+            ->with('success', 'Background process update started.');
     }
 
     public function destroy(Server $server, BackgroundProcess $process): RedirectResponse
@@ -78,12 +90,19 @@ class BackgroundProcessController extends Controller
             403,
             'Cannot delete a process while installation is in progress.'
         );
+        abort_if(
+            $process->status === ProcessStatus::Deleting,
+            403,
+            'Process deletion is already in progress.'
+        );
 
-        $process->delete();
+        $process->update(['status' => ProcessStatus::Deleting]);
+
+        RemoveBackgroundProcessJob::dispatch($process);
 
         return redirect()
             ->route('servers.background-processes', $server)
-            ->with('success', 'Background process deleted successfully.');
+            ->with('success', 'Background process deletion started.');
     }
 
     public function restart(Server $server, BackgroundProcess $process): RedirectResponse
@@ -93,7 +112,7 @@ class BackgroundProcessController extends Controller
         abort_unless($process->server_id === $server->id, 403);
         abort_unless($process->status === ProcessStatus::Installed, 403, 'Process must be installed to restart.');
 
-        // TODO: Dispatch job to restart the process on the server
+        RestartBackgroundProcessJob::dispatch($process);
 
         return redirect()
             ->route('servers.background-processes', $server)
@@ -107,7 +126,7 @@ class BackgroundProcessController extends Controller
         abort_unless($process->server_id === $server->id, 403);
         abort_unless($process->status === ProcessStatus::Installed, 403, 'Process must be installed to start.');
 
-        // TODO: Dispatch job to start the process on the server
+        StartBackgroundProcessJob::dispatch($process);
 
         return redirect()
             ->route('servers.background-processes', $server)
@@ -121,7 +140,7 @@ class BackgroundProcessController extends Controller
         abort_unless($process->server_id === $server->id, 403);
         abort_unless($process->status === ProcessStatus::Installed, 403, 'Process must be installed to stop.');
 
-        // TODO: Dispatch job to stop the process on the server
+        StopBackgroundProcessJob::dispatch($process);
 
         return redirect()
             ->route('servers.background-processes', $server)

@@ -9,6 +9,7 @@ enum ProcessStatus: string implements HasStatusBadge
     case Pending = 'pending';
     case Installing = 'installing';
     case Installed = 'installed';
+    case Deleting = 'deleting';
     case Failed = 'failed';
 
     public function label(): string
@@ -17,6 +18,7 @@ enum ProcessStatus: string implements HasStatusBadge
             self::Pending => 'Pending',
             self::Installing => 'Installing',
             self::Installed => 'Installed',
+            self::Deleting => 'Deleting',
             self::Failed => 'Failed',
         };
     }
@@ -26,6 +28,7 @@ enum ProcessStatus: string implements HasStatusBadge
         return match ($this) {
             self::Installed => 'default',
             self::Installing, self::Pending => 'secondary',
+            self::Deleting => 'outline',
             self::Failed => 'destructive',
         };
     }

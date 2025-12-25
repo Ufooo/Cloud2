@@ -49,7 +49,9 @@ class BackgroundProcessResource extends JsonResource
             'siteSlug' => $this->whenLoaded('site', fn () => $this->site?->slug),
             'can' => [
                 'update' => $canUpdate && $isInstalled,
-                'delete' => $canUpdate && $this->status !== ProcessStatus::Installing,
+                'delete' => $canUpdate
+                    && $this->status !== ProcessStatus::Installing
+                    && $this->status !== ProcessStatus::Deleting,
                 'restart' => $canUpdate && $isInstalled,
                 'start' => $canUpdate && $isInstalled && $isStopped,
                 'stop' => $canUpdate && $isInstalled && $isRunning,
