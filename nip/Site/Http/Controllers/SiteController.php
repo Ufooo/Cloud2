@@ -20,6 +20,8 @@ use Nip\Site\Enums\WwwRedirectType;
 use Nip\Site\Http\Requests\StoreSiteRequest;
 use Nip\Site\Http\Requests\UpdateSiteRequest;
 use Nip\Site\Http\Resources\SiteResource;
+use Nip\Site\Jobs\DeleteSiteJob;
+use Nip\Site\Jobs\InstallSiteJob;
 use Nip\Site\Models\Site;
 
 class SiteController extends Controller
@@ -113,16 +115,15 @@ class SiteController extends Controller
 
         $site = $server->sites()->create([
             ...$data,
-            'status' => SiteStatus::Pending,
+            'status' => SiteStatus::Installing,
             'deploy_status' => DeployStatus::NeverDeployed,
         ]);
 
-        // TODO: Dispatch job to install the site on the server
-        // InstallSiteJob::dispatch($site, $installOptions);
+        InstallSiteJob::dispatch($site);
 
         return redirect()
             ->route('sites.index')
-            ->with('success', 'Site created successfully.');
+            ->with('success', 'Site is being installed.');
     }
 
     public function show(Site $site): Response
@@ -171,20 +172,18 @@ class SiteController extends Controller
         Gate::authorize('update', $site->server);
 
         abort_if(
-            $site->status === SiteStatus::Installing,
+            $site->status === SiteStatus::Installing || $site->status === SiteStatus::Deleting,
             403,
-            'Cannot delete a site while installation is in progress.'
+            'Cannot delete a site while installation or deletion is in progress.'
         );
 
         $site->update(['status' => SiteStatus::Deleting]);
 
-        // TODO: Dispatch job to delete the site on the server
-
-        $site->delete();
+        DeleteSiteJob::dispatch($site);
 
         return redirect()
             ->route('sites.index')
-            ->with('success', 'Site deleted successfully.');
+            ->with('success', 'Site is being deleted.');
     }
 
     public function deploy(Site $site): RedirectResponse

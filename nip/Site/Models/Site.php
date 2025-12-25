@@ -12,6 +12,7 @@ use Nip\Server\Models\Server;
 use Nip\Site\Database\Factories\SiteFactory;
 use Nip\Site\Enums\DeployStatus;
 use Nip\Site\Enums\PackageManager;
+use Nip\Site\Enums\SiteProvisioningStep;
 use Nip\Site\Enums\SiteStatus;
 use Nip\Site\Enums\SiteType;
 use Nip\Site\Enums\WwwRedirectType;
@@ -46,6 +47,8 @@ class Site extends Model
         'slug',
         'type',
         'status',
+        'provisioning_step',
+        'batch_id',
         'deploy_status',
         'www_redirect_type',
         'allow_wildcard',
@@ -80,6 +83,7 @@ class Site extends Model
         return [
             'type' => SiteType::class,
             'status' => SiteStatus::class,
+            'provisioning_step' => SiteProvisioningStep::class,
             'deploy_status' => DeployStatus::class,
             'www_redirect_type' => WwwRedirectType::class,
             'allow_wildcard' => 'boolean',

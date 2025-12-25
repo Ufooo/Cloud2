@@ -62,6 +62,14 @@ enum SiteType: string
         };
     }
 
+    public function hasMigrations(): bool
+    {
+        return match ($this) {
+            self::Laravel, self::Statamic => true,
+            default => false,
+        };
+    }
+
     /**
      * @return array<int, array{value: string, label: string}>
      */
