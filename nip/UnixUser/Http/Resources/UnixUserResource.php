@@ -4,6 +4,7 @@ namespace Nip\UnixUser\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Nip\UnixUser\Enums\UserStatus;
 use Nip\UnixUser\Models\UnixUser;
 
 /**
@@ -19,11 +20,16 @@ class UnixUserResource extends JsonResource
         return [
             'id' => $this->id,
             'username' => $this->username,
-            'status' => $this->status,
-            'displayableStatus' => $this->status->label(),
+            'status' => [
+                'value' => $this->status->value,
+                'label' => $this->status->label(),
+                'variant' => $this->status->badgeVariant(),
+            ],
             'createdAt' => $this->created_at?->toISOString(),
             'can' => [
-                'delete' => ! in_array($this->username, ['root', 'netipar'], true),
+                'delete' => ! in_array($this->username, ['root', 'netipar'], true)
+                    && $this->status !== UserStatus::Deleting
+                    && $this->status !== UserStatus::Installing,
             ],
         ];
     }

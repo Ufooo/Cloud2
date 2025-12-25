@@ -26,16 +26,20 @@ import { useResourceDelete } from '@/composables/useResourceDelete';
 import ServerLayout from '@/layouts/ServerLayout.vue';
 import type { Server } from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
-import { UserStatus } from '@/types/generated';
-import { Head } from '@inertiajs/vue3';
+import { Head, usePoll } from '@inertiajs/vue3';
 import { MoreHorizontal, Plus, Trash2, Users } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { computed, ref, watch } from 'vue';
+
+interface UnixUserStatus {
+    value: 'pending' | 'installing' | 'installed' | 'deleting' | 'failed';
+    label: string;
+    variant: 'default' | 'secondary' | 'destructive';
+}
 
 interface UnixUser {
     id: number;
     username: string;
-    status: UserStatus;
-    displayableStatus: string;
+    status: UnixUserStatus;
     createdAt: string | null;
     can: {
         delete: boolean;
@@ -51,18 +55,39 @@ const props = defineProps<Props>();
 
 const addUserDialog = ref<InstanceType<typeof ResourceFormDialog>>();
 
+// Poll while there are pending, installing, or deleting users
+const hasPendingUsers = computed(() =>
+    props.users.data.some(
+        (user) =>
+            user.status.value === 'pending' ||
+            user.status.value === 'installing' ||
+            user.status.value === 'deleting',
+    ),
+);
+
+const { start: startPolling, stop: stopPolling } = usePoll(
+    3000,
+    { only: ['users'] },
+    { autoStart: false },
+);
+
+watch(
+    hasPendingUsers,
+    (pending) => {
+        if (pending) {
+            startPolling();
+        } else {
+            stopPolling();
+        }
+    },
+    { immediate: true },
+);
+
 const { deleteResource: deleteUser } = useResourceDelete<UnixUser>({
     resourceName: 'Unix User',
     getDisplayName: (user) => user.username,
     getDeleteUrl: (user) => destroy.url({ server: props.server, user: user.id }),
 });
-
-function getBadgeVariant(user: UnixUser) {
-    if (user.status !== UserStatus.Installed) {
-        return 'secondary';
-    }
-    return 'default';
-}
 </script>
 
 <template>
@@ -124,8 +149,11 @@ function getBadgeVariant(user: UnixUser) {
                                 <p class="font-medium">{{ user.username }}</p>
                             </div>
                             <div class="flex items-center gap-2">
-                                <Badge :variant="getBadgeVariant(user)">
-                                    {{ user.displayableStatus }}
+                                <Badge
+                                    v-if="user.status.value !== 'installed'"
+                                    :variant="user.status.variant"
+                                >
+                                    {{ user.status.label }}
                                 </Badge>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger as-child>
@@ -137,10 +165,6 @@ function getBadgeVariant(user: UnixUser) {
                                         <DropdownMenuItem
                                             v-if="user.can.delete"
                                             class="text-destructive focus:text-destructive"
-                                            :disabled="
-                                                user.status ===
-                                                UserStatus.Installing
-                                            "
                                             @click="deleteUser(user)"
                                         >
                                             <Trash2 class="mr-2 size-4" />

@@ -14,6 +14,8 @@ use Nip\UnixUser\Actions\CreateUnixUser;
 use Nip\UnixUser\Enums\UserStatus;
 use Nip\UnixUser\Http\Requests\StoreUnixUserRequest;
 use Nip\UnixUser\Http\Resources\UnixUserResource;
+use Nip\UnixUser\Jobs\CreateUnixUserJob;
+use Nip\UnixUser\Jobs\RemoveUnixUserJob;
 use Nip\UnixUser\Models\UnixUser;
 
 class UnixUserController extends Controller
@@ -38,11 +40,17 @@ class UnixUserController extends Controller
 
     public function store(StoreUnixUserRequest $request, Server $server): RedirectResponse
     {
-        (new CreateUnixUser)->handle($server, $request->validated('username'));
+        $unixUser = (new CreateUnixUser)->handle(
+            $server,
+            $request->validated('username'),
+            UserStatus::Installing
+        );
+
+        CreateUnixUserJob::dispatch($unixUser);
 
         return redirect()
             ->route('servers.unix-users', $server)
-            ->with('success', 'Unix user created successfully.');
+            ->with('success', 'Unix user creation started.');
     }
 
     public function destroy(Server $server, UnixUser $user): RedirectResponse
@@ -53,11 +61,14 @@ class UnixUserController extends Controller
         abort_if($user->username === 'root', 403, 'Cannot delete the root user.');
         abort_if($user->username === 'netipar', 403, 'Cannot delete the netipar user.');
         abort_if($user->status === UserStatus::Installing, 403, 'Cannot delete a user while installation is in progress.');
+        abort_if($user->status === UserStatus::Deleting, 403, 'User deletion is already in progress.');
 
-        $user->delete();
+        $user->update(['status' => UserStatus::Deleting]);
+
+        RemoveUnixUserJob::dispatch($user);
 
         return redirect()
             ->route('servers.unix-users', $server)
-            ->with('success', 'Unix user deleted successfully.');
+            ->with('success', 'Unix user deletion started.');
     }
 }
