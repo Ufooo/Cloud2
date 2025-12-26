@@ -124,7 +124,7 @@ const { deleteResource: deleteKey } = useResourceDelete<SshKey>({
 
                 <CardContent>
                     <EmptyState
-                        v-if="keys.data.length === 0"
+                        v-if="keys.length === 0"
                         :icon="Key"
                         title="No keys yet"
                         description="Get started and add your first SSH key."
@@ -143,7 +143,7 @@ const { deleteResource: deleteKey } = useResourceDelete<SshKey>({
 
                     <div v-else class="divide-y">
                         <div
-                            v-for="key in keys.data"
+                            v-for="key in keys"
                             :key="key.id"
                             class="flex items-center justify-between py-4 first:pt-0 last:pb-0"
                         >

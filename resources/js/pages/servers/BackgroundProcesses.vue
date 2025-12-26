@@ -235,7 +235,7 @@ function pluralize(count: number, singular: string, plural: string): string {
 
                 <CardContent>
                     <div
-                        v-if="processes.data.length === 0"
+                        v-if="processes.length === 0"
                         class="rounded-lg border border-dashed p-8 text-center"
                     >
                         <Activity
@@ -260,7 +260,7 @@ function pluralize(count: number, singular: string, plural: string): string {
 
                     <div v-else class="divide-y">
                         <div
-                            v-for="process in processes.data"
+                            v-for="process in processes"
                             :key="process.id"
                             class="flex items-center justify-between py-4 first:pt-0 last:pb-0"
                         >

@@ -103,7 +103,7 @@ const { deleteResource: deleteUser } = useResourceDelete<UnixUser>({
 
                 <CardContent>
                     <EmptyState
-                        v-if="users.data.length === 0"
+                        v-if="users.length === 0"
                         :icon="Users"
                         title="No users yet"
                         description="Get started and create your first user."
@@ -122,7 +122,7 @@ const { deleteResource: deleteUser } = useResourceDelete<UnixUser>({
 
                     <div v-else class="divide-y">
                         <div
-                            v-for="user in users.data"
+                            v-for="user in users"
                             :key="user.id"
                             class="flex items-center justify-between py-4 first:pt-0 last:pb-0"
                         >

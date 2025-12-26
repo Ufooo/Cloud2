@@ -218,7 +218,7 @@ watch(
 
                 <CardContent>
                     <div
-                        v-if="jobs.data.length === 0"
+                        v-if="jobs.length === 0"
                         class="rounded-lg border border-dashed p-8 text-center"
                     >
                         <Clock
@@ -243,7 +243,7 @@ watch(
 
                     <div v-else class="divide-y">
                         <div
-                            v-for="job in jobs.data"
+                            v-for="job in jobs"
                             :key="job.id"
                             class="flex items-center justify-between py-4 first:pt-0 last:pb-0"
                         >

@@ -148,7 +148,7 @@ function getBadgeVariant(rule: FirewallRule): 'default' | 'secondary' | 'destruc
 
                 <CardContent>
                     <EmptyState
-                        v-if="rules.data.length === 0"
+                        v-if="rules.length === 0"
                         :icon="Shield"
                         title="No firewall rules yet"
                         description="Get started and create your first rule."
@@ -167,7 +167,7 @@ function getBadgeVariant(rule: FirewallRule): 'default' | 'secondary' | 'destruc
 
                     <div v-else class="divide-y">
                         <div
-                            v-for="rule in rules.data"
+                            v-for="rule in rules"
                             :key="rule.id"
                             class="flex items-center justify-between py-4 first:pt-0 last:pb-0"
                         >
