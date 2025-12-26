@@ -168,11 +168,37 @@ class Site extends Model
         return "/home/{$this->user}/{$this->domain}";
     }
 
+    public function getCurrentPath(): string
+    {
+        return "{$this->getFullPath()}/current";
+    }
+
+    public function getRootPath(): string
+    {
+        return $this->getCurrentPath().$this->web_directory;
+    }
+
     public function getWebPath(): string
     {
         $webDir = $this->web_directory === '/' ? '' : $this->web_directory;
 
         return $this->getFullPath().$webDir;
+    }
+
+    public function getEffectivePhpVersion(): string
+    {
+        return $this->php_version ?? $this->server->php_version;
+    }
+
+    public function getPhpSocketPath(): string
+    {
+        $phpVersion = $this->getEffectivePhpVersion();
+
+        if ($this->is_isolated) {
+            return "/var/run/php/php{$phpVersion}-fpm-{$this->user}.sock";
+        }
+
+        return "/var/run/php/php{$phpVersion}-fpm.sock";
     }
 
     public function getUrl(): string
