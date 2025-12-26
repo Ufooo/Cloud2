@@ -17,6 +17,7 @@ enum DomainRecordStatus: string implements HasStatusBadge
     case Removing = 'removing';
     case Disabling = 'disabling';
     case Enabling = 'enabling';
+    case Failed = 'failed';
 
     public function label(): string
     {
@@ -30,6 +31,7 @@ enum DomainRecordStatus: string implements HasStatusBadge
             self::Removing => 'Removing',
             self::Disabling => 'Disabling',
             self::Enabling => 'Enabling',
+            self::Failed => 'Failed',
         };
     }
 
@@ -39,7 +41,7 @@ enum DomainRecordStatus: string implements HasStatusBadge
             self::Enabled => 'default',
             self::Disabled => 'secondary',
             self::Pending, self::Creating, self::Updating, self::Securing, self::Disabling, self::Enabling => 'outline',
-            self::Removing => 'destructive',
+            self::Removing, self::Failed => 'destructive',
         };
     }
 }

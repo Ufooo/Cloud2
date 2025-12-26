@@ -1,0 +1,21 @@
+# Netipar Cloud - Domain Configuration
+# Domain: {{ $domain }}
+# Site: {{ $site->domain }}
+# Generated: {{ now()->toISOString() }}
+
+include /etc/nginx/netipar-conf/{{ $site->id }}/before/*;
+include /etc/nginx/netipar-conf/{{ $site->id }}/{{ $domain }}/before/*;
+
+@include('provisioning.scripts.partials.nginx-server-block', [
+    'site' => $site,
+    'domain' => $domain,
+    'fullPath' => $fullPath,
+    'rootPath' => $rootPath,
+    'phpSocket' => $phpSocket,
+    'siteType' => $siteType,
+    'allowWildcard' => $allowWildcard,
+    'wwwRedirectType' => $wwwRedirectType,
+])
+
+include /etc/nginx/netipar-conf/{{ $site->id }}/after/*;
+include /etc/nginx/netipar-conf/{{ $site->id }}/{{ $domain }}/after/*;

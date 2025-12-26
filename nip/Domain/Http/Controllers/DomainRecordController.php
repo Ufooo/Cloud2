@@ -12,6 +12,8 @@ use Nip\Domain\Enums\DomainRecordType;
 use Nip\Domain\Http\Requests\StoreDomainRecordRequest;
 use Nip\Domain\Http\Requests\UpdateDomainRecordRequest;
 use Nip\Domain\Http\Resources\DomainRecordResource;
+use Nip\Domain\Jobs\AddDomainJob;
+use Nip\Domain\Jobs\RemoveDomainJob;
 use Nip\Domain\Models\DomainRecord;
 use Nip\Site\Data\SiteData;
 use Nip\Site\Enums\WwwRedirectType;
@@ -61,8 +63,10 @@ class DomainRecordController extends Controller
             'type' => $data['type'],
             'www_redirect_type' => $data['www_redirect_type'] ?? WwwRedirectType::FromWww,
             'allow_wildcard' => $data['allow_wildcard'] ?? false,
-            'status' => DomainRecordStatus::Pending,
+            'status' => DomainRecordStatus::Creating,
         ]);
+
+        AddDomainJob::dispatch($domainRecord);
 
         return redirect()->route('sites.domains.index', $site)
             ->with('success', "Domain {$domainRecord->name} has been added and is being configured.");
@@ -94,6 +98,8 @@ class DomainRecordController extends Controller
 
         $domainName = $domainRecord->name;
         $domainRecord->update(['status' => DomainRecordStatus::Removing]);
+
+        RemoveDomainJob::dispatch($domainRecord);
 
         return redirect()->route('sites.domains.index', $site)
             ->with('success', "Domain {$domainName} is being removed.");
