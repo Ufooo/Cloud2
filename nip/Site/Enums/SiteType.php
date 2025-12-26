@@ -70,6 +70,38 @@ enum SiteType: string
         };
     }
 
+    public function supportsZeroDowntime(): bool
+    {
+        return match ($this) {
+            self::Laravel, self::Statamic, self::Symfony => true,
+            default => false,
+        };
+    }
+
+    public function requiresAutoInstall(): bool
+    {
+        return match ($this) {
+            self::WordPress, self::PhpMyAdmin => true,
+            default => false,
+        };
+    }
+
+    public function defaultDeployScript(): string
+    {
+        $template = match ($this) {
+            self::Laravel => 'laravel',
+            self::Statamic => 'statamic',
+            self::Symfony => 'symfony',
+            self::WordPress => 'wordpress',
+            self::PhpMyAdmin => 'phpmyadmin',
+            self::NextJs => 'nextjs',
+            self::NuxtJs => 'nuxtjs',
+            default => 'basic',
+        };
+
+        return trim(view("provisioning.scripts.deploy.{$template}")->render());
+    }
+
     /**
      * @return array<int, array{value: string, label: string}>
      */

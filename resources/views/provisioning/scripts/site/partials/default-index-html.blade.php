@@ -1,4 +1,4 @@
-    cat > "$RELEASE_DIR{{ $webDirectory }}/index.html" << 'HTMLEOF'
+    cat > "$TARGET_DIR{{ $webDirectory }}/index.html" << 'HTMLEOF'
 <!DOCTYPE html>
 <html lang="en">
 <head>

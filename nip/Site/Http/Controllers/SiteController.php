@@ -7,6 +7,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
+use Nip\Domain\Enums\DomainRecordStatus;
+use Nip\Domain\Enums\DomainRecordType;
 use Nip\Php\Enums\PhpVersion;
 use Nip\Server\Enums\IdentityColor;
 use Nip\Server\Enums\ServerStatus;
@@ -107,6 +109,10 @@ class SiteController extends Controller
             $data['build_command'] = $siteType->defaultBuildCommand();
         }
 
+        if (! isset($data['deploy_script'])) {
+            $data['deploy_script'] = $siteType->defaultDeployScript();
+        }
+
         // Extract installation options (not stored in DB, passed to job)
         $installOptions = [
             'install_composer' => $data['install_composer'] ?? true,
@@ -118,6 +124,16 @@ class SiteController extends Controller
             ...$data,
             'status' => SiteStatus::Installing,
             'deploy_status' => DeployStatus::NeverDeployed,
+            'deploy_hook_token' => bin2hex(random_bytes(32)),
+        ]);
+
+        // Create primary domain record
+        $site->domainRecords()->create([
+            'name' => $site->domain,
+            'type' => DomainRecordType::Primary,
+            'status' => DomainRecordStatus::Pending,
+            'www_redirect_type' => $site->www_redirect_type,
+            'allow_wildcard' => $site->allow_wildcard,
         ]);
 
         InstallSiteJob::dispatch($site);

@@ -21,7 +21,8 @@ else
     echo "Creating site directory at $SITE_PATH..."
     mkdir -p "$SITE_PATH"
 
-    # Create standard directories
+@if($siteType->supportsZeroDowntime())
+    # Zero-downtime deployment structure (Laravel, Statamic, Symfony)
     mkdir -p "$SITE_PATH/releases"
     mkdir -p "$SITE_PATH/storage"
     mkdir -p "$SITE_PATH/storage/app/public"
@@ -31,22 +32,32 @@ else
     mkdir -p "$SITE_PATH/storage/logs"
 
     # Create initial release directory
-    RELEASE_DIR="$SITE_PATH/releases/initial"
-    mkdir -p "$RELEASE_DIR"
+    TARGET_DIR="$SITE_PATH/releases/initial"
+    mkdir -p "$TARGET_DIR"
 
     # Create public directory
-    mkdir -p "$RELEASE_DIR{{ $webDirectory }}"
+    mkdir -p "$TARGET_DIR{{ $webDirectory }}"
 
     # Create default index file
 {!! $defaultIndexScript !!}
 
     # Create symlink to current release
-    ln -sfn "$RELEASE_DIR" "$SITE_PATH/current"
+    ln -sfn "$TARGET_DIR" "$SITE_PATH/current"
+@else
+    # Simple directory structure (WordPress, HTML, PHP, etc.)
+    TARGET_DIR="$SITE_PATH"
+    mkdir -p "$TARGET_DIR{{ $webDirectory }}"
+
+    # Create default index file
+{!! $defaultIndexScript !!}
+@endif
 
     # Set proper ownership
     chown -R {{ $user }}:{{ $user }} "$SITE_PATH"
     chmod -R 755 "$SITE_PATH"
+@if($siteType->supportsZeroDowntime())
     chmod -R 775 "$SITE_PATH/storage"
+@endif
 
     echo "Site directory structure created successfully"
 fi
@@ -91,5 +102,18 @@ echo "Reloading Nginx..."
 service nginx reload
 
 {!! $isolatedFpmScript !!}
+
+@if($siteType === \Nip\Site\Enums\SiteType::WordPress)
+#
+# Install WordPress
+#
+@include('provisioning.scripts.site.partials.install-wordpress', [
+    'site' => $site,
+    'user' => $user,
+    'fullPath' => $fullPath,
+    'webDirectory' => $webDirectory,
+    'phpVersion' => $phpVersion,
+])
+@endif
 
 echo "Site {{ $domain }} installed successfully!"

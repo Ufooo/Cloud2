@@ -2,6 +2,7 @@
 
 namespace Nip\Site\Jobs;
 
+use Nip\Domain\Enums\DomainRecordStatus;
 use Nip\Server\Jobs\BaseProvisionJob;
 use Nip\Server\Models\Server;
 use Nip\Server\Services\SSH\ExecutionResult;
@@ -97,6 +98,11 @@ class InstallSiteJob extends BaseProvisionJob
     {
         $this->site->update([
             'status' => SiteStatus::Installed,
+        ]);
+
+        // Enable all domain records
+        $this->site->domainRecords()->update([
+            'status' => DomainRecordStatus::Enabled,
         ]);
     }
 
