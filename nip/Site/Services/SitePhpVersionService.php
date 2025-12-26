@@ -12,7 +12,7 @@ class SitePhpVersionService
 {
     public function updatePhpVersion(Site $site, string $newVersion): void
     {
-        $oldVersion = $site->php_version ?? $site->server->php_version;
+        $oldVersion = $site->getEffectivePhpVersion();
         $jobs = [];
 
         if ($site->is_isolated) {

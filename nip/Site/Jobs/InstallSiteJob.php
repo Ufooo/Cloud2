@@ -32,36 +32,31 @@ class InstallSiteJob extends BaseProvisionJob
 
     protected function generateScript(): string
     {
-        $phpVersion = $this->site->php_version ?? $this->site->server->php_version;
-        $fullPath = $this->site->getFullPath();
-        $webDirectory = $this->site->web_directory;
-        $domain = $this->site->domain;
-        $user = $this->site->user;
-
         $nginxConfig = view('provisioning.scripts.site.partials.nginx-config', [
             'site' => $this->site,
-            'user' => $user,
-            'domain' => $domain,
-            'fullPath' => $fullPath,
-            'webDirectory' => $webDirectory,
-            'phpVersion' => $phpVersion,
+            'user' => $this->site->user,
+            'domain' => $this->site->domain,
+            'fullPath' => $this->site->getFullPath(),
+            'rootPath' => $this->site->getRootPath(),
+            'phpSocket' => $this->site->getPhpSocketPath(),
+            'phpVersion' => $this->site->getEffectivePhpVersion(),
             'siteType' => $this->site->type,
             'allowWildcard' => $this->site->allow_wildcard,
             'wwwRedirectType' => $this->site->www_redirect_type,
             'isIsolated' => $this->site->is_isolated,
         ])->render();
 
-        $defaultIndexScript = $this->generateDefaultIndexScript($webDirectory);
-        $isolatedFpmScript = $this->generateIsolatedFpmScript($phpVersion, $domain, $user, $fullPath);
+        $defaultIndexScript = $this->generateDefaultIndexScript($this->site->web_directory);
+        $isolatedFpmScript = $this->generateIsolatedFpmScript();
 
         return view('provisioning.scripts.site.install', [
             'site' => $this->site,
-            'user' => $user,
-            'domain' => $domain,
-            'fullPath' => $fullPath,
+            'user' => $this->site->user,
+            'domain' => $this->site->domain,
+            'fullPath' => $this->site->getFullPath(),
             'webPath' => $this->site->getWebPath(),
-            'webDirectory' => $webDirectory,
-            'phpVersion' => $phpVersion,
+            'webDirectory' => $this->site->web_directory,
+            'phpVersion' => $this->site->getEffectivePhpVersion(),
             'siteType' => $this->site->type,
             'allowWildcard' => $this->site->allow_wildcard,
             'wwwRedirectType' => $this->site->www_redirect_type,
@@ -80,17 +75,17 @@ class InstallSiteJob extends BaseProvisionJob
         ])->render();
     }
 
-    protected function generateIsolatedFpmScript(string $phpVersion, string $domain, string $user, string $fullPath): string
+    protected function generateIsolatedFpmScript(): string
     {
         if (! $this->site->is_isolated) {
             return '';
         }
 
         return view('provisioning.scripts.site.partials.isolated-fpm-pool', [
-            'phpVersion' => $phpVersion,
-            'domain' => $domain,
-            'user' => $user,
-            'fullPath' => $fullPath,
+            'phpVersion' => $this->site->getEffectivePhpVersion(),
+            'domain' => $this->site->domain,
+            'user' => $this->site->user,
+            'fullPath' => $this->site->getFullPath(),
         ])->render();
     }
 

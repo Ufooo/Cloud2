@@ -35,7 +35,7 @@ class DeleteSiteJob extends BaseProvisionJob
             'user' => $this->site->user,
             'domain' => $this->site->domain,
             'fullPath' => $this->site->getFullPath(),
-            'phpVersion' => $this->site->php_version ?? $this->site->server->php_version,
+            'phpVersion' => $this->site->getEffectivePhpVersion(),
             'isIsolated' => $this->site->is_isolated,
         ])->render();
     }

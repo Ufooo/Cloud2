@@ -35,12 +35,10 @@ class UpdateSitePhpVersionJob extends BaseProvisionJob
 
     protected function generateScript(): string
     {
-        $oldVersion = $this->site->php_version ?? $this->site->server->php_version;
-
         return view('provisioning.scripts.site.steps.update-php-version', [
             'site' => $this->site,
             'domain' => $this->site->domain,
-            'oldVersion' => $oldVersion,
+            'oldVersion' => $this->site->getEffectivePhpVersion(),
             'newVersion' => $this->newVersion,
             'isIsolated' => $this->site->is_isolated,
             'user' => $this->site->user,
