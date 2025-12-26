@@ -23,6 +23,7 @@ use Nip\Site\Http\Resources\SiteResource;
 use Nip\Site\Jobs\DeleteSiteJob;
 use Nip\Site\Jobs\InstallSiteJob;
 use Nip\Site\Models\Site;
+use Nip\Site\Services\SitePhpVersionService;
 
 class SiteController extends Controller
 {
@@ -156,15 +157,39 @@ class SiteController extends Controller
         ]);
     }
 
-    public function update(UpdateSiteRequest $request, Site $site): RedirectResponse
+    public function update(UpdateSiteRequest $request, Site $site, SitePhpVersionService $phpVersionService): RedirectResponse
     {
         Gate::authorize('update', $site->server);
 
-        $site->update($request->validated());
+        $validated = $request->validated();
+
+        // Check if PHP version is changing and site is installed
+        $newPhpVersion = $validated['php_version'] ?? null;
+        $currentPhpVersion = $site->php_version;
+        $phpVersionChanging = $newPhpVersion !== null
+            && $newPhpVersion !== $currentPhpVersion
+            && $site->status === SiteStatus::Installed;
+
+        if ($phpVersionChanging) {
+            // Remove php_version from validated data - it will be updated by the job
+            unset($validated['php_version']);
+
+            // Dispatch job chain to update PHP version on the server
+            $phpVersionService->updatePhpVersion($site, $newPhpVersion);
+        }
+
+        // Update other fields
+        if (! empty($validated)) {
+            $site->update($validated);
+        }
+
+        $message = $phpVersionChanging
+            ? 'Site settings updated. PHP version change is being applied...'
+            : 'Site updated successfully.';
 
         return redirect()
             ->back()
-            ->with('success', 'Site updated successfully.');
+            ->with('success', $message);
     }
 
     public function destroy(Site $site): RedirectResponse

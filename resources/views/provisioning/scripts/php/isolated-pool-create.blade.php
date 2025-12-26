@@ -1,15 +1,20 @@
-#
-# Create Isolated PHP-FPM Pool (if not exists)
-#
+#!/bin/bash
+set -eo pipefail
+
+# Netipar Cloud - Create Isolated PHP-FPM Pool
+# User: {{ $user }}
+# PHP Version: {{ $phpVersion }}
 
 POOL_CONF="/etc/php/{{ $phpVersion }}/fpm/pool.d/{{ $user }}.conf"
 
 if [[ -f "$POOL_CONF" ]]; then
     echo "Isolated PHP-FPM pool for {{ $user }} (PHP {{ $phpVersion }}) already exists."
-else
-    echo "Creating isolated PHP-FPM pool for {{ $user }} (PHP {{ $phpVersion }})..."
+    exit 0
+fi
 
-    cat > "$POOL_CONF" << EOF
+echo "Creating isolated PHP-FPM pool for {{ $user }} (PHP {{ $phpVersion }})..."
+
+cat > "$POOL_CONF" << EOF
 [{{ $user }}]
 user = {{ $user }}
 group = {{ $user }}
@@ -36,6 +41,7 @@ php_admin_value[post_max_size] = 100M
 security.limit_extensions = .php
 EOF
 
-    echo "Reloading PHP-FPM..."
-    systemctl reload php{{ $phpVersion }}-fpm
-fi
+echo "Reloading PHP {{ $phpVersion }} FPM..."
+systemctl reload php{{ $phpVersion }}-fpm
+
+echo "Isolated PHP-FPM pool for {{ $user }} (PHP {{ $phpVersion }}) created successfully!"

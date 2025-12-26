@@ -1,6 +1,6 @@
 @php
     $phpSocket = $isIsolated
-        ? "/var/run/php/php{$phpVersion}-fpm-{$domain}.sock"
+        ? "/var/run/php/php{$phpVersion}-fpm-{$user}.sock"
         : "/var/run/php/php{$phpVersion}-fpm.sock";
     $currentPath = "{$fullPath}/current";
     $rootPath = "{$currentPath}{$webDirectory}";
