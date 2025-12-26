@@ -139,7 +139,7 @@ class SiteController extends Controller
         InstallSiteJob::dispatch($site);
 
         return redirect()
-            ->route('sites.index')
+            ->route('sites.show', $site)
             ->with('success', 'Site is being installed.');
     }
 

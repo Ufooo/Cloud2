@@ -2,17 +2,21 @@
 import { show } from '@/actions/Nip/Site/Http/Controllers/SiteController';
 import Avatar from '@/components/shared/Avatar.vue';
 import { Badge } from '@/components/ui/badge';
+import SiteStatusBadge from '@/pages/sites/partials/SiteStatusBadge.vue';
 import type { Site } from '@/types';
 import { Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
 interface Props {
     site: Site;
     showServer?: boolean;
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
     showServer: true,
 });
+
+const isInstalled = computed(() => props.site.status === 'installed');
 </script>
 
 <template>
@@ -48,15 +52,18 @@ withDefaults(defineProps<Props>(), {
 
         <!-- Right side -->
         <div class="shrink-0 text-right">
-            <Badge :variant="site.deployStatusBadgeVariant">
-                {{ site.displayableDeployStatus }}
-            </Badge>
-            <p
-                v-if="site.lastDeployedAtHuman"
-                class="mt-1 text-xs text-muted-foreground"
-            >
-                {{ site.lastDeployedAtHuman }}
-            </p>
+            <template v-if="isInstalled">
+                <Badge :variant="site.deployStatusBadgeVariant">
+                    {{ site.displayableDeployStatus }}
+                </Badge>
+                <p
+                    v-if="site.lastDeployedAtHuman"
+                    class="mt-1 text-xs text-muted-foreground"
+                >
+                    {{ site.lastDeployedAtHuman }}
+                </p>
+            </template>
+            <SiteStatusBadge v-else :status="site.status" />
         </div>
     </Link>
 </template>

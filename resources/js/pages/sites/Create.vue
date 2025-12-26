@@ -155,8 +155,6 @@ function navigateToSites() {
                     <Form
                         v-bind="store.form()"
                         class="space-y-6"
-                        :on-success="navigateToSites"
-                        reset-on-success
                         v-slot="{ errors, processing }"
                     >
                         <input type="hidden" name="type" :value="siteType.value" />
