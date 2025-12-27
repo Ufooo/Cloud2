@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Gate;
 use Nip\Domain\Enums\CertificateStatus;
 use Nip\Domain\Enums\CertificateType;
 use Nip\Domain\Http\Requests\StoreCertificateRequest;
+use Nip\Domain\Jobs\ObtainCertificateJob;
+use Nip\Domain\Jobs\RenewCertificateJob;
 use Nip\Domain\Models\Certificate;
 use Nip\Site\Models\Site;
 
@@ -79,7 +81,13 @@ class CertificateController extends Controller
             $certificateData['status'] = CertificateStatus::Installing;
         }
 
-        $site->certificates()->create($certificateData);
+        $certificate = $site->certificates()->create($certificateData);
+
+        // Dispatch job for Let's Encrypt HTTP-01 verification
+        if ($type === CertificateType::LetsEncrypt && ($data['verification_method'] ?? 'http') === 'http') {
+            $certificate->update(['status' => CertificateStatus::Installing]);
+            ObtainCertificateJob::dispatch($certificate);
+        }
 
         $successMessage = match ($type) {
             CertificateType::LetsEncrypt => ($data['verification_method'] ?? 'http') === 'dns'
@@ -140,12 +148,14 @@ class CertificateController extends Controller
     {
         Gate::authorize('update', $site->server);
 
-        if ($certificate->status !== CertificateStatus::Installed || ! $certificate->active) {
+        if ($certificate->status !== CertificateStatus::Installed) {
             return redirect()->route('sites.domains.index', $site)
-                ->with('error', 'Only active, installed certificates can be renewed.');
+                ->with('error', 'Only installed certificates can be renewed.');
         }
 
         $certificate->update(['status' => CertificateStatus::Renewing]);
+
+        RenewCertificateJob::dispatch($certificate);
 
         return redirect()->route('sites.domains.index', $site)
             ->with('success', 'Certificate is being renewed.');

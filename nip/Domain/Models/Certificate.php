@@ -98,4 +98,14 @@ class Certificate extends Model
 
         return $this->expires_at->diffInDays() <= 30;
     }
+
+    public function getCertPath(): string
+    {
+        return "/etc/nginx/ssl/{$this->site_id}/{$this->id}";
+    }
+
+    public function getSiteConfDir(): string
+    {
+        return "/etc/nginx/netipar-conf/{$this->site_id}";
+    }
 }
