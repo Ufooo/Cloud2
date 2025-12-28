@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { store } from '@/actions/Nip/Site/Http/Controllers/SiteController';
+import { index, store } from '@/actions/Nip/Site/Http/Controllers/SiteController';
 import SiteTypeIcon from '@/components/icons/SiteTypeIcon.vue';
 import InputError from '@/components/InputError.vue';
 import ConfigureDomainModal from './partials/ConfigureDomainModal.vue';
@@ -129,7 +129,7 @@ const selectedWwwRedirectLabel = computed(() => {
 });
 
 function navigateToSites() {
-    router.visit('/sites');
+    router.visit(index.url());
 }
 </script>
 

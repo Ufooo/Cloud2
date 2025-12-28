@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { index } from '@/actions/Nip/Site/Http/Controllers/SiteController';
+import { create, index } from '@/actions/Nip/Site/Http/Controllers/SiteController';
 import SiteTypeIcon from '@/components/icons/SiteTypeIcon.vue';
 import EmptyState from '@/components/shared/EmptyState.vue';
 import Pagination from '@/components/shared/Pagination.vue';
@@ -77,7 +77,7 @@ function openTypeSelectDialog() {
 
 function selectTypeAndNavigate(type: string) {
     showTypeSelectDialog.value = false;
-    router.visit(`/sites/create/${type}`);
+    router.visit(create.url(type));
 }
 </script>
 

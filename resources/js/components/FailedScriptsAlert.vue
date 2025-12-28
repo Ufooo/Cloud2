@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+    dismiss,
     failed,
     failedForServer,
     failedForSite,
@@ -7,6 +8,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import type { ProvisionScriptData, Server, Site } from '@/types';
+import { router } from '@inertiajs/vue3';
 import { AlertCircle, ChevronRight, X } from 'lucide-vue-next';
 import { computed, onMounted, ref, watch } from 'vue';
 
@@ -65,17 +67,10 @@ watch(
     },
 );
 
-async function dismissScript(script: ProvisionScriptData, event: Event) {
+function dismissScript(script: ProvisionScriptData, event: Event) {
     event.stopPropagation();
     dismissed.value.push(script.id);
-
-    await fetch(`/provision-scripts/${script.id}/dismiss`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
-        },
-    });
+    router.post(dismiss.url(script), {}, { preserveScroll: true });
 }
 
 function handleScriptClick(script: ProvisionScriptData) {

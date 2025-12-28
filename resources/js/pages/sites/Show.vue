@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { deploy } from '@/actions/Nip/Site/Http/Controllers/SiteController';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,8 +27,8 @@ interface Props {
 
 const props = defineProps<Props>();
 
-function deploy() {
-    router.post(`/sites/${props.site.slug}/deploy`);
+function triggerDeploy() {
+    router.post(deploy.url(props.site));
 }
 
 function getDeployStatusVariant(status: string | null): 'default' | 'secondary' | 'destructive' | 'outline' {
@@ -68,7 +69,7 @@ function getDeployStatusVariant(status: string | null): 'default' | 'secondary' 
                             </Badge>
                             <Button
                                 v-if="site.can?.deploy"
-                                @click="deploy"
+                                @click="triggerDeploy"
                                 :disabled="site.deployStatus === 'deploying'"
                             >
                                 <Rocket class="mr-2 size-4" />
