@@ -2,6 +2,7 @@
 
 namespace Nip\UnixUser\Jobs;
 
+use Nip\Server\Events\ServerResourceStatusUpdated;
 use Nip\Server\Jobs\BaseProvisionJob;
 use Nip\Server\Models\Server;
 use Nip\Server\Services\SSH\ExecutionResult;
@@ -10,6 +11,8 @@ use Nip\UnixUser\Models\UnixUser;
 
 class RemoveUnixUserJob extends BaseProvisionJob
 {
+    public int $tries = 1;
+
     public int $timeout = 120;
 
     public function __construct(
@@ -45,7 +48,17 @@ class RemoveUnixUserJob extends BaseProvisionJob
 
     protected function handleSuccess(ExecutionResult $result): void
     {
+        $server = $this->unixUser->server;
+        $unixUserId = $this->unixUser->id;
+
         $this->unixUser->delete();
+
+        ServerResourceStatusUpdated::dispatch(
+            $server,
+            'unix_user',
+            $unixUserId,
+            'deleted'
+        );
     }
 
     protected function handleFailure(\Throwable $exception): void
@@ -53,6 +66,13 @@ class RemoveUnixUserJob extends BaseProvisionJob
         $this->unixUser->update([
             'status' => UserStatus::Installed,
         ]);
+
+        ServerResourceStatusUpdated::dispatch(
+            $this->unixUser->server,
+            'unix_user',
+            $this->unixUser->id,
+            UserStatus::Installed->value
+        );
     }
 
     /**

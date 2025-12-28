@@ -12,7 +12,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { useStatusPolling } from '@/composables/useStatusPolling';
+import { useResourceStatusUpdates } from '@/composables/useResourceStatusUpdates';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem, Server, Site } from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
@@ -37,12 +37,15 @@ const props = defineProps<Props>();
 
 const sites = computed(() => props.sites.data);
 
-useStatusPolling({
-    items: sites,
-    getStatus: (site) => site.status || 'installed',
-    propName: 'sites',
-    pendingStatuses: ['pending', 'installing', 'deleting'],
-});
+// Subscribe to WebSocket updates when filtered by server
+// For global view (no currentServer), data only updates on navigation
+if (props.currentServer) {
+    useResourceStatusUpdates({
+        channelType: 'server',
+        channelId: props.currentServer.id,
+        propNames: ['sites'],
+    });
+}
 
 const showTypeSelectDialog = ref(false);
 

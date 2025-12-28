@@ -31,7 +31,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useResourceDelete } from '@/composables/useResourceDelete';
-import { useStatusPolling } from '@/composables/useStatusPolling';
+import { useResourceStatusUpdates } from '@/composables/useResourceStatusUpdates';
 import ServerLayout from '@/layouts/ServerLayout.vue';
 import type { Server } from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
@@ -77,11 +77,10 @@ const addKeyDialog = ref<InstanceType<typeof ResourceFormDialog>>();
 
 const keys = computed(() => props.keys.data);
 
-useStatusPolling({
-    items: keys,
-    getStatus: (key) => key.status.value,
-    propName: 'keys',
-    pendingStatuses: ['pending', 'deleting'],
+useResourceStatusUpdates({
+    channelType: 'server',
+    channelId: props.server.id,
+    propNames: ['keys'],
 });
 
 const { deleteResource: deleteKey } = useResourceDelete<SshKey>({

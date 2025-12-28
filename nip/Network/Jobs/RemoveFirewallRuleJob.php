@@ -4,12 +4,15 @@ namespace Nip\Network\Jobs;
 
 use Nip\Network\Enums\RuleStatus;
 use Nip\Network\Models\FirewallRule;
+use Nip\Server\Events\ServerResourceStatusUpdated;
 use Nip\Server\Jobs\BaseProvisionJob;
 use Nip\Server\Models\Server;
 use Nip\Server\Services\SSH\ExecutionResult;
 
 class RemoveFirewallRuleJob extends BaseProvisionJob
 {
+    public int $tries = 1;
+
     public int $timeout = 120;
 
     public function __construct(
@@ -43,15 +46,31 @@ class RemoveFirewallRuleJob extends BaseProvisionJob
 
     protected function handleSuccess(ExecutionResult $result): void
     {
+        $server = $this->rule->server;
+        $ruleId = $this->rule->id;
+
         $this->rule->delete();
+
+        ServerResourceStatusUpdated::dispatch(
+            $server,
+            'firewall_rule',
+            $ruleId,
+            'deleted'
+        );
     }
 
     protected function handleFailure(\Throwable $exception): void
     {
-        // Restore to Installed - the rule is still on the server
         $this->rule->update([
             'status' => RuleStatus::Installed,
         ]);
+
+        ServerResourceStatusUpdated::dispatch(
+            $this->rule->server,
+            'firewall_rule',
+            $this->rule->id,
+            RuleStatus::Installed->value
+        );
     }
 
     /**

@@ -41,7 +41,7 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useConfirmation } from '@/composables/useConfirmation';
-import { useStatusPolling } from '@/composables/useStatusPolling';
+import { useResourceStatusUpdates } from '@/composables/useResourceStatusUpdates';
 import ServerLayout from '@/layouts/ServerLayout.vue';
 import type { Server } from '@/types';
 import type {
@@ -83,11 +83,10 @@ const { confirmButton } = useConfirmation();
 // Unwrap phpVersions from { data: [] } format
 const phpVersions = computed(() => props.phpVersions?.data ?? []);
 
-useStatusPolling({
-    items: phpVersions,
-    getStatus: (version) => version.status,
-    propName: 'phpVersions',
-    pendingStatuses: ['pending', 'installing', 'uninstalling'],
+useResourceStatusUpdates({
+    channelType: 'server',
+    channelId: props.server.id,
+    propNames: ['phpVersions'],
 });
 
 // Get initial setting values - access props directly

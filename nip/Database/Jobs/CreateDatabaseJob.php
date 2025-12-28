@@ -4,12 +4,16 @@ namespace Nip\Database\Jobs;
 
 use Nip\Database\Enums\DatabaseStatus;
 use Nip\Database\Models\Database;
+use Nip\Server\Events\ServerResourceStatusUpdated;
 use Nip\Server\Jobs\BaseProvisionJob;
 use Nip\Server\Models\Server;
 use Nip\Server\Services\SSH\ExecutionResult;
+use Nip\Site\Events\SiteResourceStatusUpdated;
 
 class CreateDatabaseJob extends BaseProvisionJob
 {
+    public int $tries = 1;
+
     public int $timeout = 120;
 
     public function __construct(
@@ -46,6 +50,8 @@ class CreateDatabaseJob extends BaseProvisionJob
         $this->database->update([
             'status' => DatabaseStatus::Installed,
         ]);
+
+        $this->dispatchStatusUpdate(DatabaseStatus::Installed->value);
     }
 
     protected function handleFailure(\Throwable $exception): void
@@ -53,6 +59,27 @@ class CreateDatabaseJob extends BaseProvisionJob
         $this->database->update([
             'status' => DatabaseStatus::Failed,
         ]);
+
+        $this->dispatchStatusUpdate(DatabaseStatus::Failed->value);
+    }
+
+    protected function dispatchStatusUpdate(string $status): void
+    {
+        if ($this->database->site_id) {
+            SiteResourceStatusUpdated::dispatch(
+                $this->database->site,
+                'database',
+                $this->database->id,
+                $status
+            );
+        } else {
+            ServerResourceStatusUpdated::dispatch(
+                $this->database->server,
+                'database',
+                $this->database->id,
+                $status
+            );
+        }
     }
 
     /**

@@ -4,12 +4,15 @@ namespace Nip\Database\Jobs;
 
 use Nip\Database\Enums\DatabaseUserStatus;
 use Nip\Database\Models\DatabaseUser;
+use Nip\Server\Events\ServerResourceStatusUpdated;
 use Nip\Server\Jobs\BaseProvisionJob;
 use Nip\Server\Models\Server;
 use Nip\Server\Services\SSH\ExecutionResult;
 
 class SyncDatabaseUserJob extends BaseProvisionJob
 {
+    public int $tries = 1;
+
     public int $timeout = 120;
 
     public function __construct(
@@ -53,6 +56,13 @@ class SyncDatabaseUserJob extends BaseProvisionJob
         $this->databaseUser->update([
             'status' => DatabaseUserStatus::Installed,
         ]);
+
+        ServerResourceStatusUpdated::dispatch(
+            $this->databaseUser->server,
+            'database_user',
+            $this->databaseUser->id,
+            DatabaseUserStatus::Installed->value
+        );
     }
 
     protected function handleFailure(\Throwable $exception): void
@@ -60,6 +70,13 @@ class SyncDatabaseUserJob extends BaseProvisionJob
         $this->databaseUser->update([
             'status' => DatabaseUserStatus::Failed,
         ]);
+
+        ServerResourceStatusUpdated::dispatch(
+            $this->databaseUser->server,
+            'database_user',
+            $this->databaseUser->id,
+            DatabaseUserStatus::Failed->value
+        );
     }
 
     /**

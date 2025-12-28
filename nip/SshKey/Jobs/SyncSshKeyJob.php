@@ -2,6 +2,7 @@
 
 namespace Nip\SshKey\Jobs;
 
+use Nip\Server\Events\ServerResourceStatusUpdated;
 use Nip\Server\Jobs\BaseProvisionJob;
 use Nip\Server\Models\Server;
 use Nip\Server\Services\SSH\ExecutionResult;
@@ -10,6 +11,8 @@ use Nip\SshKey\Models\SshKey;
 
 class SyncSshKeyJob extends BaseProvisionJob
 {
+    public int $tries = 1;
+
     public int $timeout = 120;
 
     public function __construct(
@@ -52,6 +55,13 @@ class SyncSshKeyJob extends BaseProvisionJob
         $this->sshKey->update([
             'status' => SshKeyStatus::Installed,
         ]);
+
+        ServerResourceStatusUpdated::dispatch(
+            $this->sshKey->server,
+            'ssh_key',
+            $this->sshKey->id,
+            SshKeyStatus::Installed->value
+        );
     }
 
     protected function handleFailure(\Throwable $exception): void
@@ -59,6 +69,13 @@ class SyncSshKeyJob extends BaseProvisionJob
         $this->sshKey->update([
             'status' => SshKeyStatus::Failed,
         ]);
+
+        ServerResourceStatusUpdated::dispatch(
+            $this->sshKey->server,
+            'ssh_key',
+            $this->sshKey->id,
+            SshKeyStatus::Failed->value
+        );
     }
 
     /**

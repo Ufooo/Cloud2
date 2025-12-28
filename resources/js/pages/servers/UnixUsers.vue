@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { useResourceDelete } from '@/composables/useResourceDelete';
-import { useStatusPolling } from '@/composables/useStatusPolling';
+import { useResourceStatusUpdates } from '@/composables/useResourceStatusUpdates';
 import ServerLayout from '@/layouts/ServerLayout.vue';
 import type { Server } from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
@@ -58,10 +58,10 @@ const addUserDialog = ref<InstanceType<typeof ResourceFormDialog>>();
 
 const users = computed(() => props.users.data);
 
-useStatusPolling({
-    items: users,
-    getStatus: (user) => user.status.value,
-    propName: 'users',
+useResourceStatusUpdates({
+    channelType: 'server',
+    channelId: props.server.id,
+    propNames: ['users'],
 });
 
 const { deleteResource: deleteUser } = useResourceDelete<UnixUser>({

@@ -42,7 +42,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { useConfirmation } from '@/composables/useConfirmation';
-import { useStatusPolling } from '@/composables/useStatusPolling';
+import { useResourceStatusUpdates } from '@/composables/useResourceStatusUpdates';
 import ServerLayout from '@/layouts/ServerLayout.vue';
 import type { Server } from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
@@ -112,11 +112,10 @@ const props = defineProps<Props>();
 
 const processes = computed(() => props.processes.data);
 
-useStatusPolling({
-    items: processes,
-    getStatus: (process) => process.status,
-    propName: 'processes',
-    pendingStatuses: ['pending', 'installing', 'deleting'],
+useResourceStatusUpdates({
+    channelType: 'server',
+    channelId: props.server.id,
+    propNames: ['processes'],
 });
 
 const { confirmButton } = useConfirmation();

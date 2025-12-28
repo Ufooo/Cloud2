@@ -2,6 +2,7 @@
 
 namespace Nip\UnixUser\Jobs;
 
+use Nip\Server\Events\ServerResourceStatusUpdated;
 use Nip\Server\Jobs\BaseProvisionJob;
 use Nip\Server\Models\Server;
 use Nip\Server\Services\SSH\ExecutionResult;
@@ -10,6 +11,8 @@ use Nip\UnixUser\Models\UnixUser;
 
 class CreateUnixUserJob extends BaseProvisionJob
 {
+    public int $tries = 1;
+
     public int $timeout = 120;
 
     public function __construct(
@@ -50,6 +53,13 @@ class CreateUnixUserJob extends BaseProvisionJob
         $this->unixUser->update([
             'status' => UserStatus::Installed,
         ]);
+
+        ServerResourceStatusUpdated::dispatch(
+            $this->unixUser->server,
+            'unix_user',
+            $this->unixUser->id,
+            UserStatus::Installed->value
+        );
     }
 
     protected function handleFailure(\Throwable $exception): void
@@ -57,6 +67,13 @@ class CreateUnixUserJob extends BaseProvisionJob
         $this->unixUser->update([
             'status' => UserStatus::Failed,
         ]);
+
+        ServerResourceStatusUpdated::dispatch(
+            $this->unixUser->server,
+            'unix_user',
+            $this->unixUser->id,
+            UserStatus::Failed->value
+        );
     }
 
     /**

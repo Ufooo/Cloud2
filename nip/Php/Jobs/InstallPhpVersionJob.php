@@ -4,12 +4,15 @@ namespace Nip\Php\Jobs;
 
 use Nip\Php\Enums\PhpVersionStatus;
 use Nip\Php\Models\PhpVersion;
+use Nip\Server\Events\ServerResourceStatusUpdated;
 use Nip\Server\Jobs\BaseProvisionJob;
 use Nip\Server\Models\Server;
 use Nip\Server\Services\SSH\ExecutionResult;
 
 class InstallPhpVersionJob extends BaseProvisionJob
 {
+    public int $tries = 1;
+
     public int $timeout = 600;
 
     public function __construct(
@@ -45,6 +48,13 @@ class InstallPhpVersionJob extends BaseProvisionJob
         $this->phpVersion->update([
             'status' => PhpVersionStatus::Installed,
         ]);
+
+        ServerResourceStatusUpdated::dispatch(
+            $this->phpVersion->server,
+            'php_version',
+            $this->phpVersion->id,
+            PhpVersionStatus::Installed->value
+        );
     }
 
     protected function handleFailure(\Throwable $exception): void
@@ -52,6 +62,13 @@ class InstallPhpVersionJob extends BaseProvisionJob
         $this->phpVersion->update([
             'status' => PhpVersionStatus::Failed,
         ]);
+
+        ServerResourceStatusUpdated::dispatch(
+            $this->phpVersion->server,
+            'php_version',
+            $this->phpVersion->id,
+            PhpVersionStatus::Failed->value
+        );
     }
 
     /**

@@ -4,12 +4,15 @@ namespace Nip\Database\Jobs;
 
 use Nip\Database\Enums\DatabaseUserStatus;
 use Nip\Database\Models\DatabaseUser;
+use Nip\Server\Events\ServerResourceStatusUpdated;
 use Nip\Server\Jobs\BaseProvisionJob;
 use Nip\Server\Models\Server;
 use Nip\Server\Services\SSH\ExecutionResult;
 
 class DeleteDatabaseUserJob extends BaseProvisionJob
 {
+    public int $tries = 1;
+
     public int $timeout = 120;
 
     public function __construct(
@@ -44,7 +47,17 @@ class DeleteDatabaseUserJob extends BaseProvisionJob
 
     protected function handleSuccess(ExecutionResult $result): void
     {
+        $server = $this->databaseUser->server;
+        $databaseUserId = $this->databaseUser->id;
+
         $this->databaseUser->delete();
+
+        ServerResourceStatusUpdated::dispatch(
+            $server,
+            'database_user',
+            $databaseUserId,
+            'deleted'
+        );
     }
 
     protected function handleFailure(\Throwable $exception): void
@@ -52,6 +65,13 @@ class DeleteDatabaseUserJob extends BaseProvisionJob
         $this->databaseUser->update([
             'status' => DatabaseUserStatus::Installed,
         ]);
+
+        ServerResourceStatusUpdated::dispatch(
+            $this->databaseUser->server,
+            'database_user',
+            $this->databaseUser->id,
+            DatabaseUserStatus::Installed->value
+        );
     }
 
     /**

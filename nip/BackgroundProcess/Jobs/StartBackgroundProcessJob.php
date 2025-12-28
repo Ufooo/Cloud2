@@ -3,12 +3,16 @@
 namespace Nip\BackgroundProcess\Jobs;
 
 use Nip\BackgroundProcess\Models\BackgroundProcess;
+use Nip\Server\Events\ServerResourceStatusUpdated;
 use Nip\Server\Jobs\BaseProvisionJob;
 use Nip\Server\Models\Server;
 use Nip\Server\Services\SSH\ExecutionResult;
+use Nip\Site\Events\SiteResourceStatusUpdated;
 
 class StartBackgroundProcessJob extends BaseProvisionJob
 {
+    public int $tries = 1;
+
     public int $timeout = 60;
 
     public function __construct(
@@ -41,12 +45,31 @@ class StartBackgroundProcessJob extends BaseProvisionJob
 
     protected function handleSuccess(ExecutionResult $result): void
     {
-        // Process started successfully, no status change needed
+        $this->dispatchStatusUpdate('started');
     }
 
     protected function handleFailure(\Throwable $exception): void
     {
-        // Log the failure but don't change process status
+        $this->dispatchStatusUpdate('start_failed');
+    }
+
+    protected function dispatchStatusUpdate(string $status): void
+    {
+        if ($this->process->site_id) {
+            SiteResourceStatusUpdated::dispatch(
+                $this->process->site,
+                'background_process',
+                $this->process->id,
+                $status
+            );
+        } else {
+            ServerResourceStatusUpdated::dispatch(
+                $this->process->server,
+                'background_process',
+                $this->process->id,
+                $status
+            );
+        }
     }
 
     /**

@@ -3,12 +3,15 @@
 namespace Nip\Php\Jobs;
 
 use Nip\Php\Models\PhpSetting;
+use Nip\Server\Events\ServerResourceStatusUpdated;
 use Nip\Server\Jobs\BaseProvisionJob;
 use Nip\Server\Models\Server;
 use Nip\Server\Services\SSH\ExecutionResult;
 
 class UpdatePhpSettingsJob extends BaseProvisionJob
 {
+    public int $tries = 1;
+
     public int $timeout = 300;
 
     public function __construct(
@@ -50,12 +53,22 @@ class UpdatePhpSettingsJob extends BaseProvisionJob
 
     protected function handleSuccess(ExecutionResult $result): void
     {
-        // Settings are already saved in the database
+        ServerResourceStatusUpdated::dispatch(
+            $this->phpSetting->server,
+            'php_settings',
+            $this->phpSetting->id,
+            'updated'
+        );
     }
 
     protected function handleFailure(\Throwable $exception): void
     {
-        // Log the failure, settings remain in database for retry
+        ServerResourceStatusUpdated::dispatch(
+            $this->phpSetting->server,
+            'php_settings',
+            $this->phpSetting->id,
+            'failed'
+        );
     }
 
     /**

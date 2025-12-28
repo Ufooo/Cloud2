@@ -4,12 +4,16 @@ namespace Nip\Scheduler\Jobs;
 
 use Nip\Scheduler\Enums\JobStatus;
 use Nip\Scheduler\Models\ScheduledJob;
+use Nip\Server\Events\ServerResourceStatusUpdated;
 use Nip\Server\Jobs\BaseProvisionJob;
 use Nip\Server\Models\Server;
 use Nip\Server\Services\SSH\ExecutionResult;
+use Nip\Site\Events\SiteResourceStatusUpdated;
 
 class SyncScheduledJobJob extends BaseProvisionJob
 {
+    public int $tries = 1;
+
     public int $timeout = 120;
 
     public function __construct(
@@ -49,6 +53,8 @@ class SyncScheduledJobJob extends BaseProvisionJob
         $this->scheduledJob->update([
             'status' => JobStatus::Installed,
         ]);
+
+        $this->dispatchStatusUpdate(JobStatus::Installed->value);
     }
 
     protected function handleFailure(\Throwable $exception): void
@@ -56,6 +62,27 @@ class SyncScheduledJobJob extends BaseProvisionJob
         $this->scheduledJob->update([
             'status' => JobStatus::Failed,
         ]);
+
+        $this->dispatchStatusUpdate(JobStatus::Failed->value);
+    }
+
+    protected function dispatchStatusUpdate(string $status): void
+    {
+        if ($this->scheduledJob->site_id) {
+            SiteResourceStatusUpdated::dispatch(
+                $this->scheduledJob->site,
+                'scheduled_job',
+                $this->scheduledJob->id,
+                $status
+            );
+        } else {
+            ServerResourceStatusUpdated::dispatch(
+                $this->scheduledJob->server,
+                'scheduled_job',
+                $this->scheduledJob->id,
+                $status
+            );
+        }
     }
 
     /**

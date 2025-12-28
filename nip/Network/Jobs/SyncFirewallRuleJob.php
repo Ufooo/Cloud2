@@ -4,12 +4,15 @@ namespace Nip\Network\Jobs;
 
 use Nip\Network\Enums\RuleStatus;
 use Nip\Network\Models\FirewallRule;
+use Nip\Server\Events\ServerResourceStatusUpdated;
 use Nip\Server\Jobs\BaseProvisionJob;
 use Nip\Server\Models\Server;
 use Nip\Server\Services\SSH\ExecutionResult;
 
 class SyncFirewallRuleJob extends BaseProvisionJob
 {
+    public int $tries = 1;
+
     public int $timeout = 120;
 
     public function __construct(
@@ -60,6 +63,13 @@ class SyncFirewallRuleJob extends BaseProvisionJob
         $this->rule->update([
             'status' => RuleStatus::Installed,
         ]);
+
+        ServerResourceStatusUpdated::dispatch(
+            $this->rule->server,
+            'firewall_rule',
+            $this->rule->id,
+            RuleStatus::Installed->value
+        );
     }
 
     protected function handleFailure(\Throwable $exception): void
@@ -67,6 +77,13 @@ class SyncFirewallRuleJob extends BaseProvisionJob
         $this->rule->update([
             'status' => RuleStatus::Failed,
         ]);
+
+        ServerResourceStatusUpdated::dispatch(
+            $this->rule->server,
+            'firewall_rule',
+            $this->rule->id,
+            RuleStatus::Failed->value
+        );
     }
 
     /**

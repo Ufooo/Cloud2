@@ -30,7 +30,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { useResourceDelete } from '@/composables/useResourceDelete';
-import { useStatusPolling } from '@/composables/useStatusPolling';
+import { useResourceStatusUpdates } from '@/composables/useResourceStatusUpdates';
 import ServerLayout from '@/layouts/ServerLayout.vue';
 import type { Server } from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
@@ -84,10 +84,10 @@ const addRuleDialog = ref<InstanceType<typeof ResourceFormDialog>>();
 
 const rules = computed(() => props.rules.data);
 
-useStatusPolling({
-    items: rules,
-    getStatus: (rule) => rule.status.value,
-    propName: 'rules',
+useResourceStatusUpdates({
+    channelType: 'server',
+    channelId: props.server.id,
+    propNames: ['rules'],
 });
 
 const { deleteResource: deleteRule } = useResourceDelete<FirewallRule>({

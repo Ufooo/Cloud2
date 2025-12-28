@@ -2,6 +2,7 @@
 
 namespace Nip\SshKey\Jobs;
 
+use Nip\Server\Events\ServerResourceStatusUpdated;
 use Nip\Server\Jobs\BaseProvisionJob;
 use Nip\Server\Models\Server;
 use Nip\Server\Services\SSH\ExecutionResult;
@@ -10,6 +11,8 @@ use Nip\SshKey\Models\SshKey;
 
 class RemoveSshKeyJob extends BaseProvisionJob
 {
+    public int $tries = 1;
+
     public int $timeout = 120;
 
     public function __construct(
@@ -47,15 +50,31 @@ class RemoveSshKeyJob extends BaseProvisionJob
 
     protected function handleSuccess(ExecutionResult $result): void
     {
+        $server = $this->sshKey->server;
+        $sshKeyId = $this->sshKey->id;
+
         $this->sshKey->delete();
+
+        ServerResourceStatusUpdated::dispatch(
+            $server,
+            'ssh_key',
+            $sshKeyId,
+            'deleted'
+        );
     }
 
     protected function handleFailure(\Throwable $exception): void
     {
-        // Restore to Installed - the key is still on the server
         $this->sshKey->update([
             'status' => SshKeyStatus::Installed,
         ]);
+
+        ServerResourceStatusUpdated::dispatch(
+            $this->sshKey->server,
+            'ssh_key',
+            $this->sshKey->id,
+            SshKeyStatus::Installed->value
+        );
     }
 
     /**

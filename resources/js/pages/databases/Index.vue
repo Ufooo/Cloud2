@@ -28,7 +28,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useConfirmation } from '@/composables/useConfirmation';
-import { useStatusPolling } from '@/composables/useStatusPolling';
+import { useResourceStatusUpdates } from '@/composables/useResourceStatusUpdates';
 import AppLayout from '@/layouts/AppLayout.vue';
 import ServerLayout from '@/layouts/ServerLayout.vue';
 import SiteLayout from '@/layouts/SiteLayout.vue';
@@ -102,19 +102,21 @@ const databaseUsers = computed(() => {
     return props.databaseUsers.data;
 });
 
-useStatusPolling({
-    items: databases,
-    getStatus: (db) => db.status || 'installed',
-    propName: 'databases',
-    pendingStatuses: ['pending', 'installing', 'deleting'],
-});
-
-useStatusPolling({
-    items: databaseUsers,
-    getStatus: (user) => user.status || 'installed',
-    propName: 'databaseUsers',
-    pendingStatuses: ['pending', 'installing', 'syncing', 'deleting'],
-});
+// Subscribe to WebSocket updates for site or server context
+// For global view (no server/site), data only updates on navigation
+if (props.site) {
+    useResourceStatusUpdates({
+        channelType: 'site',
+        channelId: props.site.id,
+        propNames: ['databases'],
+    });
+} else if (props.server) {
+    useResourceStatusUpdates({
+        channelType: 'server',
+        channelId: props.server.id,
+        propNames: ['databases', 'databaseUsers'],
+    });
+}
 
 const hasDatabases = computed(() => databases.value.length > 0);
 const hasDatabaseUsers = computed(() => databaseUsers.value.length > 0);
