@@ -17,6 +17,7 @@ use Nip\Php\Models\PhpVersion;
 use Nip\Server\Enums\ServerStatus;
 use Nip\Server\Enums\ServerType;
 use Nip\Server\Events\ServerProvisioningUpdated;
+use Nip\Server\Events\ServerResourceStatusUpdated;
 use Nip\Server\Models\Server;
 use Nip\SshKey\Enums\SshKeyStatus;
 use Nip\SshKey\Models\SshKey;
@@ -73,17 +74,23 @@ class ProvisioningController extends Controller
                 ->where('status', UserStatus::Installing)
                 ->update(['status' => UserStatus::Installed]);
 
+            ServerResourceStatusUpdated::dispatch($server, 'unix_user', null, UserStatus::Installed->value);
+
             // Mark all PHP versions as installed
             PhpVersion::query()
                 ->where('server_id', $server->id)
                 ->where('status', PhpVersionStatus::Installing)
                 ->update(['status' => PhpVersionStatus::Installed]);
 
+            ServerResourceStatusUpdated::dispatch($server, 'php_version', null, PhpVersionStatus::Installed->value);
+
             // Mark all SSH keys as installed
             SshKey::query()
                 ->where('server_id', $server->id)
                 ->where('status', SshKeyStatus::Pending)
                 ->update(['status' => SshKeyStatus::Installed]);
+
+            ServerResourceStatusUpdated::dispatch($server, 'ssh_key', null, SshKeyStatus::Installed->value);
 
             // Create default firewall rules in database
             $this->createDefaultFirewallRules($server);
