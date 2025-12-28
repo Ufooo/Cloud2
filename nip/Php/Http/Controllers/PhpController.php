@@ -19,6 +19,7 @@ use Nip\Php\Http\Resources\PhpSettingResource;
 use Nip\Php\Http\Resources\PhpVersionResource;
 use Nip\Php\Jobs\InstallPhpVersionJob;
 use Nip\Php\Jobs\RemovePhpVersionJob;
+use Nip\Php\Jobs\SetCliDefaultPhpVersionJob;
 use Nip\Php\Jobs\UpdatePhpSettingsJob;
 use Nip\Php\Models\PhpVersion;
 use Nip\Server\Data\ServerData;
@@ -127,22 +128,21 @@ class PhpController extends Controller
 
         $type = $request->validated()['type'];
 
-        DB::transaction(function () use ($server, $phpVersion, $type) {
-            if ($type === 'cli') {
-                $server->phpVersions()->update(['is_cli_default' => false]);
-                $phpVersion->update(['is_cli_default' => true]);
-            } else {
-                $server->phpVersions()->update(['is_site_default' => false]);
-                $phpVersion->update(['is_site_default' => true]);
-            }
-        });
+        if ($type === 'cli') {
+            SetCliDefaultPhpVersionJob::dispatch($phpVersion);
 
-        $message = $type === 'cli'
-            ? 'CLI default PHP version set successfully.'
-            : 'Site default PHP version set successfully.';
+            return redirect()
+                ->route('servers.php', $server)
+                ->with('success', 'CLI default PHP version update started.');
+        }
+
+        DB::transaction(function () use ($server, $phpVersion) {
+            $server->phpVersions()->update(['is_site_default' => false]);
+            $phpVersion->update(['is_site_default' => true]);
+        });
 
         return redirect()
             ->route('servers.php', $server)
-            ->with('success', $message);
+            ->with('success', 'Site default PHP version set successfully.');
     }
 }

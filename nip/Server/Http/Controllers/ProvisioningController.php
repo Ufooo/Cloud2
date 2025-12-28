@@ -131,7 +131,7 @@ class ProvisioningController extends Controller
      */
     private function getTemplateVariables(Server $server): array
     {
-        $phpVersion = $server->php_version ? str_replace('php', '', $server->php_version) : '8.4';
+        $phpVersion = $server->phpVersions()->where('is_cli_default', true)->first()?->version ?? '8.4';
         $sudoPassword = Str::random(20);
         $databasePassword = $server->database_password ?? Str::random(20);
         $meilisearchKey = Str::random(20);

@@ -176,6 +176,17 @@ class Server extends Model
         });
     }
 
+    protected function phpVersionString(): Attribute
+    {
+        return Attribute::get(function () {
+            if (! $this->php_version) {
+                return '8.4';
+            }
+
+            return PhpVersion::tryFrom($this->php_version)?->version() ?? '8.4';
+        });
+    }
+
     protected function displayableProvider(): Attribute
     {
         return Attribute::get(fn () => $this->provider?->label());
