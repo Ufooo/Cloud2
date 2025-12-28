@@ -15,8 +15,8 @@ export function useResourceStatusUpdates({
     const channelName = `${channelType}s.${channelId}`;
     const eventName =
         channelType === 'server'
-            ? '.ServerResourceStatusUpdated'
-            : '.SiteResourceStatusUpdated';
+            ? 'ServerResourceStatusUpdated'
+            : 'SiteResourceStatusUpdated';
 
     useEcho(channelName, eventName, () => {
         router.reload({ only: propNames, preserveScroll: true });
