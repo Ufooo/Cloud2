@@ -2,15 +2,17 @@
 import {
     failed,
     failedForServer,
+    failedForSite,
 } from '@/actions/Nip/Server/Http/Controllers/ProvisionScriptController';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import type { ProvisionScriptData, Server } from '@/types';
+import type { ProvisionScriptData, Server, Site } from '@/types';
 import { AlertCircle, ChevronRight, X } from 'lucide-vue-next';
 import { computed, onMounted, ref, watch } from 'vue';
 
 interface Props {
     server?: Server;
+    site?: Site;
     resourceTypes?: string[];
     title?: string;
     showServerName?: boolean;
@@ -36,9 +38,14 @@ async function fetchFailedScripts() {
             queryParams.types = props.resourceTypes.join(',');
         }
 
-        const url = props.server
-            ? failedForServer.url(props.server, { query: queryParams })
-            : failed.url({ query: queryParams });
+        let url: string;
+        if (props.site) {
+            url = failedForSite.url(props.site, { query: queryParams });
+        } else if (props.server) {
+            url = failedForServer.url(props.server, { query: queryParams });
+        } else {
+            url = failed.url({ query: queryParams });
+        }
 
         const response = await fetch(url);
         const data = await response.json();

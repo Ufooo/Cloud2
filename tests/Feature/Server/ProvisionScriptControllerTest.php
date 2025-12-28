@@ -4,6 +4,7 @@ use App\Models\User;
 use Nip\Server\Enums\ProvisionScriptStatus;
 use Nip\Server\Models\ProvisionScript;
 use Nip\Server\Models\Server;
+use Nip\Site\Models\Site;
 
 beforeEach(function () {
     $this->user = User::factory()->create();
@@ -101,4 +102,30 @@ it('can dismiss a failed provision script', function () {
         ->assertJsonPath('success', true);
 
     expect($script->fresh()->status)->toBe(ProvisionScriptStatus::Completed);
+});
+
+it('can fetch failed scripts for a site', function () {
+    $site = Site::factory()->create([
+        'server_id' => $this->server->id,
+    ]);
+
+    ProvisionScript::factory()->count(2)->create([
+        'server_id' => $this->server->id,
+        'status' => ProvisionScriptStatus::Failed,
+        'resource_type' => 'site',
+        'resource_id' => $site->id,
+    ]);
+
+    ProvisionScript::factory()->create([
+        'server_id' => $this->server->id,
+        'status' => ProvisionScriptStatus::Failed,
+        'resource_type' => 'site',
+        'resource_id' => 999,
+    ]);
+
+    $response = $this->actingAs($this->user)
+        ->getJson("/sites/{$site->slug}/failed-scripts");
+
+    $response->assertOk()
+        ->assertJsonCount(2);
 });

@@ -14,16 +14,24 @@ class SSHService
 
     private Server $server;
 
+    private string $connectedUser;
+
     private int $maxRetries = 3;
 
     private int $timeout = 30;
 
-    public function connect(Server $server): self
+    public function connect(Server $server, ?string $asUser = null): self
     {
         $this->server = $server;
+        $this->connectedUser = $asUser ?? $server->ssh_user ?? 'root';
         $this->establishConnection();
 
         return $this;
+    }
+
+    public function getConnectedUser(): string
+    {
+        return $this->connectedUser;
     }
 
     private function establishConnection(): void
@@ -32,7 +40,7 @@ class SSHService
 
         for ($attempt = 1; $attempt <= $this->maxRetries; $attempt++) {
             try {
-                Log::info("SSH connection attempt {$attempt} to {$this->server->ip_address}");
+                Log::info("SSH connection attempt {$attempt} to {$this->server->ip_address} as {$this->connectedUser}");
 
                 $this->connection = new SSH2(
                     $this->server->ip_address,
@@ -43,13 +51,13 @@ class SSHService
 
                 $privateKey = $this->getPrivateKey();
 
-                if ($this->connection->login($this->server->ssh_user ?? 'root', $privateKey)) {
-                    Log::info("SSH connection successful to {$this->server->ip_address}");
+                if ($this->connection->login($this->connectedUser, $privateKey)) {
+                    Log::info("SSH connection successful to {$this->server->ip_address} as {$this->connectedUser}");
 
                     return;
                 }
 
-                throw new Exception('SSH authentication failed');
+                throw new Exception("SSH authentication failed for user {$this->connectedUser}");
             } catch (Exception $e) {
                 $lastException = $e;
                 Log::warning("SSH connection attempt {$attempt} failed: ".$e->getMessage());
@@ -61,7 +69,7 @@ class SSHService
         }
 
         throw new SSHConnectionException(
-            "Failed to connect to server {$this->server->ip_address} after {$this->maxRetries} attempts",
+            "Failed to connect to server {$this->server->ip_address} as {$this->connectedUser} after {$this->maxRetries} attempts",
             previous: $lastException
         );
     }
@@ -104,9 +112,8 @@ class SSHService
     public function executeScript(string $scriptContent): ExecutionResult
     {
         $scriptId = time().'_'.uniqid();
-        $user = $this->server->ssh_user ?? 'root';
 
-        $homeDir = $user === 'root' ? '/root' : "/home/{$user}";
+        $homeDir = $this->connectedUser === 'root' ? '/root' : "/home/{$this->connectedUser}";
         $scriptDir = "{$homeDir}/.netipar";
         $remotePath = "{$scriptDir}/provision-{$scriptId}.sh";
 
@@ -118,7 +125,7 @@ class SSHService
 
             $this->exec("chmod +x {$remotePath}");
 
-            Log::info("Executing script {$remotePath}");
+            Log::info("Executing script {$remotePath} as {$this->connectedUser}");
             $result = $this->exec("bash {$remotePath} 2>&1");
 
             Log::info("Script kept at {$remotePath} for audit purposes");

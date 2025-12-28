@@ -10,6 +10,7 @@ use Nip\Server\Enums\ProvisionScriptStatus;
 use Nip\Server\Http\Resources\ProvisionScriptResource;
 use Nip\Server\Models\ProvisionScript;
 use Nip\Server\Models\Server;
+use Nip\Site\Models\Site;
 
 class ProvisionScriptController extends Controller
 {
@@ -45,6 +46,21 @@ class ProvisionScriptController extends Controller
         }
 
         return response()->json(ProvisionScriptResource::collection($query->get()));
+    }
+
+    public function failedForSite(Site $site): JsonResponse
+    {
+        Gate::authorize('view', $site->server);
+
+        $scripts = ProvisionScript::query()
+            ->where('resource_type', 'site')
+            ->where('resource_id', $site->id)
+            ->where('status', ProvisionScriptStatus::Failed)
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        return response()->json(ProvisionScriptResource::collection($scripts));
     }
 
     public function show(ProvisionScript $provisionScript): JsonResponse

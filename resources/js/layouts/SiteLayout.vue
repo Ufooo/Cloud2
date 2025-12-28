@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { indexForSite as databasesIndex } from '@/actions/Nip/Database/Http/Controllers/DatabaseController';
 import { index as sitesIndex } from '@/actions/Nip/Site/Http/Controllers/SiteController';
+import FailedScriptsAlert from '@/components/FailedScriptsAlert.vue';
 import SiteTypeIcon from '@/components/icons/SiteTypeIcon.vue';
+import ScriptOutputModal from '@/components/ScriptOutputModal.vue';
 import Avatar from '@/components/shared/Avatar.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SiteStatusBadge from '@/pages/sites/partials/SiteStatusBadge.vue';
-import type { BreadcrumbItem, Site } from '@/types';
+import type { BreadcrumbItem, ProvisionScriptData, Site } from '@/types';
 import { Link, router } from '@inertiajs/vue3';
+import { useEcho } from '@laravel/echo-vue';
 import {
     Activity,
     Bell,
@@ -21,7 +24,7 @@ import {
     Share2,
 } from 'lucide-vue-next';
 import type { FunctionalComponent } from 'vue';
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 
 interface Props {
     site: Site;
@@ -29,37 +32,10 @@ interface Props {
 
 const props = defineProps<Props>();
 
-// Status polling for pending/installing/deleting states
-const pendingStatuses = ['pending', 'installing', 'deleting'];
-const pollingInterval = ref<ReturnType<typeof setInterval> | null>(null);
-
-function startPolling() {
-    if (pollingInterval.value) return;
-
-    pollingInterval.value = setInterval(() => {
-        router.reload({ only: ['site'], preserveScroll: true });
-    }, 3000);
-}
-
-function stopPolling() {
-    if (pollingInterval.value) {
-        clearInterval(pollingInterval.value);
-        pollingInterval.value = null;
-    }
-}
-
-function checkAndPoll() {
-    const status = props.site.status || 'installed';
-    if (pendingStatuses.includes(status)) {
-        startPolling();
-    } else {
-        stopPolling();
-    }
-}
-
-watch(() => props.site.status, checkAndPoll);
-onMounted(checkAndPoll);
-onUnmounted(stopPolling);
+// Real-time updates via WebSocket (useEcho handles lifecycle automatically)
+useEcho(`sites.${props.site.id}`, '.SiteStatusUpdated', () => {
+    router.reload({ only: ['site'], preserveScroll: true });
+});
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => [
     {
@@ -138,6 +114,12 @@ function isActive(item: NavItem): boolean {
         return pathname === item.href;
     }
     return pathname.startsWith(item.href);
+}
+
+const scriptOutputModal = ref<InstanceType<typeof ScriptOutputModal> | null>(null);
+
+function handleScriptClick(script: ProvisionScriptData) {
+    scriptOutputModal.value?.open(script);
 }
 </script>
 
@@ -220,8 +202,15 @@ function isActive(item: NavItem): boolean {
 
             <!-- Main Content -->
             <main class="flex-1 overflow-auto p-4">
+                <FailedScriptsAlert
+                    :site="site"
+                    class="mb-4"
+                    @script-click="handleScriptClick"
+                />
                 <slot />
             </main>
         </div>
+
+        <ScriptOutputModal ref="scriptOutputModal" />
     </AppLayout>
 </template>

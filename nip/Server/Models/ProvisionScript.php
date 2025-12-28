@@ -19,6 +19,7 @@ class ProvisionScript extends Model
         'filename',
         'resource_type',
         'resource_id',
+        'run_as_user',
         'content',
         'output',
         'exit_code',

@@ -23,6 +23,7 @@ use Nip\Site\Http\Requests\StoreSiteRequest;
 use Nip\Site\Http\Requests\UpdateSiteRequest;
 use Nip\Site\Http\Resources\SiteResource;
 use Nip\Site\Jobs\DeleteSiteJob;
+use Nip\Site\Jobs\DeploySiteJob;
 use Nip\Site\Jobs\InstallSiteJob;
 use Nip\Site\Models\Site;
 use Nip\Site\Services\SitePhpVersionService;
@@ -147,6 +148,7 @@ class SiteController extends Controller
     {
         Gate::authorize('view', $site->server);
 
+        $site->refresh();
         $site->load('server');
 
         return Inertia::render('sites/Show', [
@@ -235,10 +237,10 @@ class SiteController extends Controller
 
         $site->update(['deploy_status' => DeployStatus::Deploying]);
 
-        // TODO: Dispatch job to deploy the site on the server
+        DeploySiteJob::dispatch($site);
 
         return redirect()
-            ->route('sites.index')
+            ->route('sites.show', $site)
             ->with('success', 'Deployment started.');
     }
 }

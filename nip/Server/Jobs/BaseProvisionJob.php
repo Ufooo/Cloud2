@@ -40,16 +40,22 @@ abstract class BaseProvisionJob implements ShouldQueue
 
     abstract protected function handleSuccess(ExecutionResult $result): void;
 
+    protected function getRunAsUser(): ?string
+    {
+        return null;
+    }
+
     public function handle(SSHService $ssh): void
     {
         $server = $this->getServer();
+        $runAsUser = $this->getRunAsUser();
 
         try {
-            Log::info("Starting provision job for {$this->getResourceType()} on server {$server->id}");
+            Log::info("Starting provision job for {$this->getResourceType()} on server {$server->id}".($runAsUser ? " as {$runAsUser}" : ''));
 
             $this->createProvisionScript();
 
-            $ssh->connect($server);
+            $ssh->connect($server, $runAsUser);
 
             $result = $ssh->executeScript($this->script->content);
 
@@ -80,6 +86,7 @@ abstract class BaseProvisionJob implements ShouldQueue
             if ($this->shouldRetry($e)) {
                 $this->release($this->backoff[$this->attempts() - 1] ?? 600);
             } else {
+                $this->handleFailure($e);
                 $this->fail($e);
             }
         } finally {
@@ -98,6 +105,7 @@ abstract class BaseProvisionJob implements ShouldQueue
             'filename' => $filename,
             'resource_type' => $this->getResourceType(),
             'resource_id' => $this->getResourceId(),
+            'run_as_user' => $this->getRunAsUser(),
             'content' => $this->generateScript(),
             'status' => ProvisionScriptStatus::Executing,
         ]);
