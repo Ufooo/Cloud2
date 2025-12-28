@@ -43,6 +43,14 @@ class UnixUser extends Model
     }
 
     /**
+     * @return HasMany<\Nip\Composer\Models\ComposerCredential, $this>
+     */
+    public function composerCredentials(): HasMany
+    {
+        return $this->hasMany(\Nip\Composer\Models\ComposerCredential::class);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     protected function casts(): array

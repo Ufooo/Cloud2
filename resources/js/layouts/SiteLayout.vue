@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { index as composerIndex } from '@/actions/Nip/Composer/Http/Controllers/ComposerController';
 import { indexForSite as databasesIndex } from '@/actions/Nip/Database/Http/Controllers/DatabaseController';
 import { index as sitesIndex } from '@/actions/Nip/Site/Http/Controllers/SiteController';
 import FailedScriptsAlert from '@/components/FailedScriptsAlert.vue';
@@ -19,6 +20,7 @@ import {
     Globe,
     LayoutDashboard,
     Lock,
+    Package,
     Rocket,
     Settings,
     Share2,
@@ -69,6 +71,11 @@ const navItems = computed<NavItem[]>(() => [
         title: 'Databases',
         href: databasesIndex.url(props.site),
         icon: Database,
+    },
+    {
+        title: 'Composer',
+        href: composerIndex.url(props.site),
+        icon: Package,
     },
     {
         title: 'Scheduler',

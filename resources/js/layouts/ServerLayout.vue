@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { index as backgroundProcessIndex } from '@/actions/Nip/BackgroundProcess/Http/Controllers/BackgroundProcessController';
+import { index as serverComposerIndex } from '@/actions/Nip/Composer/Http/Controllers/ServerComposerController';
 import { indexForServer as databasesIndex } from '@/actions/Nip/Database/Http/Controllers/DatabaseController';
 import { index as networkIndex } from '@/actions/Nip/Network/Http/Controllers/NetworkController';
 import { index as phpIndex } from '@/actions/Nip/Php/Http/Controllers/PhpController';
@@ -34,6 +35,7 @@ import {
     Globe,
     Key,
     LayoutDashboard,
+    Package,
     PanelTop,
     Settings,
     Users,
@@ -125,6 +127,11 @@ const navItems = computed<NavItem[]>(() => [
         title: 'Databases',
         href: databasesIndex.url(props.server),
         icon: Database,
+    },
+    {
+        title: 'Composer',
+        href: serverComposerIndex.url(props.server),
+        icon: Package,
     },
     {
         title: 'Settings',

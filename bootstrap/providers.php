@@ -5,6 +5,7 @@ return [
     App\Providers\FortifyServiceProvider::class,
     App\Providers\HorizonServiceProvider::class,
     Nip\BackgroundProcess\Providers\BackgroundProcessServiceProvider::class,
+    Nip\Composer\Providers\ComposerServiceProvider::class,
     Nip\Database\Providers\DatabaseServiceProvider::class,
     Nip\Deployment\Providers\DeploymentServiceProvider::class,
     Nip\Domain\Providers\DomainServiceProvider::class,

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Nip\Composer\Models\ComposerCredential;
 use Nip\Server\Enums\IdentityColor;
 use Nip\Server\Models\Server;
 use Nip\Site\Database\Factories\SiteFactory;
@@ -107,6 +108,15 @@ class Site extends Model
     }
 
     /**
+     * @return BelongsTo<\Nip\UnixUser\Models\UnixUser, $this>
+     */
+    public function unixUser(): BelongsTo
+    {
+        return $this->belongsTo(\Nip\UnixUser\Models\UnixUser::class, 'user', 'username')
+            ->where('server_id', $this->server_id);
+    }
+
+    /**
      * @return HasMany<\Nip\Domain\Models\DomainRecord, $this>
      */
     public function domainRecords(): HasMany
@@ -161,6 +171,14 @@ class Site extends Model
     public function redirectRules(): HasMany
     {
         return $this->hasMany(\Nip\Redirect\Models\RedirectRule::class);
+    }
+
+    /**
+     * @return HasMany<ComposerCredential, $this>
+     */
+    public function composerCredentials(): HasMany
+    {
+        return $this->hasMany(ComposerCredential::class);
     }
 
     public function getFullPath(): string

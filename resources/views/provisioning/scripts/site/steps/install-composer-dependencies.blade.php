@@ -23,7 +23,16 @@ cd "$CURRENT_PATH"
 if [ -f "composer.json" ]; then
     echo "Installing Composer dependencies..."
 
-    sudo -u {{ $user }} composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+    # Link auth.json if exists
+    if [ -f "$SITE_PATH/auth.json" ]; then
+        ln -sf "$SITE_PATH/auth.json" "$CURRENT_PATH/auth.json"
+    fi
+
+    php{{ $composerPhpVersion }} {{ $composerBinary }} install \
+        --no-interaction \
+        --no-dev \
+        --prefer-dist \
+        --optimize-autoloader
 
     echo "Composer dependencies installed successfully!"
 else
@@ -38,13 +47,13 @@ if [ -f "package.json" ]; then
     echo "Installing NPM dependencies..."
 
     @if($packageManager->value === 'npm')
-    sudo -u {{ $user }} npm install --production
+    npm install --production
     @elseif($packageManager->value === 'yarn')
-    sudo -u {{ $user }} yarn install --production
+    yarn install --production
     @elseif($packageManager->value === 'pnpm')
-    sudo -u {{ $user }} pnpm install --prod
+    pnpm install --prod
     @elseif($packageManager->value === 'bun')
-    sudo -u {{ $user }} bun install --production
+    bun install --production
     @endif
 
     echo "NPM dependencies installed successfully!"
