@@ -7,6 +7,9 @@ import {
     storeUser,
     updateUser,
 } from '@/actions/Nip/Database/Http/Controllers/DatabaseController';
+import FailedScriptsAlert from '@/components/FailedScriptsAlert.vue';
+import ScriptOutputModal from '@/components/ScriptOutputModal.vue';
+import ConfirmationDialog from '@/components/shared/ConfirmationDialog.vue';
 import EmptyState from '@/components/shared/EmptyState.vue';
 import Pagination from '@/components/shared/Pagination.vue';
 import { Badge } from '@/components/ui/badge';
@@ -24,11 +27,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { useConfirmation } from '@/composables/useConfirmation';
 import { useStatusPolling } from '@/composables/useStatusPolling';
 import AppLayout from '@/layouts/AppLayout.vue';
 import ServerLayout from '@/layouts/ServerLayout.vue';
 import SiteLayout from '@/layouts/SiteLayout.vue';
-import type { BreadcrumbItem, Server, Site } from '@/types';
+import type { BreadcrumbItem, ProvisionScriptData, Server, Site } from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { Database, Eye, EyeOff, Plus, User } from 'lucide-vue-next';
@@ -63,6 +67,7 @@ interface DatabaseUserItem {
     id: string;
     serverId: number;
     serverName?: string;
+    serverSlug?: string;
     username: string;
     readonly?: boolean;
     status?: string;
@@ -87,6 +92,8 @@ interface Props {
 
 const props = defineProps<Props>();
 
+const { confirmButton } = useConfirmation();
+
 const databases = computed(() => props.databases.data);
 const databaseUsers = computed(() => {
     if (Array.isArray(props.databaseUsers)) {
@@ -109,13 +116,8 @@ useStatusPolling({
     pendingStatuses: ['pending', 'installing', 'syncing', 'deleting'],
 });
 
-const hasDatabases = computed(() => props.databases.data.length > 0);
-const hasDatabaseUsers = computed(() => {
-    if (Array.isArray(props.databaseUsers)) {
-        return props.databaseUsers.length > 0;
-    }
-    return props.databaseUsers.data.length > 0;
-});
+const hasDatabases = computed(() => databases.value.length > 0);
+const hasDatabaseUsers = computed(() => databaseUsers.value.length > 0);
 
 
 const pageTitle = computed(() => {
@@ -169,10 +171,19 @@ function submitDatabase() {
     });
 }
 
-function deleteDatabase(database: DatabaseItem) {
-    if (!props.server) return;
+async function deleteDatabase(database: DatabaseItem) {
+    const serverSlug = props.server?.slug ?? database.serverSlug;
+    if (!serverSlug) return;
 
-    router.delete(destroy.url({ server: props.server.slug, database: database.id }), {
+    const confirmed = await confirmButton({
+        title: 'Delete Database',
+        description: `Are you sure you want to delete the database "${database.name}"? This action cannot be undone.`,
+        confirmText: 'Delete',
+    });
+
+    if (!confirmed) return;
+
+    router.delete(destroy.url({ server: serverSlug, database: database.id }), {
         preserveScroll: true,
     });
 }
@@ -188,11 +199,15 @@ const userForm = useForm({
     readonly: false,
 });
 
+const installedDatabases = computed(() =>
+    databases.value.filter((db) => db.status === 'installed')
+);
+
 const filteredDatabases = computed(() => {
     if (!databaseSearch.value) {
-        return props.databases.data;
+        return installedDatabases.value;
     }
-    return props.databases.data.filter((db) =>
+    return installedDatabases.value.filter((db) =>
         db.name.toLowerCase().includes(databaseSearch.value.toLowerCase()),
     );
 });
@@ -220,7 +235,7 @@ function toggleDatabase(databaseId: string) {
 }
 
 function selectAllDatabases() {
-    userForm.databases = props.databases.data.map((db) => db.id);
+    userForm.databases = installedDatabases.value.map((db) => db.id);
 }
 
 function submitUser() {
@@ -240,10 +255,19 @@ function submitUser() {
         });
 }
 
-function deleteUser(user: DatabaseUserItem) {
-    if (!props.server) return;
+async function deleteUser(user: DatabaseUserItem) {
+    const serverSlug = props.server?.slug ?? user.serverSlug;
+    if (!serverSlug) return;
 
-    router.delete(destroyUser.url({ server: props.server.slug, databaseUser: user.id }), {
+    const confirmed = await confirmButton({
+        title: 'Delete Database User',
+        description: `Are you sure you want to delete the user "${user.username}"? This action cannot be undone.`,
+        confirmText: 'Delete',
+    });
+
+    if (!confirmed) return;
+
+    router.delete(destroyUser.url({ server: serverSlug, databaseUser: user.id }), {
         preserveScroll: true,
     });
 }
@@ -261,9 +285,9 @@ const editUserForm = useForm({
 
 const filteredEditDatabases = computed(() => {
     if (!editDatabaseSearch.value) {
-        return props.databases.data;
+        return installedDatabases.value;
     }
-    return props.databases.data.filter((db) =>
+    return installedDatabases.value.filter((db) =>
         db.name.toLowerCase().includes(editDatabaseSearch.value.toLowerCase()),
     );
 });
@@ -293,7 +317,7 @@ function toggleEditDatabase(databaseId: string) {
 }
 
 function selectAllEditDatabases() {
-    editUserForm.databases = props.databases.data.map((db) => db.id);
+    editUserForm.databases = installedDatabases.value.map((db) => db.id);
 }
 
 function submitEditUser() {
@@ -312,6 +336,14 @@ function submitEditUser() {
                 editingUser.value = null;
             },
         });
+}
+
+// Script output modal
+const scriptOutputModal = ref<InstanceType<typeof ScriptOutputModal> | null>(null);
+const databaseResourceTypes = ['database', 'database_user'];
+
+function handleScriptClick(script: ProvisionScriptData) {
+    scriptOutputModal.value?.open(script);
 }
 </script>
 
@@ -335,14 +367,14 @@ function submitEditUser() {
             <Card v-else class="overflow-hidden py-0">
                 <div class="divide-y">
                     <DatabaseCardListItem
-                        v-for="database in databases.data"
+                        v-for="database in databases"
                         :key="database.id"
                         :database="database"
                         :show-server="false"
                         :show-site="false"
                     />
                 </div>
-                <Pagination :meta="databases.meta" />
+                <Pagination :meta="props.databases.meta" />
             </Card>
         </div>
     </SiteLayout>
@@ -372,7 +404,7 @@ function submitEditUser() {
                     />
                     <div v-else class="divide-y">
                         <DatabaseCardListItem
-                            v-for="database in databases.data"
+                            v-for="database in databases"
                             :key="database.id"
                             :database="database"
                             :show-server="false"
@@ -760,6 +792,12 @@ function submitEditUser() {
                 </form>
             </DialogContent>
         </Dialog>
+
+        <!-- Script Output Modal -->
+        <ScriptOutputModal ref="scriptOutputModal" />
+
+        <!-- Confirmation Dialog -->
+        <ConfirmationDialog />
     </ServerLayout>
 
     <!-- Global layout -->
@@ -768,6 +806,14 @@ function submitEditUser() {
             <div class="flex items-center justify-between">
                 <h1 class="text-2xl font-semibold">Databases</h1>
             </div>
+
+            <!-- Database Warnings -->
+            <FailedScriptsAlert
+                :resource-types="databaseResourceTypes"
+                title="Database Warnings"
+                show-server-name
+                @script-click="handleScriptClick"
+            />
 
             <!-- Databases Section -->
             <Card>
@@ -787,12 +833,13 @@ function submitEditUser() {
                     />
                     <div v-else class="divide-y">
                         <DatabaseCardListItem
-                            v-for="database in databases.data"
+                            v-for="database in databases"
                             :key="database.id"
                             :database="database"
+                            @delete="deleteDatabase"
                         />
                     </div>
-                    <Pagination v-if="hasDatabases" :meta="databases.meta" />
+                    <Pagination v-if="hasDatabases" :meta="props.databases.meta" />
                 </CardContent>
             </Card>
 
@@ -817,10 +864,17 @@ function submitEditUser() {
                             v-for="user in databaseUsers"
                             :key="user.id"
                             :user="user"
+                            @delete="deleteUser"
                         />
                     </div>
                 </CardContent>
             </Card>
         </div>
+
+        <!-- Script Output Modal -->
+        <ScriptOutputModal ref="scriptOutputModal" />
+
+        <!-- Confirmation Dialog -->
+        <ConfirmationDialog />
     </AppLayout>
 </template>

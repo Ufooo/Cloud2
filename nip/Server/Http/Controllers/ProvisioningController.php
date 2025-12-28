@@ -7,6 +7,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Str;
+use Nip\Database\Enums\DatabaseStatus;
+use Nip\Database\Models\Database;
 use Nip\Network\Enums\RuleStatus;
 use Nip\Network\Enums\RuleType;
 use Nip\Network\Models\FirewallRule;
@@ -85,6 +87,11 @@ class ProvisioningController extends Controller
 
             // Create default firewall rules in database
             $this->createDefaultFirewallRules($server);
+
+            // Create default netipar database record if server has database
+            if ($server->database_type !== null) {
+                $this->createDefaultDatabase($server);
+            }
         }
 
         broadcast(new ServerProvisioningUpdated($server));
@@ -157,6 +164,22 @@ class ProvisioningController extends Controller
     private function getCallbackUrl(): string
     {
         return rtrim(config('app.url'), '/').'/provisioning/callback/status';
+    }
+
+    /**
+     * Create the default netipar database record.
+     */
+    private function createDefaultDatabase(Server $server): void
+    {
+        Database::firstOrCreate(
+            [
+                'server_id' => $server->id,
+                'name' => 'netipar',
+            ],
+            [
+                'status' => DatabaseStatus::Installed,
+            ]
+        );
     }
 
     /**

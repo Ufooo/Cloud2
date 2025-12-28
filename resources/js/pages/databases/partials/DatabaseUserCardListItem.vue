@@ -17,6 +17,7 @@ interface DatabaseUserItem {
     id: string;
     serverId: number;
     serverName?: string;
+    serverSlug?: string;
     username: string;
     readonly?: boolean;
     status?: string;

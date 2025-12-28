@@ -75,7 +75,6 @@ class Server extends Model
             'type' => ServerType::class,
             'status' => ServerStatus::class,
             'database_type' => DatabaseType::class,
-            'database_password' => 'encrypted',
             'timezone' => Timezone::class,
             'avatar_color' => IdentityColor::class,
             'services' => 'array',
