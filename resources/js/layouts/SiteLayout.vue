@@ -6,7 +6,7 @@ import Avatar from '@/components/shared/Avatar.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SiteStatusBadge from '@/pages/sites/partials/SiteStatusBadge.vue';
 import type { BreadcrumbItem, Site } from '@/types';
-import { Link } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import {
     Activity,
     Bell,
@@ -21,13 +21,45 @@ import {
     Share2,
 } from 'lucide-vue-next';
 import type { FunctionalComponent } from 'vue';
-import { computed } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
 interface Props {
     site: Site;
 }
 
 const props = defineProps<Props>();
+
+// Status polling for pending/installing/deleting states
+const pendingStatuses = ['pending', 'installing', 'deleting'];
+const pollingInterval = ref<ReturnType<typeof setInterval> | null>(null);
+
+function startPolling() {
+    if (pollingInterval.value) return;
+
+    pollingInterval.value = setInterval(() => {
+        router.reload({ only: ['site'], preserveScroll: true });
+    }, 3000);
+}
+
+function stopPolling() {
+    if (pollingInterval.value) {
+        clearInterval(pollingInterval.value);
+        pollingInterval.value = null;
+    }
+}
+
+function checkAndPoll() {
+    const status = props.site.status || 'installed';
+    if (pendingStatuses.includes(status)) {
+        startPolling();
+    } else {
+        stopPolling();
+    }
+}
+
+watch(() => props.site.status, checkAndPoll);
+onMounted(checkAndPoll);
+onUnmounted(stopPolling);
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => [
     {

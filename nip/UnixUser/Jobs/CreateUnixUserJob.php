@@ -36,10 +36,12 @@ class CreateUnixUserJob extends BaseProvisionJob
     protected function generateScript(): string
     {
         $username = $this->unixUser->username;
+        $server = $this->unixUser->server;
 
         return view('provisioning.scripts.unix-user.create', [
             'username' => $username,
             'homeDir' => $username === 'root' ? '/root' : "/home/{$username}",
+            'serverPublicKey' => $server->ssh_public_key,
         ])->render();
     }
 

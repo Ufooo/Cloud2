@@ -12,6 +12,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { useStatusPolling } from '@/composables/useStatusPolling';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem, Server, Site } from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
@@ -33,6 +34,15 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const sites = computed(() => props.sites.data);
+
+useStatusPolling({
+    items: sites,
+    getStatus: (site) => site.status || 'installed',
+    propName: 'sites',
+    pendingStatuses: ['pending', 'installing', 'deleting'],
+});
 
 const showTypeSelectDialog = ref(false);
 
@@ -56,7 +66,7 @@ const siteTypeGroups = computed(() => {
     };
 });
 
-const hasSites = computed(() => props.sites.data.length > 0);
+const hasSites = computed(() => sites.value.length > 0);
 
 function openTypeSelectDialog() {
     showTypeSelectDialog.value = true;
@@ -101,7 +111,7 @@ function selectTypeAndNavigate(type: string) {
             <Card v-else class="overflow-hidden py-0">
                 <div class="divide-y">
                     <SiteCardListItem
-                        v-for="site in sites.data"
+                        v-for="site in sites"
                         :key="site.id"
                         :site="site"
                         :show-server="!currentServer"
@@ -109,7 +119,7 @@ function selectTypeAndNavigate(type: string) {
                 </div>
 
                 <!-- Pagination -->
-                <Pagination :meta="sites.meta" />
+                <Pagination :meta="props.sites.meta" />
             </Card>
         </div>
 
