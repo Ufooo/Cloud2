@@ -31,6 +31,33 @@ if [ -d "/etc/nginx/netipar-conf/{{ $site->id }}" ]; then
 fi
 
 #
+# Remove SSL Certificates
+#
+
+if [ -d "/etc/nginx/ssl/{{ $domain }}" ]; then
+    echo "Removing SSL certificates..."
+    rm -rf /etc/nginx/ssl/{{ $domain }}
+fi
+
+#
+# Remove Let's Encrypt Renewal Cron
+#
+
+if [ -f "/etc/cron.d/letsencrypt-renew-{{ $site->id }}" ]; then
+    echo "Removing Let's Encrypt renewal cron..."
+    rm -f /etc/cron.d/letsencrypt-renew-{{ $site->id }}
+fi
+
+#
+# Remove Logrotate Configuration
+#
+
+if [ -f "/etc/logrotate.d/netipar-{{ $domain }}" ]; then
+    echo "Removing logrotate configuration..."
+    rm -f /etc/logrotate.d/netipar-{{ $domain }}
+fi
+
+#
 # Remove Error Logs
 #
 
