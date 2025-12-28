@@ -12,15 +12,17 @@ import {
 import { index as sitesIndex } from '@/actions/Nip/Site/Http/Controllers/ServerSiteController';
 import { index as sshKeysIndex } from '@/actions/Nip/SshKey/Http/Controllers/SshKeyController';
 import { index as unixUsersIndex } from '@/actions/Nip/UnixUser/Http/Controllers/UnixUserController';
+import FailedScriptsAlert from '@/components/FailedScriptsAlert.vue';
 import CustomVpsLogo from '@/components/icons/CustomVpsLogo.vue';
 import DigitalOceanLogo from '@/components/icons/DigitalOceanLogo.vue';
 import VultrLogo from '@/components/icons/VultrLogo.vue';
+import ScriptOutputModal from '@/components/ScriptOutputModal.vue';
 import Avatar from '@/components/shared/Avatar.vue';
 import { useServerActions } from '@/composables/useServer';
 import AppLayout from '@/layouts/AppLayout.vue';
 import ServerProvisioning from '@/pages/servers/partials/ServerProvisioning.vue';
 import ServerStatusBadge from '@/pages/servers/partials/ServerStatusBadge.vue';
-import type { BreadcrumbItem, Server } from '@/types';
+import type { BreadcrumbItem, ProvisionScriptData, Server } from '@/types';
 import { ServerProvider, ServerStatus } from '@/types';
 import { Link } from '@inertiajs/vue3';
 import {
@@ -37,7 +39,7 @@ import {
     Users,
 } from 'lucide-vue-next';
 import type { Component, FunctionalComponent } from 'vue';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 interface Props {
     server: Server;
@@ -134,6 +136,12 @@ const navItems = computed<NavItem[]>(() => [
 function isActive(item: NavItem): boolean {
     return window.location.pathname === item.href;
 }
+
+const scriptOutputModal = ref<InstanceType<typeof ScriptOutputModal> | null>(null);
+
+function handleScriptClick(script: ProvisionScriptData) {
+    scriptOutputModal.value?.open(script);
+}
 </script>
 
 <template>
@@ -225,9 +233,16 @@ function isActive(item: NavItem): boolean {
 
                 <!-- Main Content -->
                 <main class="flex-1 overflow-auto p-4">
+                    <FailedScriptsAlert
+                        :server="server"
+                        class="mb-4"
+                        @script-click="handleScriptClick"
+                    />
                     <slot />
                 </main>
             </template>
         </div>
+
+        <ScriptOutputModal ref="scriptOutputModal" />
     </AppLayout>
 </template>

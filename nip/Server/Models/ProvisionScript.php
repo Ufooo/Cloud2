@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Nip\Server\Database\Factories\ProvisionScriptFactory;
 use Nip\Server\Enums\ProvisionScriptStatus;
 
@@ -47,6 +48,14 @@ class ProvisionScript extends Model
         return $this->belongsTo(Server::class);
     }
 
+    /**
+     * @return MorphTo<Model, $this>
+     */
+    public function resource(): MorphTo
+    {
+        return $this->morphTo('resource', 'resource_type', 'resource_id');
+    }
+
     public function isSuccessful(): bool
     {
         return $this->status === ProvisionScriptStatus::Completed && $this->exit_code === 0;
@@ -75,6 +84,47 @@ class ProvisionScript extends Model
             }
 
             return $this->executed_at->diffInSeconds($this->created_at);
+        });
+    }
+
+    protected function displayableName(): Attribute
+    {
+        return Attribute::get(function (): string {
+            $resourceLabels = [
+                'certificate' => 'SSL Certificate',
+                'site' => 'Site',
+                'database' => 'Database',
+                'database_user' => 'Database User',
+                'background_process' => 'Background Process',
+                'scheduled_job' => 'Scheduled Job',
+                'unix_user' => 'Unix User',
+                'php_version' => 'PHP Version',
+                'firewall_rule' => 'Firewall Rule',
+                'ssh_key' => 'SSH Key',
+                'domain' => 'Domain',
+            ];
+
+            return $resourceLabels[$this->resource_type] ?? ucfirst(str_replace('_', ' ', $this->resource_type));
+        });
+    }
+
+    protected function errorMessage(): Attribute
+    {
+        return Attribute::get(function (): ?string {
+            if (! $this->isFailed() || ! $this->output) {
+                return null;
+            }
+
+            // Try to extract the last error message from output
+            if (preg_match('/\[(?:FATAL )?ERROR\]\s*(.+?)$/m', $this->output, $matches)) {
+                return trim($matches[1]);
+            }
+
+            // Get last non-empty line as error
+            $lines = array_filter(explode("\n", trim($this->output)));
+            $lastLine = end($lines);
+
+            return $lastLine ? trim($lastLine) : 'Script execution failed';
         });
     }
 }
