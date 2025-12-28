@@ -26,8 +26,6 @@ class Server extends Model
 {
     use HasFactory, HasSlug, SoftDeletes;
 
-    protected $appends = [];
-
     protected static function newFactory(): ServerFactory
     {
         return ServerFactory::new();
