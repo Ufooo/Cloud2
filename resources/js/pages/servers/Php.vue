@@ -96,7 +96,7 @@ const initialSetting = props.phpSetting?.data;
 const settingsFormData = reactive({
     max_upload_size: initialSetting?.maxUploadSize ?? 100,
     max_execution_time: initialSetting?.maxExecutionTime ?? 60,
-    opcache_enabled: initialSetting?.opcacheEnabled ?? true,
+    opcache_enabled: initialSetting?.opcacheEnabled ?? false,
 });
 
 // Computed for hidden input value - ensures reactivity
