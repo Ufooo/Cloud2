@@ -8,9 +8,10 @@ set -e
 echo "Deleting site {{ $domain }}..."
 
 #
-# Disable and Remove Nginx Configuration
+# Disable and Remove Nginx Configuration for All Domains
 #
 
+# Primary domain
 if [ -L "/etc/nginx/sites-enabled/{{ $domain }}" ]; then
     echo "Disabling site in Nginx..."
     rm -f /etc/nginx/sites-enabled/{{ $domain }}
@@ -20,6 +21,27 @@ if [ -f "/etc/nginx/sites-available/{{ $domain }}" ]; then
     echo "Removing Nginx site configuration..."
     rm -f /etc/nginx/sites-available/{{ $domain }}
 fi
+
+# Domain aliases and additional domains
+@foreach($domainRecords as $domainName)
+@if($domainName !== $domain)
+if [ -L "/etc/nginx/sites-enabled/{{ $domainName }}" ]; then
+    echo "Disabling alias {{ $domainName }} in Nginx..."
+    rm -f /etc/nginx/sites-enabled/{{ $domainName }}
+fi
+
+if [ -f "/etc/nginx/sites-available/{{ $domainName }}" ]; then
+    echo "Removing Nginx configuration for {{ $domainName }}..."
+    rm -f /etc/nginx/sites-available/{{ $domainName }}
+fi
+
+# Remove SSL certificates for alias
+if [ -d "/etc/nginx/ssl/{{ $domainName }}" ]; then
+    echo "Removing SSL certificates for {{ $domainName }}..."
+    rm -rf /etc/nginx/ssl/{{ $domainName }}
+fi
+@endif
+@endforeach
 
 #
 # Remove Nginx Configuration Directory
@@ -80,10 +102,16 @@ fi
 if [ -S "/var/run/php/php{{ $phpVersion }}-fpm-{{ $domain }}.sock" ]; then
     rm -f /var/run/php/php{{ $phpVersion }}-fpm-{{ $domain }}.sock
 fi
-
-echo "Reloading PHP-FPM..."
-service php{{ $phpVersion }}-fpm reload || true
 @endif
+
+#
+# Reload All PHP-FPM Versions
+#
+
+echo "Reloading PHP-FPM services..."
+@foreach($installedPhpVersions as $version)
+service php{{ $version }}-fpm reload > /dev/null 2>&1 || true
+@endforeach
 
 #
 # Reload Nginx

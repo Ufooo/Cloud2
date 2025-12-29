@@ -46,9 +46,6 @@ class InstallSiteJob extends BaseProvisionJob
             'isIsolated' => $this->site->is_isolated,
         ])->render();
 
-        $defaultIndexScript = $this->generateDefaultIndexScript($this->site->web_directory);
-        $isolatedFpmScript = $this->generateIsolatedFpmScript();
-
         return view('provisioning.scripts.site.install', [
             'site' => $this->site,
             'user' => $this->site->user,
@@ -62,30 +59,7 @@ class InstallSiteJob extends BaseProvisionJob
             'wwwRedirectType' => $this->site->www_redirect_type,
             'isIsolated' => $this->site->is_isolated,
             'nginxConfig' => $nginxConfig,
-            'defaultIndexScript' => $defaultIndexScript,
-            'isolatedFpmScript' => $isolatedFpmScript,
-        ])->render();
-    }
-
-    protected function generateDefaultIndexScript(string $webDirectory): string
-    {
-        return view('provisioning.scripts.site.partials.default-index-html', [
-            'webDirectory' => $webDirectory,
-            'domain' => $this->site->domain,
-        ])->render();
-    }
-
-    protected function generateIsolatedFpmScript(): string
-    {
-        if (! $this->site->is_isolated) {
-            return '';
-        }
-
-        return view('provisioning.scripts.site.partials.isolated-fpm-pool', [
-            'phpVersion' => $this->site->getEffectivePhpVersion(),
-            'domain' => $this->site->domain,
-            'user' => $this->site->user,
-            'fullPath' => $this->site->getFullPath(),
+            'installedPhpVersions' => $this->site->server->phpVersions->pluck('version')->toArray(),
         ])->render();
     }
 

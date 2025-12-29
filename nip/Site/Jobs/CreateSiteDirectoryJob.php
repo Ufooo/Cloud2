@@ -7,7 +7,7 @@ use Nip\Server\Models\Server;
 use Nip\Server\Services\SSH\ExecutionResult;
 use Nip\Site\Models\Site;
 
-class DeleteSiteJob extends BaseProvisionJob
+class CreateSiteDirectoryJob extends BaseProvisionJob
 {
     public function __construct(
         public Site $site,
@@ -28,28 +28,40 @@ class DeleteSiteJob extends BaseProvisionJob
         return $this->site->server;
     }
 
+    protected function getRunAsUser(): ?string
+    {
+        return $this->site->user;
+    }
+
     protected function generateScript(): string
     {
-        return view('provisioning.scripts.site.delete', [
+        $defaultIndexScript = view('provisioning.scripts.site.partials.default-index-html', [
+            'webDirectory' => $this->site->web_directory,
+            'domain' => $this->site->domain,
+        ])->render();
+
+        return view('provisioning.scripts.site.steps.create-site-directory', [
             'site' => $this->site,
             'user' => $this->site->user,
             'domain' => $this->site->domain,
             'fullPath' => $this->site->getFullPath(),
-            'phpVersion' => $this->site->getEffectivePhpVersion(),
-            'isIsolated' => $this->site->is_isolated,
-            'installedPhpVersions' => $this->site->server->phpVersions->pluck('version')->toArray(),
-            'domainRecords' => $this->site->domainRecords->pluck('name')->toArray(),
+            'webDirectory' => $this->site->web_directory,
+            'siteType' => $this->site->type,
+            'defaultIndexScript' => $defaultIndexScript,
         ])->render();
     }
 
     protected function handleSuccess(ExecutionResult $result): void
     {
-        $this->site->delete();
+        // Directory created, continue with InstallSiteJob
+        InstallSiteJob::dispatch($this->site);
     }
 
     protected function handleFailure(\Throwable $exception): void
     {
-        // Keep the site in deleting status for manual intervention
+        $this->site->update([
+            'status' => \Nip\Site\Enums\SiteStatus::Failed,
+        ]);
     }
 
     /**
@@ -62,7 +74,7 @@ class DeleteSiteJob extends BaseProvisionJob
             'site',
             'site:'.$this->site->id,
             'server:'.$this->site->server_id,
-            'delete',
+            'create-directory',
         ];
     }
 }
