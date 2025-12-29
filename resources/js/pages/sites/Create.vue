@@ -36,6 +36,17 @@ interface SelectOption {
     label: string;
 }
 
+interface NumericSelectOption {
+    value: number;
+    label: string;
+}
+
+interface DatabaseOption {
+    value: number;
+    label: string;
+    userIds: number[];
+}
+
 interface WwwRedirectTypeOption extends SelectOption {
     description: string;
     isDefault: boolean;
@@ -51,6 +62,8 @@ interface ServerOption {
     name: string;
     phpVersions: PhpVersionOption[];
     unixUsers: SelectOption[];
+    databases: DatabaseOption[];
+    databaseUsers: NumericSelectOption[];
 }
 
 interface Props {
@@ -71,6 +84,8 @@ const domainValue = ref('');
 const showDomainModal = ref(false);
 const installComposer = ref(true);
 const createDatabase = ref(false);
+const selectedDatabase = ref<string | undefined>(undefined);
+const selectedDatabaseUser = ref<string | undefined>(undefined);
 
 const currentServer = computed(() => {
     return props.servers.find(s => s.id.toString() === selectedServer.value);
@@ -82,6 +97,23 @@ const availablePhpVersions = computed(() => {
 
 const availableUnixUsers = computed(() => {
     return currentServer.value?.unixUsers || [];
+});
+
+const availableDatabases = computed(() => {
+    return currentServer.value?.databases || [];
+});
+
+const selectedDatabaseObject = computed(() => {
+    if (!selectedDatabase.value) return null;
+    return availableDatabases.value.find(db => db.value.toString() === selectedDatabase.value) || null;
+});
+
+const availableDatabaseUsers = computed(() => {
+    if (!selectedDatabaseObject.value) return [];
+    const allowedUserIds = selectedDatabaseObject.value.userIds;
+    return (currentServer.value?.databaseUsers || []).filter(
+        dbu => allowedUserIds.includes(dbu.value)
+    );
 });
 
 const defaultPhpVersion = computed(() => {
@@ -97,7 +129,14 @@ const defaultUnixUser = computed(() => {
 watch(selectedServer, () => {
     selectedPhpVersion.value = defaultPhpVersion.value;
     selectedUser.value = defaultUnixUser.value;
+    selectedDatabase.value = undefined;
+    selectedDatabaseUser.value = undefined;
 }, { immediate: true });
+
+// Reset database user when database changes
+watch(selectedDatabase, () => {
+    selectedDatabaseUser.value = undefined;
+});
 
 const typeDefaults: Record<string, { webDirectory: string; buildCommand: string | null }> = {
     laravel: { webDirectory: '/public', buildCommand: 'npm run build' },
@@ -325,18 +364,71 @@ function navigateToSites() {
                             />
                         </div>
 
-                        <div class="flex items-center justify-between">
-                            <input type="hidden" name="create_database" :value="createDatabase ? '1' : '0'" />
-                            <div class="space-y-0.5">
-                                <Label for="create_database">Create database</Label>
-                                <p class="text-xs text-muted-foreground">
-                                    Create a new database for this site
-                                </p>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <input type="hidden" name="create_database" :value="createDatabase ? '1' : '0'" />
+                                <div class="space-y-0.5">
+                                    <Label for="create_database">Create database</Label>
+                                    <p class="text-xs text-muted-foreground">
+                                        Create a new database for this site
+                                    </p>
+                                </div>
+                                <Switch
+                                    id="create_database"
+                                    v-model="createDatabase"
+                                />
                             </div>
-                            <Switch
-                                id="create_database"
-                                v-model="createDatabase"
-                            />
+
+                            <!-- Database selection (when not creating a new one) -->
+                            <div
+                                v-if="!createDatabase && availableDatabases.length > 0"
+                                class="grid grid-cols-2 gap-4 rounded-lg border border-dashed p-4"
+                            >
+                                <div class="space-y-2">
+                                    <Label for="database_id">Database</Label>
+                                    <Select
+                                        name="database_id"
+                                        v-model="selectedDatabase"
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select a database" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem
+                                                v-for="db in availableDatabases"
+                                                :key="db.value"
+                                                :value="db.value.toString()"
+                                            >
+                                                {{ db.label }}
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <InputError :message="errors.database_id" />
+                                </div>
+
+                                <div class="space-y-2">
+                                    <Label for="database_user_id">Database user</Label>
+                                    <Select
+                                        name="database_user_id"
+                                        v-model="selectedDatabaseUser"
+                                        :disabled="!selectedDatabase || availableDatabaseUsers.length === 0"
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue :placeholder="!selectedDatabase ? 'Select database first' : (availableDatabaseUsers.length === 0 ? 'No users available' : 'Select a user')" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem
+                                                v-for="dbu in availableDatabaseUsers"
+                                                :key="dbu.value"
+                                                :value="dbu.value.toString()"
+                                            >
+                                                {{ dbu.label }}
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <InputError :message="errors.database_user_id" />
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Package manager and Build command -->

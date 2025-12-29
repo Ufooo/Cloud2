@@ -31,6 +31,14 @@ class StoreSiteRequest extends FormRequest
     {
         return [
             'server_id' => ['required', 'exists:servers,id'],
+            'database_id' => [
+                'nullable',
+                Rule::exists('databases', 'id')->where('server_id', $this->input('server_id')),
+            ],
+            'database_user_id' => [
+                'nullable',
+                Rule::exists('database_users', 'id')->where('server_id', $this->input('server_id')),
+            ],
             'domain' => [
                 'required',
                 'string',
@@ -75,6 +83,8 @@ class StoreSiteRequest extends FormRequest
         return [
             'server_id.required' => 'Please select a server.',
             'server_id.exists' => 'The selected server does not exist.',
+            'database_id.exists' => 'The selected database does not exist on this server.',
+            'database_user_id.exists' => 'The selected database user does not exist on this server.',
             'domain.regex' => 'The domain format is invalid.',
             'domain.unique' => 'This domain is already configured on this server.',
             'user.exists' => 'The selected user does not exist on this server.',

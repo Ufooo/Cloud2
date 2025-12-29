@@ -7,6 +7,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
+use Nip\Database\Enums\DatabaseStatus;
+use Nip\Database\Enums\DatabaseUserStatus;
 use Nip\Domain\Enums\DomainRecordStatus;
 use Nip\Domain\Enums\DomainRecordType;
 use Nip\Php\Enums\PhpVersion;
@@ -22,9 +24,9 @@ use Nip\Site\Enums\WwwRedirectType;
 use Nip\Site\Http\Requests\StoreSiteRequest;
 use Nip\Site\Http\Requests\UpdateSiteRequest;
 use Nip\Site\Http\Resources\SiteResource;
+use Nip\Site\Jobs\CreateSiteDirectoryJob;
 use Nip\Site\Jobs\DeleteSiteJob;
 use Nip\Site\Jobs\DeploySiteJob;
-use Nip\Site\Jobs\InstallSiteJob;
 use Nip\Site\Models\Site;
 use Nip\Site\Services\SitePhpVersionService;
 
@@ -65,6 +67,8 @@ class SiteController extends Controller
             ->where('status', ServerStatus::Connected)
             ->with(['phpVersions' => fn ($q) => $q->where('status', 'installed')->orderBy('version', 'desc')])
             ->with(['unixUsers' => fn ($q) => $q->orderBy('username')])
+            ->with(['databases' => fn ($q) => $q->where('status', DatabaseStatus::Installed)->with('users')->orderBy('name')])
+            ->with(['databaseUsers' => fn ($q) => $q->where('status', DatabaseUserStatus::Installed)->orderBy('username')])
             ->orderBy('name')
             ->get()
             ->map(fn (Server $s) => [
@@ -79,6 +83,15 @@ class SiteController extends Controller
                 'unixUsers' => $s->unixUsers->map(fn ($u) => [
                     'value' => $u->username,
                     'label' => $u->username,
+                ])->values()->all(),
+                'databases' => $s->databases->map(fn ($db) => [
+                    'value' => $db->id,
+                    'label' => $db->name,
+                    'userIds' => $db->users->pluck('id')->all(),
+                ])->values()->all(),
+                'databaseUsers' => $s->databaseUsers->map(fn ($dbu) => [
+                    'value' => $dbu->id,
+                    'label' => $dbu->username,
                 ])->values()->all(),
             ]);
 
@@ -137,7 +150,7 @@ class SiteController extends Controller
             'allow_wildcard' => $site->allow_wildcard,
         ]);
 
-        InstallSiteJob::dispatch($site);
+        CreateSiteDirectoryJob::dispatch($site);
 
         return redirect()
             ->route('sites.show', $site)

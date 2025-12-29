@@ -44,6 +44,8 @@ class Site extends Model
 
     protected $fillable = [
         'server_id',
+        'database_id',
+        'database_user_id',
         'domain',
         'slug',
         'type',
@@ -139,6 +141,22 @@ class Site extends Model
     public function certificates(): HasMany
     {
         return $this->hasMany(\Nip\Domain\Models\Certificate::class);
+    }
+
+    /**
+     * @return BelongsTo<\Nip\Database\Models\Database, $this>
+     */
+    public function database(): BelongsTo
+    {
+        return $this->belongsTo(\Nip\Database\Models\Database::class);
+    }
+
+    /**
+     * @return BelongsTo<\Nip\Database\Models\DatabaseUser, $this>
+     */
+    public function databaseUser(): BelongsTo
+    {
+        return $this->belongsTo(\Nip\Database\Models\DatabaseUser::class);
     }
 
     /**
