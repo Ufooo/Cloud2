@@ -122,6 +122,30 @@ it('rejects provisioning script request with invalid token', function () {
     $response->assertForbidden();
 });
 
+it('includes git ssh key setup in provisioning script', function () {
+    $server = Server::factory()->create();
+
+    $response = $this->get(route('provisioning.script', [
+        'server' => $server->id,
+        'token' => $server->provisioning_token,
+    ]));
+
+    $response->assertOk();
+
+    $content = $response->getContent();
+
+    // Check that git SSH key setup is included
+    expect($content)->toContain('Configuring Git SSH key')
+        ->and($content)->toContain('/home/netipar/.ssh/id_ed25519')
+        ->and($content)->toContain('Host github.com')
+        ->and($content)->toContain('Host gitlab.com')
+        ->and($content)->toContain('Host bitbucket.org');
+
+    // Verify the server's git public key was saved
+    $server->refresh();
+    expect($server->git_public_key)->toStartWith('ssh-ed25519 ');
+});
+
 /**
  * Helper to extract the authorized_keys content for a specific user.
  */

@@ -14,6 +14,7 @@ use Nip\Network\Enums\RuleType;
 use Nip\Network\Models\FirewallRule;
 use Nip\Php\Enums\PhpVersionStatus;
 use Nip\Php\Models\PhpVersion;
+use Nip\Server\Actions\GenerateGitSshKey;
 use Nip\Server\Enums\ServerStatus;
 use Nip\Server\Enums\ServerType;
 use Nip\Server\Events\ServerProvisioningUpdated;
@@ -149,11 +150,15 @@ class ProvisioningController extends Controller
             $server->update(['database_password' => $databasePassword]);
         }
 
+        // Generate git SSH key for repository access
+        $gitKeys = app(GenerateGitSshKey::class)->handle($server);
+
         return [
             'server' => $server,
             'callbackUrl' => $this->getCallbackUrl(),
             'rootSshKeys' => $this->formatSshKeysForUser($server, 'root'),
             'netiparSshKeys' => $this->formatSshKeysForUser($server, 'netipar'),
+            'gitPrivateKey' => $gitKeys['private_key'],
             'phpVersion' => $phpVersion,
             'sudoPassword' => $sudoPassword,
             'databasePassword' => $databasePassword,

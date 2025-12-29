@@ -38,6 +38,7 @@ class ServerResource extends JsonResource
             'displayableDatabaseType' => $this->displayable_database_type,
             'cloudProviderUrl' => $this->cloud_provider_url,
             'isReady' => $this->is_ready,
+            'gitPublicKey' => $this->git_public_key,
             'lastConnectedAt' => $this->last_connected_at?->toISOString(),
             'createdAt' => $this->created_at->toISOString(),
             'updatedAt' => $this->updated_at->toISOString(),

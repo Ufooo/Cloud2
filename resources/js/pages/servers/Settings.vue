@@ -84,9 +84,6 @@ async function handleDelete() {
     }
 }
 
-// Mock public key for now - this would come from the server
-const serverPublicKey =
-    'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCrrAenhM5OpthlwzbjZ9KccmRSs5nJKWW8Ui9MloZS/GnsxGKlufS4nlUdWPjMtNUvo2I1orvCA3rKDRH28ZEIq2P/watFKhW5caVDvKAylCC+TPtg0Hv6b20Ka1zlbzUMU2kOMZBuw885Z8306ENxZaMW5kAF+yGusj2d5QANgDSpK16T3br02+Wvq2wBi4dR3Kp/Rj71Dt9CeT9EWmqCD3REaAyQ4pK/e40X3TIl8Wye/9sS9nye1Bu8ogUhVhsOQ6O4L3RdB1dV/OmWTgmi7+plh9mbx2Rzvm31H2WH8Pr190fcoUuqe8bMYpDpTNzuCr+cWJkcAnzgSjSYwKL/ root@server';
 </script>
 
 <template>
@@ -258,38 +255,37 @@ const serverPublicKey =
             </Card>
 
             <!-- Keys Section -->
-            <Card>
+            <Card v-if="server.gitPublicKey">
                 <CardHeader>
                     <CardTitle class="flex items-center gap-2">
                         <Key class="size-5" />
                         Keys
                     </CardTitle>
                     <CardDescription>
-                        Your server's public SSH keys.
+                        Your server's public SSH key for git repository access.
                     </CardDescription>
                 </CardHeader>
 
                 <CardContent class="space-y-4">
                     <div class="space-y-2">
-                        <Label>Server's public key</Label>
+                        <Label>Git public key</Label>
                         <p class="text-sm text-muted-foreground">
-                            Typically, this key will automatically be added to
-                            GitHub, GitLab. However, if you need to add it to a
-                            source control service manually, you may copy it
-                            from here.
+                            Add this key to your GitHub, GitLab, or Bitbucket
+                            account to allow the server to clone private
+                            repositories.
                         </p>
                         <div class="relative">
                             <div
                                 class="rounded-md border bg-muted/50 p-3 pr-12 font-mono text-xs break-all"
                             >
-                                {{ serverPublicKey }}
+                                {{ server.gitPublicKey }}
                             </div>
                             <Button
                                 type="button"
                                 variant="ghost"
                                 size="icon"
                                 class="absolute top-2 right-2"
-                                @click="copy(serverPublicKey)"
+                                @click="copy(server.gitPublicKey!)"
                             >
                                 <Copy class="size-4" />
                             </Button>

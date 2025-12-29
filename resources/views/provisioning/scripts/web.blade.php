@@ -2,6 +2,8 @@
 
 @include('provisioning.partials.ssh')
 
+@include('provisioning.partials.git-ssh-key')
+
 @include('provisioning.partials.swap')
 
 @include('provisioning.partials.base-dependencies')

@@ -48,6 +48,7 @@ class Server extends Model
         'php_version',
         'database_type',
         'database_password',
+        'git_public_key',
         'db_status',
         'ubuntu_version',
         'timezone',
@@ -156,6 +157,22 @@ class Server extends Model
     public function sites(): HasMany
     {
         return $this->hasMany(\Nip\Site\Models\Site::class);
+    }
+
+    /**
+     * @return HasMany<\Nip\Database\Models\Database, $this>
+     */
+    public function databases(): HasMany
+    {
+        return $this->hasMany(\Nip\Database\Models\Database::class);
+    }
+
+    /**
+     * @return HasMany<\Nip\Database\Models\DatabaseUser, $this>
+     */
+    public function databaseUsers(): HasMany
+    {
+        return $this->hasMany(\Nip\Database\Models\DatabaseUser::class);
     }
 
     protected function displayableType(): Attribute

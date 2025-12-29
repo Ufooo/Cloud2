@@ -20,7 +20,6 @@ class CloneRepositoryJob extends BaseSiteProvisionJob
             'branch' => $this->site->branch ?? 'main',
             'fullPath' => $this->site->getFullPath(),
             'user' => $this->site->user,
-            'deployKey' => $this->site->deploy_key,
         ])->render();
     }
 }

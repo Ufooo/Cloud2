@@ -19,8 +19,8 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import SiteLayout from '@/layouts/SiteLayout.vue';
 import type { Site } from '@/types';
-import { Head, router, useForm } from '@inertiajs/vue3';
-import { Check, ClipboardCopy, Key, RefreshCw, Rocket } from 'lucide-vue-next';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { Check, ClipboardCopy, ExternalLink, Key, RefreshCw, Rocket } from 'lucide-vue-next';
 import { ref } from 'vue';
 
 interface Props {
@@ -223,25 +223,27 @@ function copyDeployHookUrl() {
                 <CardHeader>
                     <CardTitle class="flex items-center gap-2">
                         <Key class="size-5" />
-                        Keys
+                        Repository Access
                     </CardTitle>
                     <CardDescription>
-                        Your site's SSH keys for repository access.
+                        SSH key configuration for repository access.
                     </CardDescription>
                 </CardHeader>
 
                 <CardContent>
                     <div class="space-y-2">
-                        <Label>Site public key</Label>
                         <p class="text-sm text-muted-foreground">
-                            Add this key to your source control provider to allow
-                            deployments.
+                            This server uses a shared SSH key for git repository
+                            access. Add the server's public key to your GitHub,
+                            GitLab, or Bitbucket account to allow deployments.
                         </p>
-                        <Textarea
-                            :model-value="site.deployKey || 'No deploy key configured'"
-                            readonly
-                            class="min-h-[100px] font-mono text-xs"
-                        />
+                        <Link
+                            :href="`/servers/${site.serverSlug}/settings`"
+                            class="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                        >
+                            View server's git public key
+                            <ExternalLink class="size-3" />
+                        </Link>
                     </div>
                 </CardContent>
             </Card>

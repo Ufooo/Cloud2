@@ -16,46 +16,7 @@ RELEASE_TIMESTAMP=$(date +%Y%m%d%H%M%S)
 RELEASE_DIR="$SITE_PATH/releases/$RELEASE_TIMESTAMP"
 
 #
-# Setup SSH Key for Repository Access
-#
-
-@if($deployKey)
-echo "Setting up deploy key..."
-
-SSH_DIR="/home/{{ $user }}/.ssh"
-mkdir -p "$SSH_DIR"
-
-cat > "$SSH_DIR/deploy_key_{{ $site->id }}" << 'DEPLOYKEYEOF'
-{!! $deployKey !!}
-DEPLOYKEYEOF
-
-chmod 600 "$SSH_DIR/deploy_key_{{ $site->id }}"
-chown {{ $user }}:{{ $user }} "$SSH_DIR/deploy_key_{{ $site->id }}"
-
-# Configure SSH to use the deploy key
-cat > "$SSH_DIR/config" << 'SSHCONFIGEOF'
-Host github.com
-    IdentityFile ~/.ssh/deploy_key_{{ $site->id }}
-    StrictHostKeyChecking no
-    UserKnownHostsFile /dev/null
-
-Host gitlab.com
-    IdentityFile ~/.ssh/deploy_key_{{ $site->id }}
-    StrictHostKeyChecking no
-    UserKnownHostsFile /dev/null
-
-Host bitbucket.org
-    IdentityFile ~/.ssh/deploy_key_{{ $site->id }}
-    StrictHostKeyChecking no
-    UserKnownHostsFile /dev/null
-SSHCONFIGEOF
-
-chmod 600 "$SSH_DIR/config"
-chown {{ $user }}:{{ $user }} "$SSH_DIR/config"
-@endif
-
-#
-# Clone Repository
+# Clone Repository (using server's pre-configured git SSH key)
 #
 
 echo "Cloning {{ $repository }} (branch: {{ $branch }})..."

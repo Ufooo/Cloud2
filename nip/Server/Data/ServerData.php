@@ -48,6 +48,7 @@ class ServerData extends Data
         public ?string $displayableDatabaseType,
         public ?string $cloudProviderUrl,
         public bool $isReady,
+        public ?string $gitPublicKey,
         #[WithCast(DateTimeInterfaceCast::class)]
         public ?\DateTimeInterface $lastConnectedAt,
         #[WithCast(DateTimeInterfaceCast::class)]
