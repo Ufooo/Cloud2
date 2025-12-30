@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Gate;
 use Nip\Domain\Enums\CertificateStatus;
 use Nip\Domain\Enums\CertificateType;
 use Nip\Domain\Http\Requests\StoreCertificateRequest;
+use Nip\Domain\Jobs\DeleteCertificateJob;
+use Nip\Domain\Jobs\DisableSslJob;
+use Nip\Domain\Jobs\EnableSslJob;
 use Nip\Domain\Jobs\ObtainCertificateJob;
 use Nip\Domain\Jobs\RenewCertificateJob;
 use Nip\Domain\Models\Certificate;
@@ -113,6 +116,8 @@ class CertificateController extends Controller
 
         $certificate->update(['status' => CertificateStatus::Removing]);
 
+        DeleteCertificateJob::dispatch($certificate);
+
         return redirect()->route('sites.domains.index', $site)
             ->with('success', 'Certificate is being removed.');
     }
@@ -126,22 +131,30 @@ class CertificateController extends Controller
                 ->with('error', 'Only installed certificates can be activated.');
         }
 
+        // Deactivate all other certificates for this site
         $site->certificates()->update(['active' => false]);
 
-        $certificate->update(['active' => true]);
+        // Dispatch job to enable SSL on the server
+        EnableSslJob::dispatch($certificate);
 
         return redirect()->route('sites.domains.index', $site)
-            ->with('success', 'Certificate has been activated.');
+            ->with('success', 'Certificate is being activated.');
     }
 
     public function deactivate(Site $site, Certificate $certificate): RedirectResponse
     {
         Gate::authorize('update', $site->server);
 
-        $certificate->update(['active' => false]);
+        if (! $certificate->active) {
+            return redirect()->route('sites.domains.index', $site)
+                ->with('error', 'Certificate is already inactive.');
+        }
+
+        // Dispatch job to disable SSL on the server
+        DisableSslJob::dispatch($certificate);
 
         return redirect()->route('sites.domains.index', $site)
-            ->with('success', 'Certificate has been deactivated.');
+            ->with('success', 'Certificate is being deactivated.');
     }
 
     public function renew(Site $site, Certificate $certificate): RedirectResponse

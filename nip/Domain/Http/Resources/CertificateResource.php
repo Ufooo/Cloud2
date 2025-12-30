@@ -17,12 +17,13 @@ class CertificateResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $canUpdate = $request->user()?->can('update', $this->site);
+        $canUpdate = $request->user()?->can('update', $this->site?->server);
         $isInstalled = $this->status === CertificateStatus::Installed;
 
         $daysUntilExpiry = null;
         if ($this->expires_at) {
-            $daysUntilExpiry = (int) $this->expires_at->diffInDays(now(), false);
+            // Positive for future dates, negative for past dates
+            $daysUntilExpiry = (int) now()->diffInDays($this->expires_at, false);
         }
 
         return [

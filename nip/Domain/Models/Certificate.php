@@ -96,7 +96,8 @@ class Certificate extends Model
             return false;
         }
 
-        return $this->expires_at->diffInDays() <= 30;
+        // Only check certificates that expire in the future within 30 days
+        return $this->expires_at->isFuture() && now()->diffInDays($this->expires_at) <= 30;
     }
 
     public function getCertPath(): string

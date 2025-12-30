@@ -38,17 +38,16 @@ trait HandlesCertificateProvision
     protected function getCertificateViewData(): array
     {
         $site = $this->certificate->site;
-        $siteUser = $site->server->sshUser();
 
         return [
             'site' => $site,
             'certificate' => $this->certificate,
             'domains' => $this->certificate->domains,
             'keyAlgorithm' => $this->certificate->key_algorithm ?? 'ecdsa',
-            'siteUser' => $siteUser,
+            'siteUser' => $site->user,
             'certPath' => $this->certificate->getCertPath(),
             'siteConfDir' => $this->certificate->getSiteConfDir(),
-            'wellknown' => "/home/{$siteUser}/.letsencrypt",
+            'wellknown' => "/home/{$site->user}/.letsencrypt",
         ];
     }
 

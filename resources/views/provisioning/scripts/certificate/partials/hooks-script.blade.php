@@ -48,6 +48,8 @@ deploy_cert() {
 
     CERT_PATH="{{ $certPath }}"
 
+    mkdir -p "$CERT_PATH"
+
     cp "$KEYFILE" "$CERT_PATH/private.key"
     cp "$CERTFILE" "$CERT_PATH/certificate.crt"
     cp "$FULLCHAINFILE" "$CERT_PATH/fullchain.crt"
