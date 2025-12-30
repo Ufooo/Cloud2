@@ -41,7 +41,6 @@ class SiteFactory extends Factory
             'build_command' => $type->defaultBuildCommand(),
             'repository' => null,
             'branch' => null,
-            'is_isolated' => false,
             'allow_wildcard' => false,
             'www_redirect_type' => WwwRedirectType::FromWww,
         ];

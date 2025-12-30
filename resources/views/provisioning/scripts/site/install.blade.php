@@ -41,17 +41,15 @@ echo "Installing site {{ $domain }}..."
 ])
 
 #
-# Step 5: Create Isolated PHP-FPM Pool (if isolated)
+# Step 5: Create Isolated PHP-FPM Pool
 #
 
-@if($isIsolated)
 @include('provisioning.scripts.site.steps.create-isolated-fpm', [
     'domain' => $domain,
     'user' => $user,
     'phpVersion' => $phpVersion,
     'fullPath' => $fullPath,
 ])
-@endif
 
 #
 # Step 6: Reload Services

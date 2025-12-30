@@ -6,6 +6,7 @@ use Nip\Domain\Enums\DomainRecordStatus;
 use Nip\Server\Jobs\BaseProvisionJob;
 use Nip\Server\Models\Server;
 use Nip\Server\Services\SSH\ExecutionResult;
+use Nip\Site\Enums\DeployStatus;
 use Nip\Site\Enums\SiteStatus;
 use Nip\Site\Models\Site;
 
@@ -43,7 +44,6 @@ class InstallSiteJob extends BaseProvisionJob
             'siteType' => $this->site->type,
             'allowWildcard' => $this->site->allow_wildcard,
             'wwwRedirectType' => $this->site->www_redirect_type,
-            'isIsolated' => $this->site->is_isolated,
         ])->render();
 
         return view('provisioning.scripts.site.install', [
@@ -57,7 +57,6 @@ class InstallSiteJob extends BaseProvisionJob
             'siteType' => $this->site->type,
             'allowWildcard' => $this->site->allow_wildcard,
             'wwwRedirectType' => $this->site->www_redirect_type,
-            'isIsolated' => $this->site->is_isolated,
             'nginxConfig' => $nginxConfig,
             'installedPhpVersions' => $this->site->server->phpVersions->pluck('version')->toArray(),
         ])->render();
@@ -73,6 +72,12 @@ class InstallSiteJob extends BaseProvisionJob
         $this->site->domainRecords()->update([
             'status' => DomainRecordStatus::Enabled,
         ]);
+
+        // Auto-deploy if repository is configured
+        if ($this->site->repository) {
+            $this->site->update(['deploy_status' => DeployStatus::Deploying]);
+            DeploySiteJob::dispatch($this->site);
+        }
     }
 
     protected function handleFailure(\Throwable $exception): void

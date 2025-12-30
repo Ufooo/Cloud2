@@ -21,15 +21,9 @@ fi
 
 echo "Updating Nginx configuration..."
 
-@if($isIsolated)
-# Isolated site - update socket path with user suffix
+# Update socket path (all sites use isolated PHP-FPM pools)
 OLD_SOCKET="php{{ $oldVersion }}-fpm-{{ $user }}.sock"
 NEW_SOCKET="php{{ $newVersion }}-fpm-{{ $user }}.sock"
-@else
-# Standard site - update default FPM socket
-OLD_SOCKET="php{{ $oldVersion }}-fpm.sock"
-NEW_SOCKET="php{{ $newVersion }}-fpm.sock"
-@endif
 
 sed -i.bak "s|$OLD_SOCKET|$NEW_SOCKET|g" "$NGINX_CONF"
 

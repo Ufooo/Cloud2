@@ -72,7 +72,6 @@ class Site extends Model
         'zero_downtime',
         'healthcheck_endpoint',
         'environment',
-        'is_isolated',
         'avatar_color',
         'notes',
         'last_deployed_at',
@@ -92,7 +91,6 @@ class Site extends Model
             'allow_wildcard' => 'boolean',
             'package_manager' => PackageManager::class,
             'avatar_color' => IdentityColor::class,
-            'is_isolated' => 'boolean',
             'push_to_deploy' => 'boolean',
             'auto_source' => 'boolean',
             'zero_downtime' => 'boolean',
@@ -230,11 +228,7 @@ class Site extends Model
     {
         $phpVersion = $this->getEffectivePhpVersion();
 
-        if ($this->is_isolated) {
-            return "/var/run/php/php{$phpVersion}-fpm-{$this->user}.sock";
-        }
-
-        return "/var/run/php/php{$phpVersion}-fpm.sock";
+        return "/var/run/php/php{$phpVersion}-fpm-{$this->user}.sock";
     }
 
     public function getUrl(): string

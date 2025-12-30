@@ -30,13 +30,20 @@ class DeleteSiteJob extends BaseProvisionJob
 
     protected function generateScript(): string
     {
+        // Check if any other sites on this server use the same user
+        $otherSitesWithSameUser = Site::query()
+            ->where('server_id', $this->site->server_id)
+            ->where('user', $this->site->user)
+            ->whereNot('id', $this->site->id)
+            ->exists();
+
         return view('provisioning.scripts.site.delete', [
             'site' => $this->site,
             'user' => $this->site->user,
             'domain' => $this->site->domain,
             'fullPath' => $this->site->getFullPath(),
             'phpVersion' => $this->site->getEffectivePhpVersion(),
-            'isIsolated' => $this->site->is_isolated,
+            'shouldDeletePool' => ! $otherSitesWithSameUser,
             'installedPhpVersions' => $this->site->server->phpVersions->pluck('version')->toArray(),
             'domainRecords' => $this->site->domainRecords->pluck('name')->toArray(),
         ])->render();

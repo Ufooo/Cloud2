@@ -24,18 +24,14 @@ class ConfigureNginxJob extends BaseSiteProvisionJob
             'siteType' => $this->site->type,
             'allowWildcard' => $this->site->allow_wildcard,
             'wwwRedirectType' => $this->site->www_redirect_type,
-            'isIsolated' => $this->site->is_isolated,
         ])->render();
 
-        $isolatedFpmScript = '';
-        if ($this->site->is_isolated) {
-            $isolatedFpmScript = view('provisioning.scripts.site.partials.isolated-fpm-pool', [
-                'phpVersion' => $this->site->getEffectivePhpVersion(),
-                'domain' => $this->site->domain,
-                'user' => $this->site->user,
-                'fullPath' => $this->site->getFullPath(),
-            ])->render();
-        }
+        $isolatedFpmScript = view('provisioning.scripts.site.partials.isolated-fpm-pool', [
+            'phpVersion' => $this->site->getEffectivePhpVersion(),
+            'domain' => $this->site->domain,
+            'user' => $this->site->user,
+            'fullPath' => $this->site->getFullPath(),
+        ])->render();
 
         return view('provisioning.scripts.site.steps.configure-nginx', [
             'site' => $this->site,

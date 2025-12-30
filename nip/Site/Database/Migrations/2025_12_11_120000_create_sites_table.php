@@ -29,7 +29,6 @@ return new class extends Migration
             $table->text('deploy_key')->nullable();
             $table->text('deploy_script')->nullable();
             $table->text('environment')->nullable();
-            $table->boolean('is_isolated')->default(false);
             $table->string('avatar_color')->nullable();
             $table->text('notes')->nullable();
             $table->timestamp('last_deployed_at')->nullable();

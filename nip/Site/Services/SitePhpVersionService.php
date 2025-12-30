@@ -15,29 +15,26 @@ class SitePhpVersionService
         $oldVersion = $site->getEffectivePhpVersion();
         $jobs = [];
 
-        if ($site->is_isolated) {
-            if (! $this->hasOtherIsolatedSiteWithPhpVersion($site, $newVersion)) {
-                $jobs[] = new CreateIsolatedPhpFpmPoolJob($site->server, $site->user, $newVersion);
-            }
+        // Create new PHP-FPM pool if no other sites use this user with the new version
+        if (! $this->hasOtherSiteWithPhpVersion($site, $newVersion)) {
+            $jobs[] = new CreateIsolatedPhpFpmPoolJob($site->server, $site->user, $newVersion);
         }
 
         $jobs[] = new UpdateSitePhpVersionJob($site, $newVersion);
 
-        if ($site->is_isolated) {
-            if (! $this->hasOtherIsolatedSiteWithPhpVersion($site, $oldVersion)) {
-                $jobs[] = new DeleteIsolatedPhpFpmPoolJob($site->server, $site->user, $oldVersion);
-            }
+        // Delete old PHP-FPM pool if no other sites use this user with the old version
+        if (! $this->hasOtherSiteWithPhpVersion($site, $oldVersion)) {
+            $jobs[] = new DeleteIsolatedPhpFpmPoolJob($site->server, $site->user, $oldVersion);
         }
 
         Bus::chain($jobs)->onQueue('provisioning')->dispatch();
     }
 
-    protected function hasOtherIsolatedSiteWithPhpVersion(Site $site, string $phpVersion): bool
+    protected function hasOtherSiteWithPhpVersion(Site $site, string $phpVersion): bool
     {
         return Site::query()
             ->where('server_id', $site->server_id)
             ->where('user', $site->user)
-            ->where('is_isolated', true)
             ->where('php_version', $phpVersion)
             ->whereNot('id', $site->id)
             ->exists();

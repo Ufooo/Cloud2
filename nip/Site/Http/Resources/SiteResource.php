@@ -48,7 +48,6 @@ class SiteResource extends JsonResource
             'repository' => $this->repository,
             'branch' => $this->branch,
             'displayableRepository' => $this->getDisplayableRepository(),
-            'isIsolated' => $this->is_isolated,
             'avatarColor' => $this->avatar_color?->value,
             'notes' => $this->notes,
             'lastDeployedAt' => $this->last_deployed_at?->toISOString(),

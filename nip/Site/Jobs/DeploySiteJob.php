@@ -53,6 +53,8 @@ class DeploySiteJob extends BaseProvisionJob
             'branch' => $this->site->branch ?? 'main',
             'phpVersion' => $this->site->getEffectivePhpVersion(),
             'deployScriptContent' => $deployScriptContent,
+            'database' => $this->site->database,
+            'databaseUser' => $this->site->databaseUser,
         ])->render();
     }
 

@@ -63,10 +63,15 @@ it('generates deploy script with correct environment variables', function () {
 
     expect($script->content)
         ->toContain('Deploying site example.com')
+        ->toContain('export NIP_SITE_ROOT=')
+        ->toContain('export NIP_RELEASES_PATH=')
         ->toContain('export NIP_SITE_PATH=')
         ->toContain('export NIP_SITE_BRANCH="develop"')
+        ->toContain('export NIP_SITE_REPOSITORY=')
         ->toContain('export NIP_PHP=')
-        ->toContain('export NIP_COMPOSER=');
+        ->toContain('export NIP_COMPOSER=')
+        ->toContain('export NIP_RELEASE_NAME=')
+        ->toContain('export NIP_NEW_RELEASE_PATH=');
 });
 
 it('includes laravel specific deploy commands for laravel sites', function () {
@@ -90,11 +95,13 @@ it('includes laravel specific deploy commands for laravel sites', function () {
     $script = ProvisionScript::query()->where('resource_type', 'site')->first();
 
     expect($script->content)
-        ->toContain('git pull')
+        ->toContain('Zero-Downtime Deployment for Laravel')
+        ->toContain('git clone')
         ->toContain('$NIP_COMPOSER install')
         ->toContain('$NIP_PHP artisan optimize')
         ->toContain('$NIP_PHP artisan migrate --force')
-        ->toContain('npm');
+        ->toContain('npm')
+        ->toContain('ln -sfn "$NIP_NEW_RELEASE_PATH" "$NIP_SITE_ROOT/current"');
 });
 
 it('updates deploy status to deployed on success', function () {

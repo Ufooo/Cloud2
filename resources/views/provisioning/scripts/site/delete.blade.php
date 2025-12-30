@@ -88,20 +88,22 @@ if [ -f "/var/log/nginx/{{ $domain }}-error.log" ]; then
     rm -f /var/log/nginx/{{ $domain }}-error.log
 fi
 
-@if($isIsolated)
+@if($shouldDeletePool)
 #
-# Remove Isolated PHP-FPM Pool
+# Remove Isolated PHP-FPM Pool (no other sites using this user)
 #
 
-if [ -f "/etc/php/{{ $phpVersion }}/fpm/pool.d/{{ $domain }}.conf" ]; then
-    echo "Removing isolated PHP-FPM pool..."
-    rm -f /etc/php/{{ $phpVersion }}/fpm/pool.d/{{ $domain }}.conf
+if [ -f "/etc/php/{{ $phpVersion }}/fpm/pool.d/{{ $user }}.conf" ]; then
+    echo "Removing isolated PHP-FPM pool for user {{ $user }}..."
+    rm -f /etc/php/{{ $phpVersion }}/fpm/pool.d/{{ $user }}.conf
 fi
 
 # Remove PHP-FPM socket if exists
-if [ -S "/var/run/php/php{{ $phpVersion }}-fpm-{{ $domain }}.sock" ]; then
-    rm -f /var/run/php/php{{ $phpVersion }}-fpm-{{ $domain }}.sock
+if [ -S "/var/run/php/php{{ $phpVersion }}-fpm-{{ $user }}.sock" ]; then
+    rm -f /var/run/php/php{{ $phpVersion }}-fpm-{{ $user }}.sock
 fi
+@else
+echo "Keeping PHP-FPM pool for user {{ $user }} (other sites still use it)"
 @endif
 
 #

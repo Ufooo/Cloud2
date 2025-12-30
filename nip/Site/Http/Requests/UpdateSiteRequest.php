@@ -58,7 +58,6 @@ class UpdateSiteRequest extends FormRequest
             'build_command' => ['nullable', 'string', 'max:500'],
             'repository' => ['nullable', 'string', 'max:255', 'regex:/^(git@|https:\/\/)/'],
             'branch' => ['nullable', 'string', 'max:100'],
-            'is_isolated' => ['boolean'],
             'avatar_color' => ['nullable', Rule::enum(IdentityColor::class)],
             'notes' => ['nullable', 'string', 'max:1000'],
         ];

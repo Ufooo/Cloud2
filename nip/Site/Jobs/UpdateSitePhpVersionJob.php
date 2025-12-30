@@ -40,7 +40,6 @@ class UpdateSitePhpVersionJob extends BaseProvisionJob
             'domain' => $this->site->domain,
             'oldVersion' => $this->site->getEffectivePhpVersion(),
             'newVersion' => $this->newVersion,
-            'isIsolated' => $this->site->is_isolated,
             'user' => $this->site->user,
             'fullPath' => $this->site->getFullPath(),
         ])->render();

@@ -58,14 +58,13 @@ it('does not dispatch job when site is not installed', function () {
     expect($phpVersionChanging)->toBeFalse();
 });
 
-it('service creates pool for isolated site when no other site uses new version', function () {
+it('service creates pool when no other site uses new version', function () {
     Bus::fake();
 
     $server = Server::factory()->create();
     $site = Site::factory()->for($server)->create([
         'status' => SiteStatus::Installed,
         'php_version' => '8.2',
-        'is_isolated' => true,
         'user' => 'testuser',
     ]);
 
@@ -79,7 +78,7 @@ it('service creates pool for isolated site when no other site uses new version',
     ]);
 });
 
-it('service skips pool creation when another isolated site uses same version', function () {
+it('service skips pool creation when another site uses same version', function () {
     Bus::fake();
 
     $server = Server::factory()->create();
@@ -88,7 +87,6 @@ it('service skips pool creation when another isolated site uses same version', f
     Site::factory()->for($server)->create([
         'status' => SiteStatus::Installed,
         'php_version' => '8.3',
-        'is_isolated' => true,
         'user' => 'testuser',
     ]);
 
@@ -96,7 +94,6 @@ it('service skips pool creation when another isolated site uses same version', f
     $site = Site::factory()->for($server)->create([
         'status' => SiteStatus::Installed,
         'php_version' => '8.2',
-        'is_isolated' => true,
         'user' => 'testuser',
     ]);
 
@@ -110,7 +107,7 @@ it('service skips pool creation when another isolated site uses same version', f
     ]);
 });
 
-it('service skips pool deletion when another isolated site uses old version', function () {
+it('service skips pool deletion when another site uses old version', function () {
     Bus::fake();
 
     $server = Server::factory()->create();
@@ -119,7 +116,6 @@ it('service skips pool deletion when another isolated site uses old version', fu
     Site::factory()->for($server)->create([
         'status' => SiteStatus::Installed,
         'php_version' => '8.2',
-        'is_isolated' => true,
         'user' => 'testuser',
     ]);
 
@@ -127,7 +123,6 @@ it('service skips pool deletion when another isolated site uses old version', fu
     $site = Site::factory()->for($server)->create([
         'status' => SiteStatus::Installed,
         'php_version' => '8.2',
-        'is_isolated' => true,
         'user' => 'testuser',
     ]);
 
@@ -141,32 +136,12 @@ it('service skips pool deletion when another isolated site uses old version', fu
     ]);
 });
 
-it('service only dispatches update job for non-isolated sites', function () {
-    Bus::fake();
-
-    $server = Server::factory()->create();
-    $site = Site::factory()->for($server)->create([
-        'status' => SiteStatus::Installed,
-        'php_version' => '8.2',
-        'is_isolated' => false,
-    ]);
-
-    $service = new SitePhpVersionService;
-    $service->updatePhpVersion($site, '8.3');
-
-    // Non-isolated sites only need nginx update
-    Bus::assertChained([
-        UpdateSitePhpVersionJob::class,
-    ]);
-});
-
-it('generates correct script for php version update', function () {
+it('generates correct script for php version update with user-based socket', function () {
     $server = Server::factory()->create();
     $site = Site::factory()->for($server)->create([
         'php_version' => '8.2',
         'domain' => 'test.example.com',
         'user' => 'testuser',
-        'is_isolated' => false,
     ]);
 
     $job = new UpdateSitePhpVersionJob($site, '8.3');
@@ -176,32 +151,11 @@ it('generates correct script for php version update', function () {
     $script = $method->invoke($job);
 
     expect($script)
-        ->toContain('php8.2-fpm.sock')
-        ->toContain('php8.3-fpm.sock')
+        ->toContain('php8.2-fpm-testuser.sock')
+        ->toContain('php8.3-fpm-testuser.sock')
         ->toContain('test.example.com')
         ->toContain('nginx -t')
         ->toContain('systemctl reload nginx');
-});
-
-it('generates script with user-based socket for isolated sites', function () {
-    $server = Server::factory()->create();
-    $site = Site::factory()->for($server)->create([
-        'php_version' => '8.2',
-        'domain' => 'isolated.example.com',
-        'user' => 'isolateduser',
-        'is_isolated' => true,
-    ]);
-
-    $job = new UpdateSitePhpVersionJob($site, '8.3');
-
-    $reflection = new ReflectionClass($job);
-    $method = $reflection->getMethod('generateScript');
-    $script = $method->invoke($job);
-
-    expect($script)
-        ->toContain('php8.2-fpm-isolateduser.sock')
-        ->toContain('php8.3-fpm-isolateduser.sock')
-        ->toContain('isolated.example.com');
 });
 
 it('updates site php version on successful job execution', function () {
