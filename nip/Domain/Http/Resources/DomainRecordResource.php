@@ -41,6 +41,8 @@ class DomainRecordResource extends JsonResource
             'wwwRedirectType' => $this->www_redirect_type->value,
             'wwwRedirectTypeLabel' => $this->www_redirect_type->label(),
             'allowWildcard' => $this->allow_wildcard,
+            'acmeSubdomains' => $this->acme_subdomains ?? [],
+            'verificationRecords' => $this->getVerificationRecords(),
             'isPrimary' => $this->isPrimary(),
             'url' => $this->getUrl(),
             'certificate' => $this->whenLoaded('certificate', fn () => new CertificateResource($this->certificate)),

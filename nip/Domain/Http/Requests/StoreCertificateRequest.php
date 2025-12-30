@@ -34,6 +34,22 @@ class StoreCertificateRequest extends FormRequest
             $rules['verification_method'] = ['required', 'in:http,dns'];
             $rules['key_algorithm'] = ['required', 'in:ecdsa,rsa'];
             $rules['isrg_root_chain'] = ['boolean'];
+
+            // DNS verification requires pre-generated ACME subdomains
+            if ($this->input('verification_method') === 'dns') {
+                $rules['acme_subdomains'] = [
+                    'required',
+                    'array',
+                    'min:1',
+                    function ($attribute, $value, $fail) {
+                        foreach ($value as $domain => $subdomain) {
+                            if (! is_string($subdomain) || ! preg_match('/^verify-[a-z0-9]+$/', $subdomain)) {
+                                $fail("Invalid ACME subdomain format for {$domain}.");
+                            }
+                        }
+                    },
+                ];
+            }
         }
 
         // Existing certificate: requires certificate and private key

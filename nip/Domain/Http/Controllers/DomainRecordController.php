@@ -3,6 +3,7 @@
 namespace Nip\Domain\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -17,6 +18,7 @@ use Nip\Domain\Jobs\DisableDomainJob;
 use Nip\Domain\Jobs\EnableDomainJob;
 use Nip\Domain\Jobs\RemoveDomainJob;
 use Nip\Domain\Models\DomainRecord;
+use Nip\Domain\Services\CloudflareService;
 use Nip\Site\Data\SiteData;
 use Nip\Site\Enums\WwwRedirectType;
 use Nip\Site\Models\Site;
@@ -176,6 +178,28 @@ class DomainRecordController extends Controller
 
         return redirect()->route('sites.domains.index', $site)
             ->with('success', "Domain {$domainName} is being disabled.");
+    }
+
+    public function verifyDns(Site $site, DomainRecord $domainRecord): JsonResponse
+    {
+        Gate::authorize('view', $site->server);
+
+        $cloudflare = new CloudflareService;
+        $subdomains = $domainRecord->getOrCreateAcmeSubdomains();
+
+        // Check each domain's DNS verification status
+        $verifiedStatus = [];
+        foreach ($subdomains as $domain => $subdomain) {
+            $expectedTarget = "{$subdomain}.{$cloudflare->getAcmeDnsDomain()}";
+            $verifiedStatus[$domain] = $cloudflare->verifyCnameRecord($domain, $expectedTarget);
+        }
+
+        $records = $domainRecord->buildVerificationRecords($subdomains, $verifiedStatus);
+
+        return response()->json([
+            'records' => $records,
+            'allVerified' => collect($verifiedStatus)->every(fn ($v) => $v),
+        ]);
     }
 
     /**

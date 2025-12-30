@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { store } from '@/actions/Nip/Domain/Http/Controllers/CertificateController';
+import { verifyDns } from '@/actions/Nip/Domain/Http/Controllers/DomainRecordController';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -22,8 +23,8 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import type { CertificateData, DomainRecordData, Site } from '@/types';
 import { useForm } from '@inertiajs/vue3';
-import { ArrowLeft, FileKey, Lock, RefreshCcw, Shield } from 'lucide-vue-next';
-import { computed, ref, watch } from 'vue';
+import { ArrowLeft, Copy, FileKey, Lock, RefreshCcw, Shield } from 'lucide-vue-next';
+import { computed, onUnmounted, ref, watch } from 'vue';
 
 interface CertificateTypeOption {
     value: string;
@@ -57,6 +58,7 @@ const form = useForm({
     verification_method: 'http' as 'http' | 'dns',
     key_algorithm: 'ecdsa' as 'ecdsa' | 'rsa',
     isrg_root_chain: false,
+    acme_subdomains: {} as Record<string, string>, // Pre-generated subdomains for DNS-01 (key -> subdomain)
     // Existing
     certificate: '',
     private_key: '',
@@ -79,8 +81,52 @@ const typeIcons = {
     clone: RefreshCcw,
 };
 
+interface VerificationRecord {
+    requiresVerification: boolean;
+    verified: boolean;
+    type: string;
+    name: string;
+    value: string;
+    ttl: number;
+}
+
+// Live verification records with polling
+const liveVerificationRecords = ref<VerificationRecord[]>([]);
+const pollingIntervalId = ref<ReturnType<typeof setInterval> | null>(null);
+const allRecordsVerified = ref(false);
+
 const availableDomains = computed(() => {
-    return props.domainRecords.filter(d => d.status === 'enabled' && !d.hasActiveCertificate);
+    return props.domainRecords
+        .filter(d => d.status === 'enabled' && !d.hasActiveCertificate)
+        .map(d => ({
+            ...d,
+            // Show wildcard format if allowWildcard is enabled
+            displayName: d.allowWildcard ? `*.${d.name}` : d.name,
+        }));
+});
+
+// Find the selected domain record
+const selectedDomainRecord = computed(() => {
+    return availableDomains.value.find(d => d.name === form.domain);
+});
+
+const isWildcardDomain = computed(() => {
+    return selectedDomainRecord.value?.allowWildcard === true;
+});
+
+// Check if DNS verification is selected
+const isDnsVerification = computed(() => {
+    return form.verification_method === 'dns';
+});
+
+// Get verification records - use live records if polling has fetched them, otherwise from domain record
+const verificationRecords = computed(() => {
+    if (!isDnsVerification.value || !selectedDomainRecord.value) return [];
+    // Prefer live records from polling if available
+    if (liveVerificationRecords.value.length > 0) {
+        return liveVerificationRecords.value;
+    }
+    return selectedDomainRecord.value.verificationRecords ?? [];
 });
 
 const cloneableCertificates = computed(() => {
@@ -156,14 +202,113 @@ const canSubmit = computed(() => {
 watch(() => props.open, (isOpen) => {
     if (isOpen) {
         resetForm();
+    } else {
+        // Stop polling when modal closes
+        stopPolling();
     }
 });
+
+// Auto-set DNS verification for wildcard domains and copy stored subdomains
+watch(isWildcardDomain, (isWildcard) => {
+    if (isWildcard) {
+        form.verification_method = 'dns';
+    }
+});
+
+// Copy stored acme_subdomains when domain is selected and reset live records
+watch(() => form.domain, () => {
+    if (selectedDomainRecord.value?.acmeSubdomains) {
+        form.acme_subdomains = { ...selectedDomainRecord.value.acmeSubdomains };
+    } else {
+        form.acme_subdomains = {};
+    }
+    // Reset live records when domain changes
+    liveVerificationRecords.value = [];
+    allRecordsVerified.value = false;
+});
+
+// Start/stop polling when DNS verification is selected
+watch([isDnsVerification, () => form.domain], ([isDns, domain]) => {
+    if (isDns && domain && selectedDomainRecord.value) {
+        startPolling();
+    } else {
+        stopPolling();
+        liveVerificationRecords.value = [];
+    }
+});
+
+// Cleanup on component unmount
+onUnmounted(() => {
+    stopPolling();
+});
+
+async function copyToClipboard(text: string) {
+    await navigator.clipboard.writeText(text);
+}
+
+async function checkDnsVerification() {
+    if (!selectedDomainRecord.value || !isDnsVerification.value) {
+        return;
+    }
+
+    try {
+        const response = await fetch(verifyDns.url({
+            site: props.site.slug,
+            domainRecord: selectedDomainRecord.value.id,
+        }), {
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        });
+
+        if (!response.ok) {
+            console.error('DNS verification check failed:', response.status);
+            return;
+        }
+
+        const data = await response.json();
+
+        liveVerificationRecords.value = data.records;
+        allRecordsVerified.value = data.allVerified;
+
+        // Stop polling if all records are verified
+        if (data.allVerified) {
+            stopPolling();
+        }
+    } catch (error) {
+        console.error('Failed to check DNS verification:', error);
+    }
+}
+
+function startPolling() {
+    if (pollingIntervalId.value) {
+        return;
+    }
+
+    // Check immediately
+    checkDnsVerification();
+
+    // Then poll every 5 seconds
+    pollingIntervalId.value = setInterval(checkDnsVerification, 5000);
+}
+
+function stopPolling() {
+    if (pollingIntervalId.value) {
+        clearInterval(pollingIntervalId.value);
+        pollingIntervalId.value = null;
+    }
+}
 
 function resetForm() {
     step.value = 'type';
     selectedType.value = 'letsencrypt';
     form.reset();
     form.clearErrors();
+    stopPolling();
+    liveVerificationRecords.value = [];
+    allRecordsVerified.value = false;
 }
 
 function selectType(type: string) {
@@ -263,7 +408,9 @@ function close() {
                             <Label for="le-domain">Custom domain</Label>
                             <Select v-model="form.domain">
                                 <SelectTrigger id="le-domain">
-                                    <SelectValue placeholder="Select domain" />
+                                    <SelectValue placeholder="Select domain">
+                                        {{ selectedDomainRecord?.displayName ?? 'Select domain' }}
+                                    </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem
@@ -271,7 +418,7 @@ function close() {
                                         :key="domain.id"
                                         :value="domain.name"
                                     >
-                                        {{ domain.name }}
+                                        {{ domain.displayName }}
                                     </SelectItem>
                                 </SelectContent>
                             </Select>
@@ -283,8 +430,8 @@ function close() {
                             </p>
                         </div>
 
-                        <!-- Verification Method -->
-                        <div class="space-y-3">
+                        <!-- Verification Method (only show for non-wildcard domains) -->
+                        <div v-if="!isWildcardDomain" class="space-y-3">
                             <Label>Verification method</Label>
                             <div class="space-y-2">
                                 <button
@@ -340,24 +487,89 @@ function close() {
                                     <div class="flex-1">
                                         <span class="font-medium">DNS-01</span>
                                         <p class="text-sm text-muted-foreground">
-                                            Verify domain ownership via DNS TXT record.
+                                            Verify domain ownership via DNS record.
                                         </p>
                                     </div>
                                 </button>
-
-                                <!-- DNS-01 Info Box -->
-                                <div
-                                    v-if="form.verification_method === 'dns'"
-                                    class="rounded-md border border-amber-500/50 bg-amber-500/10 p-3"
-                                >
-                                    <p class="text-sm text-amber-700 dark:text-amber-400">
-                                        <strong>Note:</strong> DNS-01 verification requires you to add a TXT record to your domain's DNS settings. After requesting the certificate, you'll need to create a <code class="rounded bg-amber-500/20 px-1">_acme-challenge</code> TXT record with the provided verification token.
-                                    </p>
-                                </div>
                             </div>
                             <p v-if="form.errors.verification_method" class="text-sm text-destructive">
                                 {{ form.errors.verification_method }}
                             </p>
+                        </div>
+
+                        <!-- Verification Records Preview (for DNS-01 verification) -->
+                        <div v-if="isDnsVerification && verificationRecords.length > 0" class="space-y-3">
+                            <div>
+                                <Label class="mb-2 block">Verification records</Label>
+                                <p class="mb-3 text-sm text-muted-foreground">
+                                    The following DNS records must be added to your DNS provider before you can obtain a Let's Encrypt certificate.
+                                </p>
+                            </div>
+
+                            <!-- Verification record cards -->
+                            <div
+                                v-for="record in verificationRecords"
+                                :key="record.name"
+                                class="rounded-md border"
+                            >
+                                <div class="flex items-center justify-between border-b px-4 py-2.5">
+                                    <span class="text-sm text-muted-foreground">Type</span>
+                                    <div class="flex items-center gap-3">
+                                        <span class="font-mono text-sm">{{ record.type }}</span>
+                                        <span
+                                            v-if="record.verified"
+                                            class="flex items-center gap-1 text-xs text-green-600 dark:text-green-500"
+                                        >
+                                            <span class="size-1.5 rounded-full bg-green-500" />
+                                            Verified
+                                        </span>
+                                        <span
+                                            v-else
+                                            class="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-500"
+                                        >
+                                            <span class="size-1.5 animate-pulse rounded-full bg-amber-500" />
+                                            Verifying
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between border-b px-4 py-2.5">
+                                    <span class="text-sm text-muted-foreground">Name</span>
+                                    <div class="flex items-center gap-2">
+                                        <code class="font-mono text-sm">{{ record.name }}</code>
+                                        <button
+                                            type="button"
+                                            class="text-muted-foreground hover:text-foreground"
+                                            @click="copyToClipboard(record.name)"
+                                        >
+                                            <Copy class="size-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between border-b px-4 py-2.5">
+                                    <span class="text-sm text-muted-foreground">Value</span>
+                                    <div class="flex items-center gap-2">
+                                        <code class="font-mono text-sm">{{ record.value }}</code>
+                                        <button
+                                            type="button"
+                                            class="text-muted-foreground hover:text-foreground"
+                                            @click="copyToClipboard(record.value)"
+                                        >
+                                            <Copy class="size-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between px-4 py-2.5">
+                                    <span class="text-sm text-muted-foreground">TTL</span>
+                                    <span class="font-mono text-sm">{{ record.ttl }} seconds</span>
+                                </div>
+                            </div>
+
+                            <!-- Cloudflare Warning -->
+                            <div class="rounded-md border border-amber-500/50 bg-amber-500/10 p-3">
+                                <p class="text-sm text-amber-700 dark:text-amber-400">
+                                    <strong>Using Cloudflare?</strong> Make sure the CNAME records have the proxy (orange cloud) turned off for DNS-01 verification to work.
+                                </p>
+                            </div>
                         </div>
 
                         <!-- Public Key Algorithm -->

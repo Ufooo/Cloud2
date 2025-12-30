@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'cloudflare' => [
+        'api_token' => env('CLOUDFLARE_API_TOKEN'),
+        'zone_id' => env('CLOUDFLARE_ZONE_ID'),
+        'acme_dns_domain' => env('ACME_DNS_DOMAIN', 'ssl.netipar.cloud'),
+    ],
+
 ];

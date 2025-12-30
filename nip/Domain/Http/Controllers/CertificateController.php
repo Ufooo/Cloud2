@@ -3,6 +3,7 @@
 namespace Nip\Domain\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Nip\Domain\Enums\CertificateStatus;
@@ -14,6 +15,7 @@ use Nip\Domain\Jobs\EnableSslJob;
 use Nip\Domain\Jobs\ObtainCertificateJob;
 use Nip\Domain\Jobs\RenewCertificateJob;
 use Nip\Domain\Models\Certificate;
+use Nip\Domain\Services\CloudflareService;
 use Nip\Site\Models\Site;
 
 class CertificateController extends Controller
@@ -40,8 +42,11 @@ class CertificateController extends Controller
 
             // DNS-01 requires verification records
             if ($data['verification_method'] === 'dns') {
+                // Use the pre-generated subdomains from frontend (domain => subdomain)
+                $acmeSubdomains = $data['acme_subdomains'];
                 $certificateData['status'] = CertificateStatus::PendingVerification;
-                $certificateData['verification_records'] = $this->generateVerificationRecords($data['domain']);
+                $certificateData['acme_subdomains'] = $acmeSubdomains;
+                $certificateData['verification_records'] = $this->generateVerificationRecordsFromSubdomains($acmeSubdomains);
             }
         } else {
             // For other types, single domain (plus SANs for CSR)
@@ -174,33 +179,95 @@ class CertificateController extends Controller
             ->with('success', 'Certificate is being renewed.');
     }
 
-    /**
-     * Generate verification records for DNS-01 challenge.
-     * In a real implementation, these would come from the ACME client.
-     *
-     * @return array<int, array{type: string, name: string, value: string, ttl: string}>
-     */
-    private function generateVerificationRecords(string $domain): array
+    public function verifyDns(Site $site, Certificate $certificate): JsonResponse
     {
-        $token1 = substr(str_shuffle('abcdefghijklmnopqrstuvwxyz0123456789'), 0, 8);
-        $token2 = substr(str_shuffle('abcdefghijklmnopqrstuvwxyz0123456789'), 0, 8);
+        Gate::authorize('view', $site->server);
 
-        $records = [
-            [
-                'type' => 'CNAME',
-                'name' => "_acme-challenge.{$domain}",
-                'value' => "verify-{$token1}.ssl.cloud.test",
-                'ttl' => '60 seconds',
-            ],
-        ];
+        $acmeSubdomains = $certificate->acme_subdomains ?? [];
 
-        // Add www subdomain if the domain doesn't start with www
-        if (! str_starts_with($domain, 'www.')) {
+        if (empty($acmeSubdomains)) {
+            return response()->json([
+                'verified' => false,
+                'message' => 'Certificate does not require DNS verification.',
+            ]);
+        }
+
+        $cloudflare = new CloudflareService;
+        $acmeDnsDomain = config('services.cloudflare.acme_dns_domain');
+
+        // Check each domain's DNS verification status
+        $verifiedStatus = [];
+        foreach ($acmeSubdomains as $domain => $subdomain) {
+            $expectedTarget = "{$subdomain}.{$acmeDnsDomain}";
+            $verifiedStatus[$domain] = $cloudflare->verifyCnameRecord($domain, $expectedTarget);
+        }
+
+        $allVerified = collect($verifiedStatus)->every(fn ($v) => $v);
+
+        return response()->json([
+            'verified' => $allVerified,
+            'domains' => $verifiedStatus,
+        ]);
+    }
+
+    public function obtainAfterVerification(Site $site, Certificate $certificate): RedirectResponse
+    {
+        Gate::authorize('update', $site->server);
+
+        if ($certificate->status !== CertificateStatus::PendingVerification) {
+            return redirect()->route('sites.domains.index', $site)
+                ->with('error', 'Certificate is not pending verification.');
+        }
+
+        // Verify all DNS records before proceeding
+        $acmeSubdomains = $certificate->acme_subdomains ?? [];
+
+        if (empty($acmeSubdomains)) {
+            return redirect()->route('sites.domains.index', $site)
+                ->with('error', 'No ACME subdomains configured for verification.');
+        }
+
+        $cloudflare = new CloudflareService;
+        $acmeDnsDomain = config('services.cloudflare.acme_dns_domain');
+        $failedDomains = [];
+
+        foreach ($acmeSubdomains as $domain => $subdomain) {
+            $expectedTarget = "{$subdomain}.{$acmeDnsDomain}";
+            if (! $cloudflare->verifyCnameRecord($domain, $expectedTarget)) {
+                $failedDomains[] = $domain;
+            }
+        }
+
+        if (! empty($failedDomains)) {
+            return redirect()->route('sites.domains.index', $site)
+                ->with('error', 'DNS verification failed for: '.implode(', ', $failedDomains));
+        }
+
+        $certificate->update(['status' => CertificateStatus::Installing]);
+        ObtainCertificateJob::dispatch($certificate);
+
+        return redirect()->route('sites.domains.index', $site)
+            ->with('success', 'DNS verified. Certificate is being installed.');
+    }
+
+    /**
+     * Generate verification records for DNS-01 challenge from subdomains map.
+     *
+     * @param  array<string, string>  $acmeSubdomains  Map of domain => acme_subdomain
+     * @return array<int, array{type: string, name: string, value: string, ttl: string, verified: bool}>
+     */
+    private function generateVerificationRecordsFromSubdomains(array $acmeSubdomains): array
+    {
+        $acmeDnsDomain = config('services.cloudflare.acme_dns_domain');
+        $records = [];
+
+        foreach ($acmeSubdomains as $domain => $subdomain) {
             $records[] = [
                 'type' => 'CNAME',
-                'name' => "_acme-challenge.www.{$domain}",
-                'value' => "verify-{$token2}.ssl.cloud.test",
+                'name' => "_acme-challenge.{$domain}",
+                'value' => "{$subdomain}.{$acmeDnsDomain}",
                 'ttl' => '60 seconds',
+                'verified' => false,
             ];
         }
 

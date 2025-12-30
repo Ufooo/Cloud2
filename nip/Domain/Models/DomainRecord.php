@@ -29,6 +29,7 @@ class DomainRecord extends Model
         'status',
         'www_redirect_type',
         'allow_wildcard',
+        'acme_subdomains',
     ];
 
     /**
@@ -41,6 +42,7 @@ class DomainRecord extends Model
             'status' => DomainRecordStatus::class,
             'www_redirect_type' => WwwRedirectType::class,
             'allow_wildcard' => 'boolean',
+            'acme_subdomains' => 'array',
         ];
     }
 
@@ -68,5 +70,106 @@ class DomainRecord extends Model
     public function isPrimary(): bool
     {
         return $this->type === DomainRecordType::Primary;
+    }
+
+    /**
+     * Get or generate ACME subdomains for DNS-01 verification.
+     * Returns a map of domain => subdomain based on www redirect settings.
+     *
+     * @return array<string, string>
+     */
+    public function getOrCreateAcmeSubdomains(): array
+    {
+        $requiredDomains = $this->getDomainsRequiringVerification();
+
+        // Check if we already have all required subdomains
+        $existingSubdomains = $this->acme_subdomains ?? [];
+        $needsUpdate = false;
+
+        foreach ($requiredDomains as $domain) {
+            if (! isset($existingSubdomains[$domain])) {
+                $existingSubdomains[$domain] = $this->generateAcmeSubdomain();
+                $needsUpdate = true;
+            }
+        }
+
+        // Save if we generated new subdomains
+        if ($needsUpdate) {
+            $this->acme_subdomains = $existingSubdomains;
+            $this->save();
+        }
+
+        // Return only the required domains (in case www redirect changed)
+        return array_intersect_key($existingSubdomains, array_flip($requiredDomains));
+    }
+
+    /**
+     * Get domains that require DNS verification based on www redirect settings.
+     *
+     * @return array<int, string>
+     */
+    public function getDomainsRequiringVerification(): array
+    {
+        $domains = [$this->name];
+
+        // Wildcard domains only need the base domain
+        if ($this->allow_wildcard) {
+            return $domains;
+        }
+
+        // Non-wildcard: check www redirect settings
+        if ($this->www_redirect_type === WwwRedirectType::ToWww ||
+            $this->www_redirect_type === WwwRedirectType::FromWww) {
+            $domains[] = 'www.'.$this->name;
+        }
+
+        return $domains;
+    }
+
+    /**
+     * Generate a unique ACME subdomain.
+     */
+    public function generateAcmeSubdomain(): string
+    {
+        return 'verify-'.substr(md5(uniqid((string) mt_rand(), true)), 0, 8);
+    }
+
+    /**
+     * Build verification records from subdomains array.
+     *
+     * @param  array<string, string>  $subdomains  Map of domain => subdomain
+     * @param  array<string, bool>  $verifiedStatus  Map of domain => verified status
+     * @return array<int, array{requiresVerification: bool, verified: bool, type: string, name: string, value: string, ttl: int}>
+     */
+    public function buildVerificationRecords(array $subdomains, array $verifiedStatus = []): array
+    {
+        if (empty($subdomains)) {
+            return [];
+        }
+
+        $acmeDnsDomain = config('services.cloudflare.acme_dns_domain');
+
+        return array_map(
+            fn (string $domain, string $subdomain) => [
+                'requiresVerification' => true,
+                'verified' => $verifiedStatus[$domain] ?? false,
+                'type' => 'CNAME',
+                'name' => "_acme-challenge.{$domain}",
+                'value' => "{$subdomain}.{$acmeDnsDomain}",
+                'ttl' => 60,
+            ],
+            array_keys($subdomains),
+            array_values($subdomains)
+        );
+    }
+
+    /**
+     * Get verification records from stored subdomains (no side effects).
+     *
+     * @return array<int, array{requiresVerification: bool, verified: bool, type: string, name: string, value: string, ttl: int}>
+     */
+    public function getVerificationRecords(): array
+    {
+        return $this->buildVerificationRecords($this->acme_subdomains ?? []);
     }
 }

@@ -18,7 +18,11 @@ class RenewCertificateJob extends BaseProvisionJob
 
     protected function generateScript(): string
     {
-        return view('provisioning.scripts.certificate.renew-letsencrypt', $this->getCertificateViewData())->render();
+        $scriptView = $this->certificate->verification_method === 'dns'
+            ? 'provisioning.scripts.certificate.renew-letsencrypt-dns01'
+            : 'provisioning.scripts.certificate.renew-letsencrypt';
+
+        return view($scriptView, $this->getCertificateViewData())->render();
     }
 
     protected function handleSuccess(ExecutionResult $result): void

@@ -3,7 +3,9 @@ import {
     activate,
     deactivate,
     destroy,
+    obtainAfterVerification,
     renew,
+    verifyDns,
 } from '@/actions/Nip/Domain/Http/Controllers/CertificateController';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -24,8 +26,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import type { CertificateData, Site } from '@/types';
 import { router } from '@inertiajs/vue3';
-import { AlertTriangle, Copy, Loader2, MoreVertical, RefreshCw, Shield, Trash2 } from 'lucide-vue-next';
-import { computed, ref } from 'vue';
+import { AlertTriangle, Check, Copy, Loader2, MoreVertical, RefreshCw, Shield, Trash2, X } from 'lucide-vue-next';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
 interface Props {
     certificate: CertificateData;
@@ -35,6 +37,9 @@ interface Props {
 const props = defineProps<Props>();
 
 const showDeleteConfirm = ref(false);
+const dnsVerified = ref(false);
+const isCheckingDns = ref(false);
+let dnsCheckInterval: ReturnType<typeof setInterval> | null = null;
 
 const isPendingVerification = computed(() => props.certificate.status === 'pending_verification');
 const hasVerificationRecords = computed(() =>
@@ -62,6 +67,68 @@ function handleDelete() {
         onSuccess: () => (showDeleteConfirm.value = false),
     });
 }
+
+const hasAcmeSubdomains = computed(() =>
+    props.certificate.acmeSubdomains && Object.keys(props.certificate.acmeSubdomains).length > 0
+);
+
+async function checkDnsVerification() {
+    if (!isPendingVerification.value || !hasAcmeSubdomains.value) {
+        return;
+    }
+
+    isCheckingDns.value = true;
+    try {
+        const response = await fetch(verifyDns.url({ site: props.site, certificate: props.certificate }));
+        const data = await response.json();
+        dnsVerified.value = data.verified;
+
+        if (data.verified && dnsCheckInterval) {
+            clearInterval(dnsCheckInterval);
+            dnsCheckInterval = null;
+        }
+    } catch (error) {
+        console.error('Failed to check DNS verification:', error);
+    } finally {
+        isCheckingDns.value = false;
+    }
+}
+
+function handleObtainCertificate() {
+    router.post(obtainAfterVerification.url({ site: props.site, certificate: props.certificate }), {}, { preserveScroll: true });
+}
+
+function startDnsPolling() {
+    if (isPendingVerification.value && hasAcmeSubdomains.value && !dnsCheckInterval) {
+        checkDnsVerification();
+        dnsCheckInterval = setInterval(checkDnsVerification, 5000);
+    }
+}
+
+function stopDnsPolling() {
+    if (dnsCheckInterval) {
+        clearInterval(dnsCheckInterval);
+        dnsCheckInterval = null;
+    }
+}
+
+watch(isPendingVerification, (isPending) => {
+    if (isPending) {
+        startDnsPolling();
+    } else {
+        stopDnsPolling();
+    }
+});
+
+onMounted(() => {
+    if (isPendingVerification.value && hasAcmeSubdomains.value) {
+        startDnsPolling();
+    }
+});
+
+onUnmounted(() => {
+    stopDnsPolling();
+});
 </script>
 
 <template>
@@ -159,7 +226,8 @@ function handleDelete() {
                             <th class="pb-2 pr-4 font-medium">Type</th>
                             <th class="pb-2 pr-4 font-medium">Name</th>
                             <th class="pb-2 pr-4 font-medium">Value</th>
-                            <th class="pb-2 font-medium">TTL</th>
+                            <th class="pb-2 pr-4 font-medium">TTL</th>
+                            <th class="pb-2 font-medium">Verified</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -201,12 +269,52 @@ function handleDelete() {
                                     </button>
                                 </div>
                             </td>
-                            <td class="py-2 text-muted-foreground">
+                            <td class="py-2 pr-4 text-muted-foreground">
                                 {{ record.ttl }}
+                            </td>
+                            <td class="py-2">
+                                <div class="flex items-center gap-1">
+                                    <template v-if="isCheckingDns">
+                                        <Loader2 class="size-4 animate-spin text-muted-foreground" />
+                                    </template>
+                                    <template v-else-if="dnsVerified">
+                                        <Check class="size-4 text-green-500" />
+                                        <span class="text-xs text-green-500">Verified</span>
+                                    </template>
+                                    <template v-else>
+                                        <X class="size-4 text-muted-foreground" />
+                                        <span class="text-xs text-muted-foreground">Pending</span>
+                                    </template>
+                                </div>
                             </td>
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Cloudflare Warning -->
+            <div class="mt-3 rounded-md border border-amber-500/50 bg-amber-500/10 p-3">
+                <p class="text-xs text-amber-700 dark:text-amber-400">
+                    <strong>Using Cloudflare?</strong> Make sure the CNAME record has the proxy (orange cloud) turned off for DNS-01 verification to work.
+                </p>
+            </div>
+
+            <!-- Obtain Certificate Button -->
+            <div class="mt-4 flex items-center justify-end gap-2">
+                <Button
+                    v-if="certificate.can.obtain"
+                    :disabled="!dnsVerified"
+                    @click="handleObtainCertificate"
+                >
+                    <template v-if="!dnsVerified">
+                        <Loader2 class="mr-2 size-4 animate-spin" />
+                        Waiting for DNS verification...
+                    </template>
+                    <template v-else>
+                        <Check class="mr-2 size-4" />
+                        Obtain certificate
+                    </template>
+                </Button>
             </div>
         </div>
 

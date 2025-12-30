@@ -34,6 +34,7 @@ class Certificate extends Model
         'key_algorithm',
         'isrg_root_chain',
         'verification_records',
+        'acme_subdomains',
         'csr_country',
         'csr_state',
         'csr_city',
@@ -61,6 +62,7 @@ class Certificate extends Model
             'active' => 'boolean',
             'isrg_root_chain' => 'boolean',
             'verification_records' => 'array',
+            'acme_subdomains' => 'array',
             'issued_at' => 'datetime',
             'expires_at' => 'datetime',
         ];
@@ -108,5 +110,62 @@ class Certificate extends Model
     public function getSiteConfDir(): string
     {
         return "/etc/nginx/netipar-conf/{$this->site_id}";
+    }
+
+    public function generateAcmeSubdomain(): string
+    {
+        return 'verify-'.substr(md5(uniqid((string) mt_rand(), true)), 0, 12);
+    }
+
+    /**
+     * Get the ACME DNS target for a specific domain.
+     */
+    public function getAcmeDnsDomain(string $domain): ?string
+    {
+        $subdomain = $this->acme_subdomains[$domain] ?? null;
+
+        if (! $subdomain) {
+            return null;
+        }
+
+        return "{$subdomain}.".config('services.cloudflare.acme_dns_domain');
+    }
+
+    /**
+     * Get all ACME subdomains as domain => full target mapping.
+     *
+     * @return array<string, string>
+     */
+    public function getAcmeDnsTargets(): array
+    {
+        $acmeDnsDomain = config('services.cloudflare.acme_dns_domain');
+
+        return collect($this->acme_subdomains ?? [])
+            ->mapWithKeys(fn ($subdomain, $domain) => [$domain => "{$subdomain}.{$acmeDnsDomain}"])
+            ->all();
+    }
+
+    /**
+     * Get the first ACME subdomain (for single-domain certificates).
+     */
+    public function getFirstAcmeSubdomain(): ?string
+    {
+        return collect($this->acme_subdomains ?? [])->first();
+    }
+
+    public function isWildcard(): bool
+    {
+        return collect($this->domains)->contains(fn ($d) => str_starts_with($d, '*.'));
+    }
+
+    public function getBaseDomain(): ?string
+    {
+        $wildcardDomain = collect($this->domains)->first(fn ($d) => str_starts_with($d, '*.'));
+
+        if ($wildcardDomain) {
+            return substr($wildcardDomain, 2);
+        }
+
+        return $this->domains[0] ?? null;
     }
 }

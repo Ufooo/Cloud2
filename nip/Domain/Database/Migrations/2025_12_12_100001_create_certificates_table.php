@@ -18,6 +18,20 @@ return new class extends Migration
             $table->text('certificate')->nullable();
             $table->text('private_key')->nullable();
             $table->string('path')->nullable();
+            // Let's Encrypt fields
+            $table->string('verification_method')->nullable();
+            $table->json('verification_records')->nullable();
+            $table->json('acme_subdomains')->nullable();
+            $table->string('key_algorithm')->nullable();
+            $table->boolean('isrg_root_chain')->default(false);
+            // CSR fields
+            $table->string('csr_country')->nullable();
+            $table->string('csr_state')->nullable();
+            $table->string('csr_city')->nullable();
+            $table->string('csr_organization')->nullable();
+            $table->string('csr_department')->nullable();
+            // Clone source
+            $table->foreignId('source_certificate_id')->nullable()->constrained('certificates')->nullOnDelete();
             $table->timestamp('issued_at')->nullable();
             $table->timestamp('expires_at')->nullable();
             $table->timestamps();

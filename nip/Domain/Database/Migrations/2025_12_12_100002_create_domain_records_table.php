@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('status')->default('pending');
             $table->string('www_redirect_type')->default('from_www');
             $table->boolean('allow_wildcard')->default(false);
+            $table->json('acme_subdomains')->nullable();
             $table->timestamps();
 
             $table->unique(['site_id', 'name']);

@@ -19,6 +19,7 @@ class CertificateResource extends JsonResource
     {
         $canUpdate = $request->user()?->can('update', $this->site?->server);
         $isInstalled = $this->status === CertificateStatus::Installed;
+        $isPendingVerification = $this->status === CertificateStatus::PendingVerification;
 
         $daysUntilExpiry = null;
         if ($this->expires_at) {
@@ -39,6 +40,10 @@ class CertificateResource extends JsonResource
             'path' => $this->path,
             'verificationMethod' => $this->verification_method,
             'verificationRecords' => $this->verification_records,
+            'acmeSubdomains' => $this->acme_subdomains,
+            'acmeDnsTargets' => $this->getAcmeDnsTargets(),
+            'isWildcard' => $this->isWildcard(),
+            'baseDomain' => $this->getBaseDomain(),
             'issuedAt' => $this->issued_at?->toISOString(),
             'issuedAtHuman' => $this->issued_at?->diffForHumans(),
             'expiresAt' => $this->expires_at?->toISOString(),
@@ -53,6 +58,7 @@ class CertificateResource extends JsonResource
                 'activate' => $canUpdate && $isInstalled && ! $this->active,
                 'deactivate' => $canUpdate && $this->active,
                 'renew' => $canUpdate && $isInstalled && $this->active,
+                'obtain' => $canUpdate && $isPendingVerification,
             ],
         ];
     }
