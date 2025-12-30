@@ -1,4 +1,4 @@
-@if($wwwRedirectType->value !== 'none')
+@if($wwwRedirectType->value !== 'none' && !($allowWildcard ?? false))
 # WWW Redirect
 server {
     listen 80;

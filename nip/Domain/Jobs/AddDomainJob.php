@@ -64,6 +64,7 @@ class AddDomainJob extends BaseProvisionJob
         return view('provisioning.scripts.partials.nginx-www-redirect', [
             'domain' => $this->domainRecord->name,
             'wwwRedirectType' => $this->domainRecord->www_redirect_type,
+            'allowWildcard' => $this->domainRecord->allow_wildcard,
         ])->render();
     }
 
