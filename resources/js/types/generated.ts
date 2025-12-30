@@ -37,6 +37,7 @@ export type DomainRecordData = {
 id: string;
 siteId: string;
 certificateId: string | null;
+hasActiveCertificate: boolean;
 isSecured: boolean;
 certificateType: string | null;
 name: string;

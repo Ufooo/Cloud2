@@ -13,6 +13,8 @@ use Nip\Domain\Http\Requests\StoreDomainRecordRequest;
 use Nip\Domain\Http\Requests\UpdateDomainRecordRequest;
 use Nip\Domain\Http\Resources\DomainRecordResource;
 use Nip\Domain\Jobs\AddDomainJob;
+use Nip\Domain\Jobs\DisableDomainJob;
+use Nip\Domain\Jobs\EnableDomainJob;
 use Nip\Domain\Jobs\RemoveDomainJob;
 use Nip\Domain\Models\DomainRecord;
 use Nip\Site\Data\SiteData;
@@ -32,15 +34,26 @@ class DomainRecordController extends Controller
             ->paginate(15);
 
         $certificates = $site->certificates()
+            ->with('site.server')
             ->orderBy('active', 'desc')
             ->orderBy('created_at', 'desc')
             ->paginate(15);
+
+        // Collect domains covered by active certificates (single query, no N+1)
+        $activeCertificateDomains = $site->certificates()
+            ->where('active', true)
+            ->pluck('domains')
+            ->flatten()
+            ->unique()
+            ->values()
+            ->all();
 
         $canUpdate = request()->user()?->can('update', $site->server);
 
         return Inertia::render('sites/domains/Index', [
             'site' => SiteData::fromModel($site->load('server')),
-            'domainRecords' => DomainRecordResource::collection($domainRecords),
+            'domainRecords' => DomainRecordResource::collection($domainRecords)
+                ->additional(['activeCertificateDomains' => $activeCertificateDomains]),
             'certificates' => \Nip\Domain\Http\Resources\CertificateResource::collection($certificates),
             'wwwRedirectTypes' => WwwRedirectType::options(),
             'certificateTypes' => \Nip\Domain\Enums\CertificateType::options(),
@@ -122,6 +135,47 @@ class DomainRecordController extends Controller
 
         return redirect()->route('sites.domains.index', $site)
             ->with('success', "Domain {$domainRecord->name} is now the primary domain.");
+    }
+
+    public function enable(Site $site, DomainRecord $domainRecord): RedirectResponse
+    {
+        Gate::authorize('update', $site->server);
+
+        if ($domainRecord->status !== DomainRecordStatus::Disabled) {
+            return redirect()->route('sites.domains.index', $site)
+                ->with('error', 'Only disabled domains can be enabled.');
+        }
+
+        $domainName = $domainRecord->name;
+        $domainRecord->update(['status' => DomainRecordStatus::Enabling]);
+
+        EnableDomainJob::dispatch($domainRecord);
+
+        return redirect()->route('sites.domains.index', $site)
+            ->with('success', "Domain {$domainName} is being enabled.");
+    }
+
+    public function disable(Site $site, DomainRecord $domainRecord): RedirectResponse
+    {
+        Gate::authorize('update', $site->server);
+
+        if ($domainRecord->isPrimary()) {
+            return redirect()->route('sites.domains.index', $site)
+                ->with('error', 'Cannot disable the primary domain.');
+        }
+
+        if ($domainRecord->status !== DomainRecordStatus::Enabled) {
+            return redirect()->route('sites.domains.index', $site)
+                ->with('error', 'Only enabled domains can be disabled.');
+        }
+
+        $domainName = $domainRecord->name;
+        $domainRecord->update(['status' => DomainRecordStatus::Disabling]);
+
+        DisableDomainJob::dispatch($domainRecord);
+
+        return redirect()->route('sites.domains.index', $site)
+            ->with('success', "Domain {$domainName} is being disabled.");
     }
 
     /**

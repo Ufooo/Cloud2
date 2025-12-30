@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import {
     destroy,
+    disable,
+    enable,
     markAsPrimary,
     update,
 } from '@/actions/Nip/Domain/Http/Controllers/DomainRecordController';
@@ -21,10 +23,25 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import type { DomainRecordData, Site } from '@/types';
 import { router, useForm } from '@inertiajs/vue3';
-import { Globe, Lock, LockOpen, MoreVertical, Settings, Shield, Trash2 } from 'lucide-vue-next';
+import {
+    Globe,
+    Lock,
+    LockOpen,
+    MoreVertical,
+    Power,
+    PowerOff,
+    Settings,
+    Shield,
+    Trash2,
+} from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import ConfigureDomainModal from '../../partials/ConfigureDomainModal.vue';
 
@@ -65,20 +82,46 @@ function openEditModal() {
 }
 
 function saveEdit() {
-    editForm.patch(update.url({ site: props.site, domainRecord: props.domain }), {
-        preserveScroll: true,
-    });
+    editForm.patch(
+        update.url({ site: props.site, domainRecord: props.domain }),
+        {
+            preserveScroll: true,
+        },
+    );
 }
 
 function handleMarkAsPrimary() {
-    router.post(markAsPrimary.url({ site: props.site, domainRecord: props.domain }), {}, { preserveScroll: true });
+    router.post(
+        markAsPrimary.url({ site: props.site, domainRecord: props.domain }),
+        {},
+        { preserveScroll: true },
+    );
+}
+
+function handleEnable() {
+    router.post(
+        enable.url({ site: props.site, domainRecord: props.domain }),
+        {},
+        { preserveScroll: true },
+    );
+}
+
+function handleDisable() {
+    router.post(
+        disable.url({ site: props.site, domainRecord: props.domain }),
+        {},
+        { preserveScroll: true },
+    );
 }
 
 function handleDelete() {
-    router.delete(destroy.url({ site: props.site, domainRecord: props.domain }), {
-        preserveScroll: true,
-        onSuccess: () => (showDeleteConfirm.value = false),
-    });
+    router.delete(
+        destroy.url({ site: props.site, domainRecord: props.domain }),
+        {
+            preserveScroll: true,
+            onSuccess: () => (showDeleteConfirm.value = false),
+        },
+    );
 }
 </script>
 
@@ -120,7 +163,10 @@ function handleDelete() {
                     >
                         {{ domain.displayableStatus }}
                     </Badge>
-                    <span v-if="domain.allowWildcard" class="text-xs text-muted-foreground">
+                    <span
+                        v-if="domain.allowWildcard"
+                        class="text-xs text-muted-foreground"
+                    >
                         Wildcard
                     </span>
                 </div>
@@ -137,31 +183,45 @@ function handleDelete() {
                         <MoreVertical class="size-4" />
                     </Button>
                 </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" class="w-48">
-                <DropdownMenuItem
-                    v-if="domain.can.update"
-                    @click="openEditModal"
-                >
-                    <Settings class="mr-2 size-4" />
-                    Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                    v-if="domain.can.makePrimary && !domain.isPrimary"
-                    @click="handleMarkAsPrimary"
-                >
-                    <Shield class="mr-2 size-4" />
-                    Mark as primary
-                </DropdownMenuItem>
-                <DropdownMenuSeparator v-if="domain.can.delete" />
-                <DropdownMenuItem
-                    v-if="domain.can.delete"
-                    class="text-destructive"
-                    @click="showDeleteConfirm = true"
-                >
-                    <Trash2 class="mr-2 size-4" />
-                    Delete
-                </DropdownMenuItem>
-            </DropdownMenuContent>
+                <DropdownMenuContent align="end" class="w-48">
+                    <DropdownMenuItem
+                        v-if="domain.can.update"
+                        @click="openEditModal"
+                    >
+                        <Settings class="mr-2 size-4" />
+                        Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                        v-if="domain.can.makePrimary && !domain.isPrimary"
+                        @click="handleMarkAsPrimary"
+                    >
+                        <Shield class="mr-2 size-4" />
+                        Mark as primary
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                        v-if="domain.status === 'disabled'"
+                        @click="handleEnable"
+                    >
+                        <Power class="mr-2 size-4" />
+                        Enable
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                        v-if="domain.status === 'enabled' && !domain.isPrimary"
+                        @click="handleDisable"
+                    >
+                        <PowerOff class="mr-2 size-4" />
+                        Disable
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator v-if="domain.can.delete" />
+                    <DropdownMenuItem
+                        v-if="domain.can.delete"
+                        class="text-destructive"
+                        @click="showDeleteConfirm = true"
+                    >
+                        <Trash2 class="mr-2 size-4" />
+                        Delete
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
             </DropdownMenu>
         </div>
 

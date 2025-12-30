@@ -80,7 +80,7 @@ const typeIcons = {
 };
 
 const availableDomains = computed(() => {
-    return props.domainRecords.filter(d => d.status === 'enabled');
+    return props.domainRecords.filter(d => d.status === 'enabled' && !d.hasActiveCertificate);
 });
 
 const cloneableCertificates = computed(() => {

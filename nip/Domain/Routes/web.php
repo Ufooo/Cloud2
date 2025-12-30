@@ -11,6 +11,8 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
         Route::patch('domains/{domainRecord}', [DomainRecordController::class, 'update'])->name('sites.domains.update');
         Route::delete('domains/{domainRecord}', [DomainRecordController::class, 'destroy'])->name('sites.domains.destroy');
         Route::post('domains/{domainRecord}/primary', [DomainRecordController::class, 'markAsPrimary'])->name('sites.domains.primary');
+        Route::post('domains/{domainRecord}/enable', [DomainRecordController::class, 'enable'])->name('sites.domains.enable');
+        Route::post('domains/{domainRecord}/disable', [DomainRecordController::class, 'disable'])->name('sites.domains.disable');
 
         Route::post('certificates', [CertificateController::class, 'store'])->name('sites.certificates.store');
         Route::delete('certificates/{certificate}', [CertificateController::class, 'destroy'])->name('sites.certificates.destroy');

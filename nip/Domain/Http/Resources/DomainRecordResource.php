@@ -21,10 +21,15 @@ class DomainRecordResource extends JsonResource
         $canUpdate = $request->user()?->can('update', $this->site->server);
         $isEnabled = $this->status === DomainRecordStatus::Enabled;
 
+        // Use pre-computed active certificate domains from controller (no N+1)
+        $activeCertificateDomains = $this->additional['activeCertificateDomains'] ?? [];
+        $hasActiveCertificate = in_array($this->name, $activeCertificateDomains);
+
         return [
             'id' => $this->id,
             'siteId' => $this->site_id,
             'certificateId' => $this->certificate_id,
+            'hasActiveCertificate' => $hasActiveCertificate,
             'isSecured' => $this->certificate_id && $this->certificate?->status === CertificateStatus::Active,
             'certificateType' => $this->certificate?->type?->label(),
             'name' => $this->name,
