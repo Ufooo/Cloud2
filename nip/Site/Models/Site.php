@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Nip\Composer\Models\ComposerCredential;
+use Nip\Php\Enums\PhpVersion;
 use Nip\Server\Enums\IdentityColor;
 use Nip\Server\Models\Server;
 use Nip\Site\Database\Factories\SiteFactory;
@@ -221,7 +222,15 @@ class Site extends Model
 
     public function getEffectivePhpVersion(): string
     {
-        return $this->php_version ?? $this->server->php_version;
+        $version = $this->php_version ?? $this->server->php_version;
+
+        // If already in numeric format (8.4), return as-is
+        if (preg_match('/^\d+\.\d+$/', $version)) {
+            return $version;
+        }
+
+        // Convert enum value (php84) to numeric version (8.4)
+        return PhpVersion::tryFrom($version)?->version() ?? '8.4';
     }
 
     public function getPhpSocketPath(): string

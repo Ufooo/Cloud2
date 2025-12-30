@@ -20,6 +20,9 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# Set home directory permissions to 755
+chmod 755 "{{ $homeDir }}"
+
 # Create .ssh directory for the user
 mkdir -p "{{ $homeDir }}/.ssh"
 chmod 700 "{{ $homeDir }}/.ssh"
