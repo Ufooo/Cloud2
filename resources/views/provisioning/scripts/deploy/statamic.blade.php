@@ -1,12 +1,25 @@
-cd $NIP_SITE_PATH
+#
+# Zero-Downtime Deployment for Statamic
+#
 
-git pull origin $NIP_SITE_BRANCH
+@include('provisioning.scripts.deploy.partials.clone-repository')
 
-$NIP_COMPOSER install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+@include('provisioning.scripts.deploy.partials.setup-env')
 
+@include('provisioning.scripts.deploy.partials.install-composer')
+
+#
+# Statamic Optimizations
+#
+
+echo "Running Statamic optimizations..."
 $NIP_PHP artisan optimize
-$NIP_PHP artisan storage:link
+$NIP_PHP artisan storage:link 2>/dev/null || true
 $NIP_PHP artisan migrate --force
 $NIP_PHP artisan statamic:stache:warm
 
-npm ci || npm install && npm run build
+@include('provisioning.scripts.deploy.partials.build-frontend')
+
+@include('provisioning.scripts.deploy.partials.activate-release')
+
+echo "Statamic deployment completed!"

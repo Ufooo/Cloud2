@@ -1,11 +1,24 @@
-cd $NIP_SITE_PATH
+#
+# Zero-Downtime Deployment for Laravel
+#
 
-git pull origin $NIP_SITE_BRANCH
+@include('provisioning.scripts.deploy.partials.clone-repository')
 
-$NIP_COMPOSER install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+@include('provisioning.scripts.deploy.partials.setup-env')
 
+@include('provisioning.scripts.deploy.partials.install-composer')
+
+#
+# Laravel Optimizations
+#
+
+echo "Running Laravel optimizations..."
 $NIP_PHP artisan optimize
-$NIP_PHP artisan storage:link
+$NIP_PHP artisan storage:link 2>/dev/null || true
 $NIP_PHP artisan migrate --force
 
-npm ci || npm install && npm run build
+@include('provisioning.scripts.deploy.partials.build-frontend')
+
+@include('provisioning.scripts.deploy.partials.activate-release')
+
+echo "Laravel deployment completed!"
