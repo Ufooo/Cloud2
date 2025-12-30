@@ -137,12 +137,14 @@ if [ -f "$ENV_FILE" ]; then
 
 @if($database)
     # Database settings
-    sed -i -r "s|DB_CONNECTION=.*|DB_CONNECTION={{ $database->type }}|" "$ENV_FILE"
-    sed -i "s|^\(# DB_HOST=\|DB_HOST=\).*|DB_HOST={{ $database->host }}|" "$ENV_FILE"
-    sed -i "s|^\(# DB_PORT=\|DB_PORT=\).*|DB_PORT={{ $database->port }}|" "$ENV_FILE"
-    sed -i "s|^\(# DB_DATABASE=\|DB_DATABASE=\).*|DB_DATABASE={{ $database->name }}|" "$ENV_FILE"
-    sed -i "s|^\(# DB_USERNAME=\|DB_USERNAME=\).*|DB_USERNAME={{ $database->username }}|" "$ENV_FILE"
-    sed -i "s|^\(# DB_PASSWORD=\|DB_PASSWORD=\).*|DB_PASSWORD=\"{{ $database->password }}\"|" "$ENV_FILE"
+    # Escape special sed characters in password (& / \ | need escaping)
+    SAFE_DB_PASSWORD=$(printf '%s' '{!! $database->password !!}' | sed 's/[&/\|]/\\&/g')
+    sed -i -r "s|DB_CONNECTION=.*|DB_CONNECTION={!! $database->type !!}|" "$ENV_FILE"
+    sed -i "s|^\(# DB_HOST=\|DB_HOST=\).*|DB_HOST={!! $database->host !!}|" "$ENV_FILE"
+    sed -i "s|^\(# DB_PORT=\|DB_PORT=\).*|DB_PORT={!! $database->port !!}|" "$ENV_FILE"
+    sed -i "s|^\(# DB_DATABASE=\|DB_DATABASE=\).*|DB_DATABASE={!! $database->name !!}|" "$ENV_FILE"
+    sed -i "s|^\(# DB_USERNAME=\|DB_USERNAME=\).*|DB_USERNAME={!! $database->username !!}|" "$ENV_FILE"
+    sed -i "s|^\(# DB_PASSWORD=\|DB_PASSWORD=\).*|DB_PASSWORD=\"$SAFE_DB_PASSWORD\"|" "$ENV_FILE"
 @endif
 
     # Generate APP_KEY if empty

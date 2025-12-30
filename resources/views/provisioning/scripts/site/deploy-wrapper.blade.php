@@ -23,11 +23,11 @@ export NIP_COMPOSER="composer"
 # Database configuration
 @if($database && $databaseUser)
 export NIP_DB_CONNECTION="mysql"
-export NIP_DB_HOST="{{ $database->host ?? '127.0.0.1' }}"
-export NIP_DB_PORT="{{ $database->port ?? '3306' }}"
-export NIP_DB_DATABASE="{{ $database->name }}"
-export NIP_DB_USERNAME="{{ $databaseUser->username }}"
-export NIP_DB_PASSWORD="{{ $databaseUser->password }}"
+export NIP_DB_HOST="{!! $database->host ?? '127.0.0.1' !!}"
+export NIP_DB_PORT="{!! $database->port ?? '3306' !!}"
+export NIP_DB_DATABASE="{!! $database->name !!}"
+export NIP_DB_USERNAME="{!! $databaseUser->username !!}"
+export NIP_DB_PASSWORD='{!! $databaseUser->password !!}'
 @endif
 
 # Generate release directory name

@@ -15,12 +15,14 @@ fi
 # Configure database in .env if database credentials are provided
 if [ -n "$NIP_DB_DATABASE" ]; then
     echo "Configuring database in .env..."
+    # Escape special sed characters in password (& / \ need escaping)
+    SAFE_DB_PASSWORD=$(printf '%s' "$NIP_DB_PASSWORD" | sed 's/[&/\]/\\&/g')
     sed -i "s/^DB_CONNECTION=.*/DB_CONNECTION=$NIP_DB_CONNECTION/" "$NIP_SITE_ROOT/.env"
     sed -i "s/^DB_HOST=.*/DB_HOST=$NIP_DB_HOST/" "$NIP_SITE_ROOT/.env"
     sed -i "s/^DB_PORT=.*/DB_PORT=$NIP_DB_PORT/" "$NIP_SITE_ROOT/.env"
     sed -i "s/^DB_DATABASE=.*/DB_DATABASE=$NIP_DB_DATABASE/" "$NIP_SITE_ROOT/.env"
     sed -i "s/^DB_USERNAME=.*/DB_USERNAME=$NIP_DB_USERNAME/" "$NIP_SITE_ROOT/.env"
-    sed -i "s/^DB_PASSWORD=.*/DB_PASSWORD=$NIP_DB_PASSWORD/" "$NIP_SITE_ROOT/.env"
+    sed -i "s/^DB_PASSWORD=.*/DB_PASSWORD=\"$SAFE_DB_PASSWORD\"/" "$NIP_SITE_ROOT/.env"
 fi
 
 # Link shared storage directory

@@ -36,7 +36,6 @@ class DatabaseUser extends Model
     protected function casts(): array
     {
         return [
-            'password' => 'encrypted',
             'readonly' => 'boolean',
             'status' => DatabaseUserStatus::class,
         ];
