@@ -4,7 +4,6 @@ namespace Nip\Server\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Nip\Server\Enums\ProvisionScriptStatus;
@@ -71,7 +70,7 @@ class ProvisionScriptController extends Controller
         return response()->json(ProvisionScriptResource::make($provisionScript));
     }
 
-    public function dismiss(ProvisionScript $provisionScript): RedirectResponse
+    public function dismiss(ProvisionScript $provisionScript): JsonResponse
     {
         Gate::authorize('view', $provisionScript->server);
 
@@ -79,6 +78,6 @@ class ProvisionScriptController extends Controller
             'status' => ProvisionScriptStatus::Completed,
         ]);
 
-        return back();
+        return response()->json(['success' => true]);
     }
 }

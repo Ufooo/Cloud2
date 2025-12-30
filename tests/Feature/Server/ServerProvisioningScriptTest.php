@@ -123,7 +123,7 @@ it('rejects provisioning script request with invalid token', function () {
 });
 
 it('includes git ssh key setup in provisioning script', function () {
-    $server = Server::factory()->create();
+    $server = Server::factory()->create(['type' => \Nip\Server\Enums\ServerType::App]);
 
     $response = $this->get(route('provisioning.script', [
         'server' => $server->id,
