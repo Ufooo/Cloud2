@@ -45,6 +45,12 @@ abstract class BaseProvisionJob implements ShouldQueue
         return null;
     }
 
+    protected function getSshTimeout(): int
+    {
+        // Default to 10 minutes for SSH operations, can be overridden in child classes
+        return 600;
+    }
+
     public function handle(SSHService $ssh): void
     {
         $server = $this->getServer();
@@ -55,6 +61,8 @@ abstract class BaseProvisionJob implements ShouldQueue
 
             $this->createProvisionScript();
 
+            // Set SSH timeout to match job timeout for long-running scripts
+            $ssh->setTimeout($this->getSshTimeout());
             $ssh->connect($server, $runAsUser);
 
             $result = $ssh->executeScript($this->script->content);

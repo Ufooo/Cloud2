@@ -116,6 +116,7 @@ class SSHService
         $homeDir = $this->connectedUser === 'root' ? '/root' : "/home/{$this->connectedUser}";
         $scriptDir = "{$homeDir}/.netipar";
         $remotePath = "{$scriptDir}/provision-{$scriptId}.sh";
+        $outputPath = "{$scriptDir}/provision-{$scriptId}.output";
 
         try {
             $this->exec("mkdir -p {$scriptDir}");
@@ -125,15 +126,16 @@ class SSHService
 
             $this->exec("chmod +x {$remotePath}");
 
+            // Execute script and tee output to .output file for debugging (like Forge)
             Log::info("Executing script {$remotePath} as {$this->connectedUser}");
-            $result = $this->exec("bash {$remotePath} 2>&1");
+            $result = $this->exec("bash {$remotePath} 2>&1 | tee {$outputPath}; exit \${PIPESTATUS[0]}");
 
-            Log::info("Script kept at {$remotePath} for audit purposes");
+            Log::info("Script output saved to {$outputPath}");
 
             return $result;
 
         } catch (Exception $e) {
-            Log::error("Script execution failed. Script kept at {$remotePath} for debugging");
+            Log::error("Script execution failed. Script kept at {$remotePath}, output at {$outputPath}");
 
             throw $e;
         }
