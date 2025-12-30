@@ -22,6 +22,7 @@ it('creates provision script for deploy job', function () {
         ]);
 
     $ssh = Mockery::mock(SSHService::class);
+    $ssh->shouldReceive('setTimeout')->once()->andReturnSelf();
     $ssh->shouldReceive('connect')->once();
     $ssh->shouldReceive('executeScript')->once()->andReturn(new ExecutionResult('Success', 0, 1.0));
     $ssh->shouldReceive('disconnect')->once();
@@ -52,6 +53,7 @@ it('generates deploy script with correct environment variables', function () {
         ]);
 
     $ssh = Mockery::mock(SSHService::class);
+    $ssh->shouldReceive('setTimeout')->once()->andReturnSelf();
     $ssh->shouldReceive('connect')->once();
     $ssh->shouldReceive('executeScript')->once()->andReturn(new ExecutionResult('Success', 0, 1.0));
     $ssh->shouldReceive('disconnect')->once();
@@ -85,6 +87,7 @@ it('includes laravel specific deploy commands for laravel sites', function () {
         ]);
 
     $ssh = Mockery::mock(SSHService::class);
+    $ssh->shouldReceive('setTimeout')->once()->andReturnSelf();
     $ssh->shouldReceive('connect')->once();
     $ssh->shouldReceive('executeScript')->once()->andReturn(new ExecutionResult('Success', 0, 1.0));
     $ssh->shouldReceive('disconnect')->once();
@@ -116,6 +119,7 @@ it('updates deploy status to deployed on success', function () {
         ]);
 
     $ssh = Mockery::mock(SSHService::class);
+    $ssh->shouldReceive('setTimeout')->once()->andReturnSelf();
     $ssh->shouldReceive('connect')->once();
     $ssh->shouldReceive('executeScript')->once()->andReturn(new ExecutionResult('Success', 0, 1.0));
     $ssh->shouldReceive('disconnect')->once();

@@ -1,8 +1,11 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Support\Facades\Queue;
 use Nip\Database\Enums\DatabaseStatus;
 use Nip\Database\Enums\DatabaseUserStatus;
+use Nip\Database\Jobs\DeleteDatabaseJob;
+use Nip\Database\Jobs\DeleteDatabaseUserJob;
 use Nip\Database\Models\Database;
 use Nip\Database\Models\DatabaseUser;
 use Nip\Server\Models\Server;
@@ -50,6 +53,8 @@ it('can create a database on a server', function () {
 });
 
 it('can delete a database', function () {
+    Queue::fake();
+
     $database = Database::factory()->create([
         'server_id' => $this->server->id,
     ]);
@@ -59,6 +64,10 @@ it('can delete a database', function () {
         ->assertRedirect();
 
     expect($database->fresh()->status)->toBe(DatabaseStatus::Deleting);
+
+    Queue::assertPushed(DeleteDatabaseJob::class, function ($job) use ($database) {
+        return $job->database->id === $database->id;
+    });
 });
 
 it('can create a database user on a server', function () {
@@ -76,6 +85,8 @@ it('can create a database user on a server', function () {
 });
 
 it('can delete a database user', function () {
+    Queue::fake();
+
     $databaseUser = DatabaseUser::factory()->create([
         'server_id' => $this->server->id,
     ]);
@@ -85,6 +96,10 @@ it('can delete a database user', function () {
         ->assertRedirect();
 
     expect($databaseUser->fresh()->status)->toBe(DatabaseUserStatus::Deleting);
+
+    Queue::assertPushed(DeleteDatabaseUserJob::class, function ($job) use ($databaseUser) {
+        return $job->databaseUser->id === $databaseUser->id;
+    });
 });
 
 it('can view site databases', function () {

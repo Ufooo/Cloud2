@@ -24,6 +24,7 @@ it('creates provision script for configure nginx job', function () {
         ->create();
 
     $ssh = Mockery::mock(SSHService::class);
+    $ssh->shouldReceive('setTimeout')->once()->andReturnSelf();
     $ssh->shouldReceive('connect')->once();
     $ssh->shouldReceive('executeScript')->once()->andReturn(new ExecutionResult('Success', 0, 1.0));
     $ssh->shouldReceive('disconnect')->once();
@@ -49,6 +50,7 @@ it('updates site provisioning step on successful job execution', function () {
         ->create();
 
     $ssh = Mockery::mock(SSHService::class);
+    $ssh->shouldReceive('setTimeout')->once()->andReturnSelf();
     $ssh->shouldReceive('connect')->once();
     $ssh->shouldReceive('executeScript')->once()->andReturn(new ExecutionResult('Success', 0, 1.0));
     $ssh->shouldReceive('disconnect')->once();
@@ -69,6 +71,7 @@ it('dispatches site provisioning step changed event', function () {
         ->create();
 
     $ssh = Mockery::mock(SSHService::class);
+    $ssh->shouldReceive('setTimeout')->once()->andReturnSelf();
     $ssh->shouldReceive('connect')->once();
     $ssh->shouldReceive('executeScript')->once()->andReturn(new ExecutionResult('Success', 0, 1.0));
     $ssh->shouldReceive('disconnect')->once();
@@ -93,6 +96,7 @@ it('generates nginx configuration script correctly', function () {
         ]);
 
     $ssh = Mockery::mock(SSHService::class);
+    $ssh->shouldReceive('setTimeout')->once()->andReturnSelf();
     $ssh->shouldReceive('connect')->once();
     $ssh->shouldReceive('executeScript')->once()->andReturn(new ExecutionResult('Success', 0, 1.0));
     $ssh->shouldReceive('disconnect')->once();
@@ -116,6 +120,7 @@ it('finalize job marks site as installed on success', function () {
         ->create();
 
     $ssh = Mockery::mock(SSHService::class);
+    $ssh->shouldReceive('setTimeout')->once()->andReturnSelf();
     $ssh->shouldReceive('connect')->once();
     $ssh->shouldReceive('executeScript')->once()->andReturn(new ExecutionResult('Success', 0, 1.0));
     $ssh->shouldReceive('disconnect')->once();
