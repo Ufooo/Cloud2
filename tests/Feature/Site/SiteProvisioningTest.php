@@ -7,10 +7,17 @@ use Nip\Site\Enums\SiteStatus;
 use Nip\Site\Enums\SiteType;
 use Nip\Site\Jobs\Provisioning\BuildFrontendAssetsJob;
 use Nip\Site\Jobs\Provisioning\CloneRepositoryJob;
-use Nip\Site\Jobs\Provisioning\ConfigureNginxJob;
+use Nip\Site\Jobs\Provisioning\ConfigureWwwRedirectJob;
 use Nip\Site\Jobs\Provisioning\CreateEnvironmentFileJob;
+use Nip\Site\Jobs\Provisioning\CreateLogrotateConfigJob;
+use Nip\Site\Jobs\Provisioning\CreateNginxServerBlockJob;
+use Nip\Site\Jobs\Provisioning\CreatePhpFpmPoolJob;
+use Nip\Site\Jobs\Provisioning\CreateSiteConfigDirectoryJob;
+use Nip\Site\Jobs\Provisioning\CreateSiteDirectoryJob;
+use Nip\Site\Jobs\Provisioning\EnableNginxSiteJob;
 use Nip\Site\Jobs\Provisioning\FinalizeSiteJob;
 use Nip\Site\Jobs\Provisioning\InstallComposerDependenciesJob;
+use Nip\Site\Jobs\Provisioning\RestartServicesJob;
 use Nip\Site\Jobs\Provisioning\RunMigrationsJob;
 use Nip\Site\Models\Site;
 use Nip\Site\Services\SiteProvisioningService;
@@ -19,7 +26,28 @@ beforeEach(function () {
     Bus::fake();
 });
 
-it('dispatches site provisioning batch with all jobs for laravel site with repository', function () {
+/**
+ * Helper to extract job types from a pending chain fake
+ * PendingChain has: $job (first job) and $chain (rest of jobs as array)
+ */
+function getJobTypesFromChain($pendingChain): array
+{
+    $jobTypes = [];
+
+    // First job
+    if ($pendingChain->job) {
+        $jobTypes[] = get_class($pendingChain->job);
+    }
+
+    // Chained jobs
+    foreach ($pendingChain->chain as $job) {
+        $jobTypes[] = get_class($job);
+    }
+
+    return $jobTypes;
+}
+
+it('dispatches site provisioning batch with chain for laravel site with repository', function () {
     $server = Server::factory()->create();
     $site = Site::factory()
         ->for($server)
@@ -32,7 +60,7 @@ it('dispatches site provisioning batch with all jobs for laravel site with repos
     $service = new SiteProvisioningService;
     $batch = $service->dispatch($site);
 
-    expect($batch->name)->toBe("Site Provisioning: {$site->domain}");
+    expect($batch->name)->toBe("Installing site: {$site->domain}");
 
     $site->refresh();
 
@@ -41,7 +69,8 @@ it('dispatches site provisioning batch with all jobs for laravel site with repos
         ->and($site->batch_id)->toBe($batch->id);
 
     Bus::assertBatched(function ($batch) {
-        return count($batch->jobs) === 7;
+        // Batch contains a single chain with multiple jobs
+        return count($batch->jobs) === 1;
     });
 });
 
@@ -57,9 +86,17 @@ it('includes all required jobs for laravel site with repository', function () {
     $service->dispatch($site);
 
     Bus::assertBatched(function ($batch) {
-        $jobTypes = collect($batch->jobs)->map(fn ($job) => get_class($job))->toArray();
+        $chain = $batch->jobs[0];
+        $jobTypes = getJobTypesFromChain($chain);
 
-        return in_array(ConfigureNginxJob::class, $jobTypes)
+        return in_array(CreateSiteConfigDirectoryJob::class, $jobTypes)
+            && in_array(CreateNginxServerBlockJob::class, $jobTypes)
+            && in_array(ConfigureWwwRedirectJob::class, $jobTypes)
+            && in_array(EnableNginxSiteJob::class, $jobTypes)
+            && in_array(CreatePhpFpmPoolJob::class, $jobTypes)
+            && in_array(RestartServicesJob::class, $jobTypes)
+            && in_array(CreateLogrotateConfigJob::class, $jobTypes)
+            && in_array(CreateSiteDirectoryJob::class, $jobTypes)
             && in_array(CloneRepositoryJob::class, $jobTypes)
             && in_array(CreateEnvironmentFileJob::class, $jobTypes)
             && in_array(InstallComposerDependenciesJob::class, $jobTypes)
@@ -82,9 +119,10 @@ it('excludes dependency jobs when site has no repository', function () {
     $service->dispatch($site);
 
     Bus::assertBatched(function ($batch) {
-        $jobTypes = collect($batch->jobs)->map(fn ($job) => get_class($job))->toArray();
+        $chain = $batch->jobs[0];
+        $jobTypes = getJobTypesFromChain($chain);
 
-        return in_array(ConfigureNginxJob::class, $jobTypes)
+        return in_array(CreateSiteConfigDirectoryJob::class, $jobTypes)
             && in_array(CloneRepositoryJob::class, $jobTypes)
             && in_array(CreateEnvironmentFileJob::class, $jobTypes)
             && in_array(FinalizeSiteJob::class, $jobTypes)
@@ -108,7 +146,8 @@ it('excludes build job when site has no build command', function () {
     $service->dispatch($site);
 
     Bus::assertBatched(function ($batch) {
-        $jobTypes = collect($batch->jobs)->map(fn ($job) => get_class($job))->toArray();
+        $chain = $batch->jobs[0];
+        $jobTypes = getJobTypesFromChain($chain);
 
         return in_array(InstallComposerDependenciesJob::class, $jobTypes)
             && ! in_array(BuildFrontendAssetsJob::class, $jobTypes);
@@ -127,14 +166,15 @@ it('excludes migration job for non-laravel sites', function () {
     $service->dispatch($site);
 
     Bus::assertBatched(function ($batch) {
-        $jobTypes = collect($batch->jobs)->map(fn ($job) => get_class($job))->toArray();
+        $chain = $batch->jobs[0];
+        $jobTypes = getJobTypesFromChain($chain);
 
         return in_array(InstallComposerDependenciesJob::class, $jobTypes)
             && ! in_array(RunMigrationsJob::class, $jobTypes);
     });
 });
 
-it('always includes configure nginx and finalize jobs', function () {
+it('always includes system level jobs and finalize job', function () {
     $server = Server::factory()->create();
     $site = Site::factory()
         ->for($server)
@@ -148,9 +188,16 @@ it('always includes configure nginx and finalize jobs', function () {
     $service->dispatch($site);
 
     Bus::assertBatched(function ($batch) {
-        $jobTypes = collect($batch->jobs)->map(fn ($job) => get_class($job))->toArray();
+        $chain = $batch->jobs[0];
+        $jobTypes = getJobTypesFromChain($chain);
 
-        return in_array(ConfigureNginxJob::class, $jobTypes)
+        return in_array(CreateSiteConfigDirectoryJob::class, $jobTypes)
+            && in_array(CreateNginxServerBlockJob::class, $jobTypes)
+            && in_array(ConfigureWwwRedirectJob::class, $jobTypes)
+            && in_array(EnableNginxSiteJob::class, $jobTypes)
+            && in_array(CreatePhpFpmPoolJob::class, $jobTypes)
+            && in_array(RestartServicesJob::class, $jobTypes)
+            && in_array(CreateLogrotateConfigJob::class, $jobTypes)
             && in_array(FinalizeSiteJob::class, $jobTypes);
     });
 });
@@ -166,7 +213,7 @@ it('sets batch callbacks correctly', function () {
     $service->dispatch($site);
 
     Bus::assertBatched(function ($batch) use ($site) {
-        return $batch->name === "Site Provisioning: {$site->domain}";
+        return $batch->name === "Installing site: {$site->domain}";
     });
 });
 
@@ -201,7 +248,8 @@ it('includes migrations job only for laravel and statamic sites', function () {
     $service->dispatch($laravelSite);
 
     Bus::assertBatched(function ($batch) {
-        $jobTypes = collect($batch->jobs)->map(fn ($job) => get_class($job))->toArray();
+        $chain = $batch->jobs[0];
+        $jobTypes = getJobTypesFromChain($chain);
 
         return in_array(RunMigrationsJob::class, $jobTypes);
     });
@@ -219,7 +267,8 @@ it('includes migrations job only for laravel and statamic sites', function () {
     $service->dispatch($statamicSite);
 
     Bus::assertBatched(function ($batch) {
-        $jobTypes = collect($batch->jobs)->map(fn ($job) => get_class($job))->toArray();
+        $chain = $batch->jobs[0];
+        $jobTypes = getJobTypesFromChain($chain);
 
         return in_array(RunMigrationsJob::class, $jobTypes);
     });

@@ -8,10 +8,17 @@ use Nip\Site\Enums\SiteProvisioningStep;
 use Nip\Site\Enums\SiteStatus;
 use Nip\Site\Jobs\Provisioning\BuildFrontendAssetsJob;
 use Nip\Site\Jobs\Provisioning\CloneRepositoryJob;
-use Nip\Site\Jobs\Provisioning\ConfigureNginxJob;
+use Nip\Site\Jobs\Provisioning\ConfigureWwwRedirectJob;
 use Nip\Site\Jobs\Provisioning\CreateEnvironmentFileJob;
+use Nip\Site\Jobs\Provisioning\CreateLogrotateConfigJob;
+use Nip\Site\Jobs\Provisioning\CreateNginxServerBlockJob;
+use Nip\Site\Jobs\Provisioning\CreatePhpFpmPoolJob;
+use Nip\Site\Jobs\Provisioning\CreateSiteConfigDirectoryJob;
+use Nip\Site\Jobs\Provisioning\CreateSiteDirectoryJob;
+use Nip\Site\Jobs\Provisioning\EnableNginxSiteJob;
 use Nip\Site\Jobs\Provisioning\FinalizeSiteJob;
 use Nip\Site\Jobs\Provisioning\InstallComposerDependenciesJob;
+use Nip\Site\Jobs\Provisioning\RestartServicesJob;
 use Nip\Site\Jobs\Provisioning\RunMigrationsJob;
 use Nip\Site\Models\Site;
 
@@ -26,8 +33,10 @@ class SiteProvisioningService
 
         $jobs = $this->buildJobChain($site);
 
-        $batch = Bus::batch($jobs)
-            ->name("Site Provisioning: {$site->domain}")
+        $batch = Bus::batch([
+            Bus::chain($jobs),
+        ])
+            ->name("Installing site: {$site->domain}")
             ->then(function (Batch $batch) use ($site) {
                 $site->update([
                     'status' => SiteStatus::Installed,
@@ -61,31 +70,54 @@ class SiteProvisioningService
     {
         $jobs = [];
 
-        // Step 1: Configure Nginx (always required)
-        $jobs[] = new ConfigureNginxJob($site);
+        // System-level steps (run as root)
+        // Step 1: Create site configuration directory
+        $jobs[] = new CreateSiteConfigDirectoryJob($site);
 
-        // Step 2: Clone Repository (conditional)
+        // Step 2: Create Nginx server block
+        $jobs[] = new CreateNginxServerBlockJob($site);
+
+        // Step 3: Configure www redirect
+        $jobs[] = new ConfigureWwwRedirectJob($site);
+
+        // Step 4: Enable Nginx site
+        $jobs[] = new EnableNginxSiteJob($site);
+
+        // Step 5: Create PHP-FPM pool
+        $jobs[] = new CreatePhpFpmPoolJob($site);
+
+        // Step 6: Restart services
+        $jobs[] = new RestartServicesJob($site);
+
+        // Step 7: Create logrotate config
+        $jobs[] = new CreateLogrotateConfigJob($site);
+
+        // Application-level steps (run as site user)
+        // Step 8: Create site directory
+        $jobs[] = new CreateSiteDirectoryJob($site);
+
+        // Step 9: Clone repository (conditional)
         $jobs[] = new CloneRepositoryJob($site);
 
-        // Step 3: Create Environment File (conditional)
+        // Step 10: Create environment file
         $jobs[] = new CreateEnvironmentFileJob($site);
 
-        // Step 4: Install Dependencies (conditional on repository)
+        // Step 11: Install Composer dependencies (conditional)
         if ($site->repository) {
             $jobs[] = new InstallComposerDependenciesJob($site);
         }
 
-        // Step 5: Build Frontend Assets (conditional on build command)
+        // Step 12: Build frontend assets (conditional)
         if ($site->repository && $site->build_command) {
             $jobs[] = new BuildFrontendAssetsJob($site);
         }
 
-        // Step 6: Run Migrations (conditional on site type and repository)
+        // Step 13: Run migrations (conditional)
         if ($site->repository && $site->type->hasMigrations()) {
             $jobs[] = new RunMigrationsJob($site);
         }
 
-        // Step 7: Finalize (always required)
+        // Step 14: Finalize site
         $jobs[] = new FinalizeSiteJob($site);
 
         return $jobs;

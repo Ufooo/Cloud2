@@ -8,7 +8,7 @@ class CreateEnvironmentFileJob extends BaseSiteProvisionJob
 {
     protected function getStep(): SiteProvisioningStep
     {
-        return SiteProvisioningStep::CreatingEnvironmentFile;
+        return SiteProvisioningStep::ConfiguringEnvironment;
     }
 
     protected function generateScript(): string

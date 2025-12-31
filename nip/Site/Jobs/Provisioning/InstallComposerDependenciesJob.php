@@ -8,7 +8,7 @@ class InstallComposerDependenciesJob extends BaseSiteProvisionJob
 {
     protected function getStep(): SiteProvisioningStep
     {
-        return SiteProvisioningStep::InstallingDependencies;
+        return SiteProvisioningStep::InstallingComposerDependencies;
     }
 
     protected function generateScript(): string

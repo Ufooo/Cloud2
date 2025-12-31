@@ -10,7 +10,7 @@ class FinalizeSiteJob extends BaseSiteProvisionJob
 {
     protected function getStep(): SiteProvisioningStep
     {
-        return SiteProvisioningStep::FinishingUp;
+        return SiteProvisioningStep::FinalizingSite;
     }
 
     protected function generateScript(): string

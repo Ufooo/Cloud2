@@ -1,42 +1,10 @@
 #!/bin/bash
 set -e
 
-# Netipar Cloud - Create Nginx Configuration
+# Netipar Cloud - Create Nginx Server Block
 # Site: {{ $domain }}
 
-echo "Creating Nginx configuration for {{ $domain }}..."
-
-#
-# Ensure DH Parameters Exist
-#
-
-if [ ! -f /etc/nginx/dhparams.pem ]; then
-    echo "Generating dhparams.pem file..."
-    openssl dhparam -out /etc/nginx/dhparams.pem 2048
-fi
-
-#
-# Create FastCGI Defaults
-#
-
-if [ ! -f /etc/nginx/netipar_fastcgi_defaults ]; then
-    echo "Creating FastCGI defaults..."
-    cat > /etc/nginx/netipar_fastcgi_defaults << 'EOF'
-# Netipar FastCGI Defaults
-fastcgi_buffers 32 32k;
-fastcgi_buffer_size 64k;
-EOF
-fi
-
-#
-# Create Nginx Configuration Directory
-#
-
-NGINX_CONF_DIR="/etc/nginx/netipar-conf/{{ $site->id }}"
-mkdir -p "$NGINX_CONF_DIR"
-mkdir -p "$NGINX_CONF_DIR/before"
-mkdir -p "$NGINX_CONF_DIR/server"
-mkdir -p "$NGINX_CONF_DIR/after"
+echo "Creating Nginx server block for {{ $domain }}..."
 
 #
 # Create Nginx Site Configuration
@@ -46,4 +14,4 @@ cat > /etc/nginx/sites-available/{{ $domain }} << 'NGINXEOF'
 {!! $nginxConfig !!}
 NGINXEOF
 
-echo "Nginx configuration created for {{ $domain }}"
+echo "Nginx server block created for {{ $domain }}"

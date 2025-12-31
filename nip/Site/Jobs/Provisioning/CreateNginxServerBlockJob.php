@@ -4,11 +4,11 @@ namespace Nip\Site\Jobs\Provisioning;
 
 use Nip\Site\Enums\SiteProvisioningStep;
 
-class ConfigureNginxJob extends BaseSiteProvisionJob
+class CreateNginxServerBlockJob extends BaseSiteProvisionJob
 {
     protected function getStep(): SiteProvisioningStep
     {
-        return SiteProvisioningStep::ConfiguringNginx;
+        return SiteProvisioningStep::CreatingNginxServerBlock;
     }
 
     protected function generateScript(): string
@@ -26,18 +26,10 @@ class ConfigureNginxJob extends BaseSiteProvisionJob
             'wwwRedirectType' => $this->site->www_redirect_type,
         ])->render();
 
-        $isolatedFpmScript = view('provisioning.scripts.site.partials.isolated-fpm-pool', [
-            'phpVersion' => $this->site->getEffectivePhpVersion(),
-            'domain' => $this->site->domain,
-            'user' => $this->site->user,
-            'fullPath' => $this->site->getFullPath(),
-        ])->render();
-
-        return view('provisioning.scripts.site.steps.configure-nginx', [
+        return view('provisioning.scripts.site.steps.create-nginx-config', [
             'site' => $this->site,
             'domain' => $this->site->domain,
             'nginxConfig' => $nginxConfig,
-            'isolatedFpmScript' => $isolatedFpmScript,
         ])->render();
     }
 }

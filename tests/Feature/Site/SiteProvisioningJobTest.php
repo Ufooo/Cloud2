@@ -8,7 +8,8 @@ use Nip\Server\Services\SSH\ExecutionResult;
 use Nip\Server\Services\SSH\SSHService;
 use Nip\Site\Enums\SiteProvisioningStep;
 use Nip\Site\Events\SiteProvisioningStepChanged;
-use Nip\Site\Jobs\Provisioning\ConfigureNginxJob;
+use Nip\Site\Jobs\Provisioning\CreateNginxServerBlockJob;
+use Nip\Site\Jobs\Provisioning\CreateSiteConfigDirectoryJob;
 use Nip\Site\Jobs\Provisioning\FinalizeSiteJob;
 use Nip\Site\Models\Site;
 
@@ -16,7 +17,7 @@ beforeEach(function () {
     Event::fake();
 });
 
-it('creates provision script for configure nginx job', function () {
+it('creates provision script for create nginx server block job', function () {
     $server = Server::factory()->create();
     $site = Site::factory()
         ->for($server)
@@ -29,7 +30,7 @@ it('creates provision script for configure nginx job', function () {
     $ssh->shouldReceive('executeScript')->once()->andReturn(new ExecutionResult('Success', 0, 1.0));
     $ssh->shouldReceive('disconnect')->once();
 
-    $job = new ConfigureNginxJob($site);
+    $job = new CreateNginxServerBlockJob($site);
     $job->handle($ssh);
 
     expect(ProvisionScript::query()->where('resource_type', 'site')->count())->toBe(1);
@@ -39,7 +40,7 @@ it('creates provision script for configure nginx job', function () {
     expect($script->resource_id)->toBe($site->id)
         ->and($script->server_id)->toBe($server->id)
         ->and($script->status)->toBe(ProvisionScriptStatus::Completed)
-        ->and($script->content)->toContain('Configuring Nginx');
+        ->and($script->content)->toContain('Creating Nginx server block');
 });
 
 it('updates site provisioning step on successful job execution', function () {
@@ -55,12 +56,12 @@ it('updates site provisioning step on successful job execution', function () {
     $ssh->shouldReceive('executeScript')->once()->andReturn(new ExecutionResult('Success', 0, 1.0));
     $ssh->shouldReceive('disconnect')->once();
 
-    $job = new ConfigureNginxJob($site);
+    $job = new CreateNginxServerBlockJob($site);
     $job->handle($ssh);
 
     $site->refresh();
 
-    expect($site->provisioning_step)->toBe(SiteProvisioningStep::ConfiguringNginx);
+    expect($site->provisioning_step)->toBe(SiteProvisioningStep::CreatingNginxServerBlock);
 });
 
 it('dispatches site provisioning step changed event', function () {
@@ -76,12 +77,12 @@ it('dispatches site provisioning step changed event', function () {
     $ssh->shouldReceive('executeScript')->once()->andReturn(new ExecutionResult('Success', 0, 1.0));
     $ssh->shouldReceive('disconnect')->once();
 
-    $job = new ConfigureNginxJob($site);
+    $job = new CreateNginxServerBlockJob($site);
     $job->handle($ssh);
 
     Event::assertDispatched(SiteProvisioningStepChanged::class, function ($event) use ($site) {
         return $event->site->id === $site->id
-            && $event->site->provisioning_step === SiteProvisioningStep::ConfiguringNginx;
+            && $event->site->provisioning_step === SiteProvisioningStep::CreatingNginxServerBlock;
     });
 });
 
@@ -101,13 +102,13 @@ it('generates nginx configuration script correctly', function () {
     $ssh->shouldReceive('executeScript')->once()->andReturn(new ExecutionResult('Success', 0, 1.0));
     $ssh->shouldReceive('disconnect')->once();
 
-    $job = new ConfigureNginxJob($site);
+    $job = new CreateNginxServerBlockJob($site);
     $job->handle($ssh);
 
     $script = ProvisionScript::query()->where('resource_type', 'site')->first();
 
     expect($script->content)
-        ->toContain('Configuring Nginx')
+        ->toContain('Creating Nginx server block')
         ->and($script->content)->toContain('example.com')
         ->and($script->content)->toContain('/etc/nginx/sites-available/example.com');
 });
@@ -131,7 +132,7 @@ it('finalize job marks site as installed on success', function () {
     $site->refresh();
 
     expect($site->status->value)->toBe('installed')
-        ->and($site->provisioning_step)->toBe(SiteProvisioningStep::FinishingUp);
+        ->and($site->provisioning_step)->toBe(SiteProvisioningStep::FinalizingSite);
 });
 
 it('generates job tags correctly', function () {
@@ -141,12 +142,12 @@ it('generates job tags correctly', function () {
         ->laravel()
         ->create();
 
-    $job = new ConfigureNginxJob($site);
+    $job = new CreateSiteConfigDirectoryJob($site);
     $tags = $job->tags();
 
     expect($tags)->toContain('provision')
         ->and($tags)->toContain('site')
         ->and($tags)->toContain("site:{$site->id}")
         ->and($tags)->toContain("server:{$server->id}")
-        ->and($tags)->toContain('step:ConfiguringNginx');
+        ->and($tags)->toContain('step:CreatingSiteConfigDirectory');
 });
