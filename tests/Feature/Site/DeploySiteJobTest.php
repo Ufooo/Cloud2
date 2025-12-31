@@ -104,7 +104,7 @@ it('includes laravel specific deploy commands for laravel sites', function () {
         ->toContain('$NIP_PHP artisan optimize')
         ->toContain('$NIP_PHP artisan migrate --force')
         ->toContain('npm')
-        ->toContain('ln -sfn "$NIP_NEW_RELEASE_PATH" "$NIP_SITE_ROOT/current"');
+        ->toContain('ln -s "$NIP_NEW_RELEASE_PATH" "$NIP_SITE_ROOT/current-temp" && mv -Tf "$NIP_SITE_ROOT/current-temp" "$NIP_SITE_ROOT/current"');
 });
 
 it('updates deploy status to deployed on success', function () {

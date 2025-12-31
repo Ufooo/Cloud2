@@ -25,10 +25,10 @@ mkdir -p "$RELEASE_DIR"
 sudo -u {{ $user }} git clone --branch {{ $branch }} --depth 1 {{ $repository }} "$RELEASE_DIR"
 
 #
-# Update Current Symlink
+# Update Current Symlink (atomic swap)
 #
 
-ln -sfn "$RELEASE_DIR" "$SITE_PATH/current"
+ln -s "$RELEASE_DIR" "$SITE_PATH/current-temp" && mv -Tf "$SITE_PATH/current-temp" "$SITE_PATH/current"
 
 #
 # Set Ownership

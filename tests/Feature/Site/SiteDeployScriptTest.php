@@ -15,7 +15,7 @@ it('generates default deploy script for laravel site', function () {
         ->toContain('$NIP_PHP artisan optimize')
         ->toContain('$NIP_PHP artisan migrate --force')
         ->toContain('npm run build')
-        ->toContain('ln -sfn "$NIP_NEW_RELEASE_PATH" "$NIP_SITE_ROOT/current"');
+        ->toContain('ln -s "$NIP_NEW_RELEASE_PATH" "$NIP_SITE_ROOT/current-temp" && mv -Tf "$NIP_SITE_ROOT/current-temp" "$NIP_SITE_ROOT/current"');
 });
 
 it('generates default deploy script for statamic site', function () {
@@ -25,7 +25,7 @@ it('generates default deploy script for statamic site', function () {
         ->toContain('Zero-Downtime Deployment for Statamic')
         ->toContain('$NIP_PHP artisan statamic:stache:warm')
         ->toContain('$NIP_PHP artisan migrate --force')
-        ->toContain('ln -sfn "$NIP_NEW_RELEASE_PATH" "$NIP_SITE_ROOT/current"');
+        ->toContain('ln -s "$NIP_NEW_RELEASE_PATH" "$NIP_SITE_ROOT/current-temp" && mv -Tf "$NIP_SITE_ROOT/current-temp" "$NIP_SITE_ROOT/current"');
 });
 
 it('generates default deploy script for symfony site', function () {
@@ -35,7 +35,7 @@ it('generates default deploy script for symfony site', function () {
         ->toContain('Zero-Downtime Deployment for Symfony')
         ->toContain('bin/console cache:clear')
         ->toContain('doctrine:migrations:migrate')
-        ->toContain('ln -sfn "$NIP_NEW_RELEASE_PATH" "$NIP_SITE_ROOT/current"');
+        ->toContain('ln -s "$NIP_NEW_RELEASE_PATH" "$NIP_SITE_ROOT/current-temp" && mv -Tf "$NIP_SITE_ROOT/current-temp" "$NIP_SITE_ROOT/current"');
 });
 
 it('generates default deploy script for nextjs site', function () {

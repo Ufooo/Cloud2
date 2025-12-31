@@ -1,9 +1,9 @@
 #
-# Activate Release
+# Activate Release (atomic swap)
 #
 
 echo "Activating new release..."
-ln -sfn "$NIP_NEW_RELEASE_PATH" "$NIP_SITE_ROOT/current"
+ln -s "$NIP_NEW_RELEASE_PATH" "$NIP_SITE_ROOT/current-temp" && mv -Tf "$NIP_SITE_ROOT/current-temp" "$NIP_SITE_ROOT/current"
 
 # Clean up old releases (keep last 5)
 echo "Cleaning up old releases..."

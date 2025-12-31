@@ -37,8 +37,8 @@ mkdir -p "$TARGET_DIR{{ $webDirectory }}"
 # Create default index file
 {!! $defaultIndexScript !!}
 
-# Create symlink to current release
-ln -sfn "$TARGET_DIR" "$SITE_PATH/current"
+# Create symlink to current release (atomic swap)
+ln -s "$TARGET_DIR" "$SITE_PATH/current-temp" && mv -Tf "$SITE_PATH/current-temp" "$SITE_PATH/current"
 
 # Create shared .env file
 if [ ! -f "$SITE_PATH/.env" ]; then
