@@ -41,4 +41,22 @@ return [
         'acme_dns_domain' => env('ACME_DNS_DOMAIN', 'ssl.netipar.cloud'),
     ],
 
+    'github' => [
+        'client_id' => env('GITHUB_CLIENT_ID'),
+        'client_secret' => env('GITHUB_CLIENT_SECRET'),
+        'redirect_uri' => env('GITHUB_REDIRECT_URI', '/source-control/github/callback'),
+    ],
+
+    'gitlab' => [
+        'client_id' => env('GITLAB_CLIENT_ID'),
+        'client_secret' => env('GITLAB_CLIENT_SECRET'),
+        'redirect_uri' => env('GITLAB_REDIRECT_URI', '/source-control/gitlab/callback'),
+    ],
+
+    'bitbucket' => [
+        'client_id' => env('BITBUCKET_CLIENT_ID'),
+        'client_secret' => env('BITBUCKET_CLIENT_SECRET'),
+        'redirect_uri' => env('BITBUCKET_REDIRECT_URI', '/source-control/bitbucket/callback'),
+    ],
+
 ];

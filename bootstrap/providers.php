@@ -17,6 +17,7 @@ return [
     Nip\Security\Providers\SecurityServiceProvider::class,
     Nip\Server\Providers\ServerServiceProvider::class,
     Nip\Site\Providers\SiteServiceProvider::class,
+    Nip\SourceControl\Providers\SourceControlServiceProvider::class,
     Nip\SshKey\Providers\SshKeyServiceProvider::class,
     Nip\UnixUser\Providers\UnixUserServiceProvider::class,
 ];

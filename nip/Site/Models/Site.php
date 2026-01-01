@@ -2,6 +2,7 @@
 
 namespace Nip\Site\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,6 +12,7 @@ use Nip\Composer\Models\ComposerCredential;
 use Nip\Php\Enums\PhpVersion;
 use Nip\Server\Enums\IdentityColor;
 use Nip\Server\Models\Server;
+use Nip\Site\Data\SiteProvisioningStepData;
 use Nip\Site\Database\Factories\SiteFactory;
 use Nip\Site\Enums\DeployStatus;
 use Nip\Site\Enums\PackageManager;
@@ -18,6 +20,8 @@ use Nip\Site\Enums\SiteProvisioningStep;
 use Nip\Site\Enums\SiteStatus;
 use Nip\Site\Enums\SiteType;
 use Nip\Site\Enums\WwwRedirectType;
+use Nip\SourceControl\Models\SourceControl;
+use Nip\SourceControl\Services\GitHubService;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 
@@ -45,6 +49,7 @@ class Site extends Model
 
     protected $fillable = [
         'server_id',
+        'source_control_id',
         'database_id',
         'database_user_id',
         'domain',
@@ -106,6 +111,14 @@ class Site extends Model
     public function server(): BelongsTo
     {
         return $this->belongsTo(Server::class);
+    }
+
+    /**
+     * @return BelongsTo<SourceControl, $this>
+     */
+    public function sourceControl(): BelongsTo
+    {
+        return $this->belongsTo(SourceControl::class);
     }
 
     /**
@@ -270,5 +283,80 @@ class Site extends Model
         $this->update([
             'deploy_hook_token' => bin2hex(random_bytes(32)),
         ]);
+    }
+
+    public function getAuthenticatedCloneUrl(): ?string
+    {
+        if (! $this->repository || ! $this->sourceControl) {
+            return null;
+        }
+
+        $service = new GitHubService($this->sourceControl);
+
+        return $service->getCloneUrl($this->repository);
+    }
+
+    public function getCloneUrl(): ?string
+    {
+        if (! $this->repository) {
+            return null;
+        }
+
+        if ($this->sourceControl) {
+            return $this->getAuthenticatedCloneUrl();
+        }
+
+        return "https://github.com/{$this->repository}.git";
+    }
+
+    /**
+     * @return Attribute<array<SiteProvisioningStepData>, never>
+     */
+    protected function provisioningSteps(): Attribute
+    {
+        return Attribute::get(fn () => $this->getProvisioningSteps());
+    }
+
+    /**
+     * @return array<SiteProvisioningStepData>
+     */
+    public function getProvisioningSteps(): array
+    {
+        $steps = [
+            SiteProvisioningStep::Initializing,
+            SiteProvisioningStep::CreatingSiteConfigDirectory,
+            SiteProvisioningStep::CreatingNginxServerBlock,
+            SiteProvisioningStep::ConfiguringWwwRedirect,
+            SiteProvisioningStep::EnablingNginxSite,
+            SiteProvisioningStep::CreatingPhpFpmPool,
+            SiteProvisioningStep::RestartingServices,
+            SiteProvisioningStep::CreatingLogrotateConfig,
+            SiteProvisioningStep::CreatingSiteDirectory,
+            SiteProvisioningStep::CloningRepository,
+            SiteProvisioningStep::ConfiguringEnvironment,
+        ];
+
+        if ($this->repository) {
+            $steps[] = SiteProvisioningStep::InstallingComposerDependencies;
+        }
+
+        if ($this->repository && $this->build_command) {
+            $steps[] = SiteProvisioningStep::BuildingFrontendAssets;
+        }
+
+        if ($this->repository && $this->type?->hasMigrations()) {
+            $steps[] = SiteProvisioningStep::RunningMigrations;
+        }
+
+        $steps[] = SiteProvisioningStep::FinalizingSite;
+
+        return array_map(
+            fn (SiteProvisioningStep $step) => new SiteProvisioningStepData(
+                value: $step->value,
+                label: $step->label(),
+                description: $step->description(),
+            ),
+            $steps
+        );
     }
 }
