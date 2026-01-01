@@ -27,24 +27,12 @@ beforeEach(function () {
 });
 
 /**
- * Helper to extract job types from a pending chain fake
- * PendingChain has: $job (first job) and $chain (rest of jobs as array)
+ * Helper to extract job types from a job chain array
+ * When using Bus::batch([$jobs]), the chain is an array of job instances
  */
-function getJobTypesFromChain($pendingChain): array
+function getJobTypesFromChain(array $jobs): array
 {
-    $jobTypes = [];
-
-    // First job
-    if ($pendingChain->job) {
-        $jobTypes[] = get_class($pendingChain->job);
-    }
-
-    // Chained jobs
-    foreach ($pendingChain->chain as $job) {
-        $jobTypes[] = get_class($job);
-    }
-
-    return $jobTypes;
+    return array_map(fn ($job) => get_class($job), $jobs);
 }
 
 it('dispatches site provisioning batch with chain for laravel site with repository', function () {

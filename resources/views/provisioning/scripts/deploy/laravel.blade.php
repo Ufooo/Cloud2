@@ -1,24 +1,15 @@
-#
-# Zero-Downtime Deployment for Laravel
-#
+$NIP_COMPOSER install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
-@include('provisioning.scripts.deploy.partials.clone-repository')
+( flock -w 10 9 || exit 1
+    echo 'Restarting FPM...'; sudo -S service $NIP_PHP_FPM reload ) 9>/tmp/fpmlock-$(whoami)
 
-@include('provisioning.scripts.deploy.partials.setup-env')
+if [ -f artisan ]; then
+    $NIP_PHP artisan optimize
+    $NIP_PHP artisan storage:link
+    $NIP_PHP artisan migrate --force
+fi
 
-@include('provisioning.scripts.deploy.partials.install-composer')
-
-#
-# Laravel Optimizations
-#
-
-echo "Running Laravel optimizations..."
-$NIP_PHP artisan optimize
-$NIP_PHP artisan storage:link 2>/dev/null || true
-$NIP_PHP artisan migrate --force
-
-@include('provisioning.scripts.deploy.partials.build-frontend')
-
-@include('provisioning.scripts.deploy.partials.activate-release')
-
-echo "Laravel deployment completed!"
+if [ -f package.json ]; then
+    npm ci || npm install
+    npm run build
+fi

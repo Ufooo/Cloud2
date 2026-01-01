@@ -24,7 +24,7 @@ cd "$CURRENT_PATH"
 if [ -f "artisan" ]; then
     echo "Running Laravel migrations..."
 
-    sudo -u {{ $user }} php artisan migrate --force --no-interaction
+    php artisan migrate --force --no-interaction
 
     echo "Migrations completed successfully!"
 else

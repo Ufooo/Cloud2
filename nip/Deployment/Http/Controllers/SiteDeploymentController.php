@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 use Nip\Deployment\Http\Requests\UpdateDeploymentSettingsRequest;
+use Nip\Deployment\Http\Resources\DeploymentDetailResource;
 use Nip\Deployment\Http\Resources\DeploymentResource;
 use Nip\Deployment\Models\Deployment;
 use Nip\Site\Data\SiteData;
@@ -30,6 +31,21 @@ class SiteDeploymentController extends Controller
         return Inertia::render('sites/deployments/Index', [
             'site' => SiteData::fromModel($site),
             'deployments' => DeploymentResource::collection($deployments),
+        ]);
+    }
+
+    public function show(Site $site, Deployment $deployment): Response
+    {
+        Gate::authorize('view', $site->server);
+
+        abort_if($deployment->site_id !== $site->id, 404);
+
+        $site->load('server');
+        $deployment->load('user');
+
+        return Inertia::render('sites/deployments/Show', [
+            'site' => SiteData::fromModel($site),
+            'deployment' => DeploymentDetailResource::make($deployment),
         ]);
     }
 

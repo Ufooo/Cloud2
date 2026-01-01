@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { settings } from '@/actions/Nip/Deployment/Http/Controllers/SiteDeploymentController';
+import {
+    settings,
+    show,
+} from '@/actions/Nip/Deployment/Http/Controllers/SiteDeploymentController';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -8,36 +11,11 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { useDeploymentStatus } from '@/composables/useDeploymentStatus';
 import SiteLayout from '@/layouts/SiteLayout.vue';
-import type { Paginated, Site } from '@/types';
+import type { Deployment, Paginated, Site } from '@/types';
 import { Head, Link } from '@inertiajs/vue3';
-import {
-    CheckCircle,
-    Clock,
-    GitCommit,
-    Loader2,
-    Rocket,
-    Settings,
-    XCircle,
-} from 'lucide-vue-next';
-
-interface Deployment {
-    id: string;
-    status: string;
-    statusLabel: string;
-    statusColor: string;
-    commitHash: string | null;
-    shortCommitHash: string | null;
-    commitMessage: string | null;
-    commitAuthor: string | null;
-    branch: string | null;
-    deployedBy: string | null;
-    startedAt: string | null;
-    endedAt: string | null;
-    duration: number | null;
-    createdAt: string;
-    createdAtForHumans: string;
-}
+import { GitCommit, Rocket, Settings } from 'lucide-vue-next';
 
 interface Props {
     site: Site;
@@ -46,31 +24,7 @@ interface Props {
 
 defineProps<Props>();
 
-function getStatusIcon(status: string) {
-    switch (status) {
-        case 'finished':
-            return CheckCircle;
-        case 'failed':
-            return XCircle;
-        case 'deploying':
-            return Loader2;
-        default:
-            return Clock;
-    }
-}
-
-function getStatusClass(status: string) {
-    switch (status) {
-        case 'finished':
-            return 'text-green-500';
-        case 'failed':
-            return 'text-red-500';
-        case 'deploying':
-            return 'text-blue-500 animate-spin';
-        default:
-            return 'text-yellow-500';
-    }
-}
+const { getStatusIcon, getStatusClass, isDeploying } = useDeploymentStatus();
 </script>
 
 <template>
@@ -109,16 +63,20 @@ function getStatusClass(status: string) {
                 </div>
 
                 <div v-else class="divide-y">
-                    <div
+                    <Link
                         v-for="deployment in deployments.data"
                         :key="deployment.id"
-                        class="flex items-center gap-4 py-3"
+                        :href="show.url({ site, deployment: deployment.id })"
+                        class="flex items-center gap-4 py-3 transition-colors hover:bg-muted/50"
                     >
                         <!-- Status Icon -->
                         <component
                             :is="getStatusIcon(deployment.status)"
                             class="size-5 shrink-0"
-                            :class="getStatusClass(deployment.status)"
+                            :class="[
+                                getStatusClass(deployment.status),
+                                { 'animate-spin': isDeploying(deployment.status) },
+                            ]"
                         />
 
                         <!-- Commit Hash -->
@@ -137,7 +95,8 @@ function getStatusClass(status: string) {
                             />
                             <span class="truncate text-sm">
                                 {{
-                                    deployment.commitMessage || 'Manual deployment'
+                                    deployment.commitMessage ||
+                                    'Manual deployment'
                                 }}
                             </span>
                         </div>
@@ -162,7 +121,7 @@ function getStatusClass(status: string) {
                                 </span>
                             </span>
                         </div>
-                    </div>
+                    </Link>
                 </div>
 
                 <!-- Pagination -->
@@ -178,10 +137,7 @@ function getStatusClass(status: string) {
                         size="sm"
                         as-child
                     >
-                        <Link
-                            v-if="link.url"
-                            :href="link.url"
-                        >
+                        <Link v-if="link.url" :href="link.url">
                             <span v-html="link.label" />
                         </Link>
                         <span v-else v-html="link.label" />

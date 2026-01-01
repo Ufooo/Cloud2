@@ -139,12 +139,21 @@ if [ -f "$ENV_FILE" ]; then
     # Database settings
     # Escape special sed characters in password (& / \ | need escaping)
     SAFE_DB_PASSWORD=$(printf '%s' '{!! $database->password !!}' | sed 's/[&/\|]/\\&/g')
-    sed -i -r "s|DB_CONNECTION=.*|DB_CONNECTION={!! $database->type !!}|" "$ENV_FILE"
-    sed -i "s|^\(# DB_HOST=\|DB_HOST=\).*|DB_HOST={!! $database->host !!}|" "$ENV_FILE"
-    sed -i "s|^\(# DB_PORT=\|DB_PORT=\).*|DB_PORT={!! $database->port !!}|" "$ENV_FILE"
-    sed -i "s|^\(# DB_DATABASE=\|DB_DATABASE=\).*|DB_DATABASE={!! $database->name !!}|" "$ENV_FILE"
-    sed -i "s|^\(# DB_USERNAME=\|DB_USERNAME=\).*|DB_USERNAME={!! $database->username !!}|" "$ENV_FILE"
-    sed -i "s|^\(# DB_PASSWORD=\|DB_PASSWORD=\).*|DB_PASSWORD=\"$SAFE_DB_PASSWORD\"|" "$ENV_FILE"
+
+    # First uncomment any commented DB_ lines
+    sed -i 's/^# DB_HOST=/DB_HOST=/' "$ENV_FILE"
+    sed -i 's/^# DB_PORT=/DB_PORT=/' "$ENV_FILE"
+    sed -i 's/^# DB_DATABASE=/DB_DATABASE=/' "$ENV_FILE"
+    sed -i 's/^# DB_USERNAME=/DB_USERNAME=/' "$ENV_FILE"
+    sed -i 's/^# DB_PASSWORD=/DB_PASSWORD=/' "$ENV_FILE"
+
+    # Now set the values
+    sed -i -r "s|^DB_CONNECTION=.*|DB_CONNECTION={!! $database->type !!}|" "$ENV_FILE"
+    sed -i -r "s|^DB_HOST=.*|DB_HOST={!! $database->host !!}|" "$ENV_FILE"
+    sed -i -r "s|^DB_PORT=.*|DB_PORT={!! $database->port !!}|" "$ENV_FILE"
+    sed -i -r "s|^DB_DATABASE=.*|DB_DATABASE={!! $database->name !!}|" "$ENV_FILE"
+    sed -i -r "s|^DB_USERNAME=.*|DB_USERNAME={!! $database->username !!}|" "$ENV_FILE"
+    sed -i -r "s|^DB_PASSWORD=.*|DB_PASSWORD=\"$SAFE_DB_PASSWORD\"|" "$ENV_FILE"
 @endif
 
     # Generate APP_KEY if empty
@@ -165,7 +174,6 @@ if [ -f "$ENV_FILE" ]; then
     cp "$ENV_FILE" "$SHARED_ENV"
     rm -f "$ENV_FILE"
     ln -sf "$SHARED_ENV" "$ENV_FILE"
-    chown {{ $user }}:{{ $user }} "$SHARED_ENV"
     chmod 644 "$SHARED_ENV"
 fi
 

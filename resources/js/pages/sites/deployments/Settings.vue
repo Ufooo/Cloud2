@@ -20,7 +20,14 @@ import { Textarea } from '@/components/ui/textarea';
 import SiteLayout from '@/layouts/SiteLayout.vue';
 import type { Site } from '@/types';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { Check, ClipboardCopy, ExternalLink, Key, RefreshCw, Rocket } from 'lucide-vue-next';
+import {
+    Check,
+    ClipboardCopy,
+    ExternalLink,
+    Key,
+    RefreshCw,
+    Rocket,
+} from 'lucide-vue-next';
 import { ref } from 'vue';
 
 interface Props {
@@ -46,9 +53,13 @@ function submit() {
 }
 
 function handleRegenerateToken() {
-    router.post(regenerateToken.url(props.site), {}, {
-        preserveScroll: true,
-    });
+    router.post(
+        regenerateToken.url(props.site),
+        {},
+        {
+            preserveScroll: true,
+        },
+    );
 }
 
 function copyDeployHookUrl() {
@@ -93,9 +104,7 @@ function copyDeployHookUrl() {
                                     changes are pushed to the Git branch.
                                 </p>
                             </div>
-                            <Switch
-                                v-model="form.push_to_deploy"
-                            />
+                            <Switch v-model="form.push_to_deploy" />
                         </div>
 
                         <!-- Deploy Script -->
@@ -145,7 +154,8 @@ function copyDeployHookUrl() {
                                 class="max-w-[120px]"
                             />
                             <p class="text-sm text-muted-foreground">
-                                Number of previous deployments to retain (1-100).
+                                Number of previous deployments to retain
+                                (1-100).
                             </p>
                             <InputError
                                 :message="form.errors.deployment_retention"
@@ -210,7 +220,9 @@ function copyDeployHookUrl() {
                         <div class="flex justify-end">
                             <Button type="submit" :disabled="form.processing">
                                 {{
-                                    form.processing ? 'Saving...' : 'Save Changes'
+                                    form.processing
+                                        ? 'Saving...'
+                                        : 'Save Changes'
                                 }}
                             </Button>
                         </div>

@@ -6,6 +6,11 @@ use Nip\Site\Enums\SiteProvisioningStep;
 
 class CloneRepositoryJob extends BaseSiteProvisionJob
 {
+    protected function getRunAsUser(): ?string
+    {
+        return $this->site->user;
+    }
+
     protected function getStep(): SiteProvisioningStep
     {
         return SiteProvisioningStep::CloningRepository;
@@ -13,10 +18,12 @@ class CloneRepositoryJob extends BaseSiteProvisionJob
 
     protected function generateScript(): string
     {
+        $cloneUrl = $this->site->getCloneUrl();
+
         return view('provisioning.scripts.site.steps.clone-repository', [
             'site' => $this->site,
             'skipClone' => ! $this->site->repository,
-            'repository' => $this->site->repository,
+            'repository' => $cloneUrl,
             'branch' => $this->site->branch ?? 'main',
             'fullPath' => $this->site->getFullPath(),
             'user' => $this->site->user,

@@ -8,7 +8,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
 use Nip\Server\Enums\ProvisionScriptStatus;
 use Nip\Server\Models\ProvisionScript;
 use Nip\Server\Models\Server;
@@ -45,6 +44,23 @@ abstract class BaseProvisionJob implements ShouldQueue
         return null;
     }
 
+    /**
+     * Called during script execution with streaming output.
+     * Override in child classes to handle real-time output updates.
+     */
+    protected function onOutputReceived(string $chunk, string $fullOutput): void
+    {
+        // Override in child classes for real-time updates
+    }
+
+    /**
+     * Whether to use streaming output for this job.
+     */
+    protected function useStreamingOutput(): bool
+    {
+        return false;
+    }
+
     protected function getSshTimeout(): int
     {
         // Default to 10 minutes for SSH operations, can be overridden in child classes
@@ -57,15 +73,17 @@ abstract class BaseProvisionJob implements ShouldQueue
         $runAsUser = $this->getRunAsUser();
 
         try {
-            Log::info("Starting provision job for {$this->getResourceType()} on server {$server->id}".($runAsUser ? " as {$runAsUser}" : ''));
-
             $this->createProvisionScript();
 
             // Set SSH timeout to match job timeout for long-running scripts
             $ssh->setTimeout($this->getSshTimeout());
             $ssh->connect($server, $runAsUser);
 
-            $result = $ssh->executeScript($this->script->content);
+            $outputCallback = $this->useStreamingOutput()
+                ? fn (string $chunk, string $fullOutput) => $this->onOutputReceived($chunk, $fullOutput)
+                : null;
+
+            $result = $ssh->executeScript($this->script->content, $outputCallback);
 
             $this->script->update([
                 'output' => $result->output,
@@ -75,26 +93,20 @@ abstract class BaseProvisionJob implements ShouldQueue
             ]);
 
             if ($result->isSuccessful()) {
-                Log::info("Provision job completed successfully for {$this->getResourceType()} on server {$server->id}");
                 $this->handleSuccess($result);
             } else {
                 throw new Exception("Script execution failed with exit code {$result->exitCode}");
             }
 
         } catch (Exception $e) {
-            Log::error("Provision job failed for {$this->getResourceType()}: ".$e->getMessage());
-
-            if ($this->script) {
-                $this->script->update([
-                    'status' => ProvisionScriptStatus::Failed,
-                    'output' => $this->script->output."\n\n[ERROR] ".$e->getMessage(),
-                ]);
-            }
-
             if ($this->shouldRetry($e)) {
+                if ($this->script) {
+                    $this->script->update([
+                        'output' => $this->script->output."\n\n[RETRY] ".$e->getMessage(),
+                    ]);
+                }
                 $this->release($this->backoff[$this->attempts() - 1] ?? 600);
             } else {
-                $this->handleFailure($e);
                 $this->fail($e);
             }
         } finally {
@@ -130,8 +142,6 @@ abstract class BaseProvisionJob implements ShouldQueue
 
     public function failed(\Throwable $exception): void
     {
-        Log::error("Provision job permanently failed for {$this->getResourceType()}: ".$exception->getMessage());
-
         if ($this->script) {
             $this->script->update([
                 'status' => ProvisionScriptStatus::Failed,

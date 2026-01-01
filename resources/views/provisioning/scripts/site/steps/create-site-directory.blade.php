@@ -53,12 +53,18 @@ ln -sfn "$SITE_PATH/storage" "$TARGET_DIR/storage"
 
 # Set storage permissions
 chmod -R 775 "$SITE_PATH/storage"
+
+# Set ownership to site user
+chown -R {{ $user }}:{{ $user }} "$SITE_PATH"
 @else
 # Simple directory structure (WordPress, HTML, PHP, etc.)
 mkdir -p "$SITE_PATH{{ $webDirectory }}"
 
 # Create default index file
 {!! $defaultIndexScript !!}
+
+# Set ownership to site user
+chown -R {{ $user }}:{{ $user }} "$SITE_PATH"
 @endif
 
 echo "Site directory structure created successfully"

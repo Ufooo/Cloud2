@@ -6,6 +6,11 @@ use Nip\Site\Enums\SiteProvisioningStep;
 
 class CreateEnvironmentFileJob extends BaseSiteProvisionJob
 {
+    protected function getRunAsUser(): ?string
+    {
+        return $this->site->user;
+    }
+
     protected function getStep(): SiteProvisioningStep
     {
         return SiteProvisioningStep::ConfiguringEnvironment;

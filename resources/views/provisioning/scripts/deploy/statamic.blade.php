@@ -1,25 +1,16 @@
-#
-# Zero-Downtime Deployment for Statamic
-#
+$NIP_COMPOSER install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
-@include('provisioning.scripts.deploy.partials.clone-repository')
+( flock -w 10 9 || exit 1
+    echo 'Restarting FPM...'; sudo -S service $NIP_PHP_FPM reload ) 9>/tmp/fpmlock-$(whoami)
 
-@include('provisioning.scripts.deploy.partials.setup-env')
+if [ -f artisan ]; then
+    $NIP_PHP artisan optimize
+    $NIP_PHP artisan storage:link
+    $NIP_PHP artisan migrate --force
+    $NIP_PHP artisan statamic:stache:warm
+fi
 
-@include('provisioning.scripts.deploy.partials.install-composer')
-
-#
-# Statamic Optimizations
-#
-
-echo "Running Statamic optimizations..."
-$NIP_PHP artisan optimize
-$NIP_PHP artisan storage:link 2>/dev/null || true
-$NIP_PHP artisan migrate --force
-$NIP_PHP artisan statamic:stache:warm
-
-@include('provisioning.scripts.deploy.partials.build-frontend')
-
-@include('provisioning.scripts.deploy.partials.activate-release')
-
-echo "Statamic deployment completed!"
+if [ -f package.json ]; then
+    npm ci || npm install
+    npm run build
+fi

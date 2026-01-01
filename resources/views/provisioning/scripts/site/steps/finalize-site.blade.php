@@ -16,7 +16,6 @@ CURRENT_PATH="$SITE_PATH/current"
 
 echo "Setting final permissions..."
 
-chown -R {{ $user }}:{{ $user }} "$SITE_PATH"
 chmod -R 755 "$SITE_PATH"
 
 # Set storage directory permissions if it exists
@@ -39,10 +38,10 @@ cd "$CURRENT_PATH"
 
 # Clear Laravel caches if artisan exists
 if [ -f "artisan" ]; then
-    sudo -u {{ $user }} php artisan config:clear || true
-    sudo -u {{ $user }} php artisan cache:clear || true
-    sudo -u {{ $user }} php artisan view:clear || true
-    sudo -u {{ $user }} php artisan route:clear || true
+    php artisan config:clear || true
+    php artisan cache:clear || true
+    php artisan view:clear || true
+    php artisan route:clear || true
 fi
 
 #
@@ -53,9 +52,9 @@ echo "Optimizing application..."
 
 # Optimize Laravel if artisan exists
 if [ -f "artisan" ]; then
-    sudo -u {{ $user }} php artisan config:cache || true
-    sudo -u {{ $user }} php artisan route:cache || true
-    sudo -u {{ $user }} php artisan view:cache || true
+    php artisan config:cache || true
+    php artisan route:cache || true
+    php artisan view:cache || true
 fi
 
 #

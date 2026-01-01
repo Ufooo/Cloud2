@@ -21,16 +21,28 @@ cd "$CURRENT_PATH"
 #
 
 if [ -f "package.json" ]; then
+    echo "Installing node dependencies..."
+
+    @if($packageManager->value === 'npm')
+    npm ci || npm install
+    @elseif($packageManager->value === 'yarn')
+    yarn install --frozen-lockfile || yarn install
+    @elseif($packageManager->value === 'pnpm')
+    pnpm install --frozen-lockfile || pnpm install
+    @elseif($packageManager->value === 'bun')
+    bun install --frozen-lockfile || bun install
+    @endif
+
     echo "Running build command: {{ $buildCommand }}"
 
     @if($packageManager->value === 'npm')
-    sudo -u {{ $user }} {{ $buildCommand }}
+    {{ $buildCommand }}
     @elseif($packageManager->value === 'yarn')
-    sudo -u {{ $user }} {{ str_replace('npm run', 'yarn', $buildCommand) }}
+    {{ str_replace('npm run', 'yarn', $buildCommand) }}
     @elseif($packageManager->value === 'pnpm')
-    sudo -u {{ $user }} {{ str_replace('npm run', 'pnpm', $buildCommand) }}
+    {{ str_replace('npm run', 'pnpm', $buildCommand) }}
     @elseif($packageManager->value === 'bun')
-    sudo -u {{ $user }} {{ str_replace('npm run', 'bun run', $buildCommand) }}
+    {{ str_replace('npm run', 'bun run', $buildCommand) }}
     @endif
 
     echo "Frontend assets built successfully!"

@@ -2,11 +2,11 @@
 
 namespace Nip\Deployment\Database\Factories;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Nip\Deployment\Enums\DeploymentStatus;
 use Nip\Deployment\Models\Deployment;
 use Nip\Site\Models\Site;
-use Nip\User\Models\User;
 
 /**
  * @extends Factory<Deployment>

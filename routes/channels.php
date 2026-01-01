@@ -13,3 +13,7 @@ Broadcast::channel('servers.{serverId}', function ($user, $serverId) {
 Broadcast::channel('sites.{siteId}', function ($user, $siteId) {
     return $user !== null;
 });
+
+Broadcast::channel('deployments.{deploymentId}', function ($user, $deploymentId) {
+    return $user !== null;
+});

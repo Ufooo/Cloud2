@@ -9,7 +9,7 @@ use Nip\Deployment\Models\Deployment;
 /**
  * @mixin Deployment
  */
-class DeploymentResource extends JsonResource
+class DeploymentDetailResource extends JsonResource
 {
     /**
      * @return array<string, mixed>
@@ -26,6 +26,7 @@ class DeploymentResource extends JsonResource
             'commitMessage' => $this->commit_message,
             'commitAuthor' => $this->commit_author,
             'branch' => $this->branch,
+            'output' => $this->output,
             'deployedBy' => $this->user?->name,
             'startedAt' => $this->started_at?->toIso8601String(),
             'endedAt' => $this->ended_at?->toIso8601String(),

@@ -5,7 +5,7 @@ use Nip\Domain\Enums\DomainRecordType;
 use Nip\Server\Models\Server;
 use Nip\Site\Enums\SiteStatus;
 use Nip\Site\Enums\WwwRedirectType;
-use Nip\Site\Jobs\InstallSiteJob;
+use Nip\Site\Jobs\Provisioning\FinalizeSiteJob;
 use Nip\Site\Models\Site;
 
 it('creates primary domain record when site is created', function () {
@@ -45,13 +45,13 @@ it('enables domain records when site installation succeeds', function () {
         'status' => DomainRecordStatus::Pending,
     ]);
 
-    $job = new InstallSiteJob($site);
+    $job = new FinalizeSiteJob($site);
 
     $reflection = new ReflectionClass($job);
     $method = $reflection->getMethod('handleSuccess');
 
     $mockResult = new \Nip\Server\Services\SSH\ExecutionResult(
-        output: 'Site installed successfully',
+        output: 'Site finalized successfully',
         exitCode: 0,
         duration: 5.0
     );

@@ -36,6 +36,18 @@ EOF
 chmod 600 "{{ $homeDir }}/.ssh/authorized_keys"
 chown -R "{{ $username }}:{{ $username }}" "{{ $homeDir }}/.ssh"
 
+# Configure sudoers permissions
+echo "Configuring sudoers for {{ $username }}..."
+
+# Allow PHP-FPM reload without password
+grep -q "^{{ $username }} " /etc/sudoers.d/php-fpm 2>/dev/null || echo "{{ $username }} ALL=NOPASSWD: /usr/sbin/service php*-fpm reload" >> /etc/sudoers.d/php-fpm
+
+# Allow Supervisor control without password
+grep -q "^{{ $username }} " /etc/sudoers.d/supervisor 2>/dev/null || echo "{{ $username }} ALL=NOPASSWD: /usr/bin/supervisorctl *" >> /etc/sudoers.d/supervisor
+
+# Allow Nginx control without password
+grep -q "^{{ $username }} .*nginx reload" /etc/sudoers.d/nginx 2>/dev/null || echo "{{ $username }} ALL=NOPASSWD: /usr/sbin/service nginx *" >> /etc/sudoers.d/nginx
+
 # Verify user was created
 if id "{{ $username }}" &>/dev/null; then
     echo "User {{ $username }} created successfully"

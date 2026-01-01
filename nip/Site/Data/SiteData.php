@@ -24,6 +24,9 @@ class SiteData extends Data
         public ?string $status,
         public ?string $displayableStatus,
         public ?string $statusBadgeVariant,
+        public ?int $provisioningStep,
+        /** @var SiteProvisioningStepData[]|null */
+        public ?array $provisioningSteps,
         public ?string $deployStatus,
         public ?string $displayableDeployStatus,
         public ?string $deployStatusBadgeVariant,
@@ -74,6 +77,8 @@ class SiteData extends Data
             status: $site->status?->value,
             displayableStatus: $site->status?->label(),
             statusBadgeVariant: $site->status?->badgeVariant(),
+            provisioningStep: $site->provisioning_step?->value,
+            provisioningSteps: $site->status === SiteStatus::Installing ? $site->getProvisioningSteps() : null,
             deployStatus: $site->deploy_status?->value,
             displayableDeployStatus: $site->deploy_status?->label(),
             deployStatusBadgeVariant: $site->deploy_status?->badgeVariant(),
