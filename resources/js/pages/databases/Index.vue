@@ -32,7 +32,12 @@ import { useResourceStatusUpdates } from '@/composables/useResourceStatusUpdates
 import AppLayout from '@/layouts/AppLayout.vue';
 import ServerLayout from '@/layouts/ServerLayout.vue';
 import SiteLayout from '@/layouts/SiteLayout.vue';
-import type { BreadcrumbItem, ProvisionScriptData, Server, Site } from '@/types';
+import type {
+    BreadcrumbItem,
+    ProvisionScriptData,
+    Server,
+    Site,
+} from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { Database, Eye, EyeOff, Plus, User } from 'lucide-vue-next';
@@ -40,7 +45,13 @@ import { computed, ref } from 'vue';
 import DatabaseCardListItem from './partials/DatabaseCardListItem.vue';
 import DatabaseUserCardListItem from './partials/DatabaseUserCardListItem.vue';
 
-type BadgeVariant = 'default' | 'secondary' | 'destructive' | 'outline' | null | undefined;
+type BadgeVariant =
+    | 'default'
+    | 'secondary'
+    | 'destructive'
+    | 'outline'
+    | null
+    | undefined;
 
 interface DatabaseItem {
     id: string;
@@ -121,7 +132,6 @@ if (props.site) {
 const hasDatabases = computed(() => databases.value.length > 0);
 const hasDatabaseUsers = computed(() => databaseUsers.value.length > 0);
 
-
 const pageTitle = computed(() => {
     if (props.site) {
         return `Databases - ${props.site.domain}`;
@@ -151,8 +161,11 @@ const databaseForm = useForm({
 });
 
 function generatePassword(): string {
-    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
-    return Array.from({ length: 24 }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
+    const chars =
+        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+    return Array.from({ length: 24 }, () =>
+        chars.charAt(Math.floor(Math.random() * chars.length)),
+    ).join('');
 }
 
 function openDatabaseDialog() {
@@ -202,7 +215,7 @@ const userForm = useForm({
 });
 
 const installedDatabases = computed(() =>
-    databases.value.filter((db) => db.status === 'installed')
+    databases.value.filter((db) => db.status === 'installed'),
 );
 
 const filteredDatabases = computed(() => {
@@ -269,9 +282,12 @@ async function deleteUser(user: DatabaseUserItem) {
 
     if (!confirmed) return;
 
-    router.delete(destroyUser.url({ server: serverSlug, databaseUser: user.id }), {
-        preserveScroll: true,
-    });
+    router.delete(
+        destroyUser.url({ server: serverSlug, databaseUser: user.id }),
+        {
+            preserveScroll: true,
+        },
+    );
 }
 
 // Edit user form
@@ -330,18 +346,26 @@ function submitEditUser() {
             ...data,
             readonly: Boolean(data.readonly),
         }))
-        .put(updateUser.url({ server: props.server.slug, databaseUser: editingUser.value.id }), {
-            preserveScroll: true,
-            onSuccess: () => {
-                showEditUserDialog.value = false;
-                editUserForm.reset();
-                editingUser.value = null;
+        .put(
+            updateUser.url({
+                server: props.server.slug,
+                databaseUser: editingUser.value.id,
+            }),
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    showEditUserDialog.value = false;
+                    editUserForm.reset();
+                    editingUser.value = null;
+                },
             },
-        });
+        );
 }
 
 // Script output modal
-const scriptOutputModal = ref<InstanceType<typeof ScriptOutputModal> | null>(null);
+const scriptOutputModal = ref<InstanceType<typeof ScriptOutputModal> | null>(
+    null,
+);
 const databaseResourceTypes = ['database', 'database_user'];
 
 function handleScriptClick(script: ProvisionScriptData) {
@@ -386,7 +410,9 @@ function handleScriptClick(script: ProvisionScriptData) {
         <div class="space-y-6">
             <!-- Databases Section -->
             <Card>
-                <CardHeader class="flex flex-row items-center justify-between pb-2">
+                <CardHeader
+                    class="flex flex-row items-center justify-between pb-2"
+                >
                     <CardTitle class="flex items-center gap-2 text-lg">
                         <Database class="size-5" />
                         Databases
@@ -418,7 +444,9 @@ function handleScriptClick(script: ProvisionScriptData) {
 
             <!-- Database Users Section -->
             <Card>
-                <CardHeader class="flex flex-row items-center justify-between pb-2">
+                <CardHeader
+                    class="flex flex-row items-center justify-between pb-2"
+                >
                     <CardTitle class="flex items-center gap-2 text-lg">
                         <User class="size-5" />
                         Database Users
@@ -456,8 +484,9 @@ function handleScriptClick(script: ProvisionScriptData) {
                 <DialogHeader>
                     <DialogTitle>Add database</DialogTitle>
                     <DialogDescription>
-                        Create a new database for your <strong>{{ server.name }}</strong> server.
-                        You can optionally create a new database user if needed.
+                        Create a new database for your
+                        <strong>{{ server.name }}</strong> server. You can
+                        optionally create a new database user if needed.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -469,9 +498,15 @@ function handleScriptClick(script: ProvisionScriptData) {
                                 id="db-name"
                                 v-model="databaseForm.name"
                                 placeholder="my_database"
-                                :class="{ 'border-destructive': databaseForm.errors.name }"
+                                :class="{
+                                    'border-destructive':
+                                        databaseForm.errors.name,
+                                }"
                             />
-                            <p v-if="databaseForm.errors.name" class="text-sm text-destructive">
+                            <p
+                                v-if="databaseForm.errors.name"
+                                class="text-sm text-destructive"
+                            >
                                 {{ databaseForm.errors.name }}
                             </p>
                         </div>
@@ -479,15 +514,25 @@ function handleScriptClick(script: ProvisionScriptData) {
                         <div class="space-y-2">
                             <div class="flex items-center gap-2">
                                 <Label for="db-user">User</Label>
-                                <Badge variant="outline" class="text-xs font-normal">Optional</Badge>
+                                <Badge
+                                    variant="outline"
+                                    class="text-xs font-normal"
+                                    >Optional</Badge
+                                >
                             </div>
                             <Input
                                 id="db-user"
                                 v-model="databaseForm.user"
                                 placeholder="db_user"
-                                :class="{ 'border-destructive': databaseForm.errors.user }"
+                                :class="{
+                                    'border-destructive':
+                                        databaseForm.errors.user,
+                                }"
                             />
-                            <p v-if="databaseForm.errors.user" class="text-sm text-destructive">
+                            <p
+                                v-if="databaseForm.errors.user"
+                                class="text-sm text-destructive"
+                            >
                                 {{ databaseForm.errors.user }}
                             </p>
                         </div>
@@ -496,14 +541,22 @@ function handleScriptClick(script: ProvisionScriptData) {
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-2">
                                     <Label for="db-password">Password</Label>
-                                    <Badge variant="outline" class="text-xs font-normal">Optional</Badge>
+                                    <Badge
+                                        variant="outline"
+                                        class="text-xs font-normal"
+                                        >Optional</Badge
+                                    >
                                 </div>
                                 <Button
                                     type="button"
                                     variant="link"
                                     size="sm"
                                     class="h-auto p-0 text-primary"
-                                    @click="databaseForm.password = generatePassword(); showDbPassword = true"
+                                    @click="
+                                        databaseForm.password =
+                                            generatePassword();
+                                        showDbPassword = true;
+                                    "
                                 >
                                     Generate password
                                 </Button>
@@ -515,7 +568,10 @@ function handleScriptClick(script: ProvisionScriptData) {
                                     :type="showDbPassword ? 'text' : 'password'"
                                     placeholder="••••••••"
                                     class="pr-10"
-                                    :class="{ 'border-destructive': databaseForm.errors.password }"
+                                    :class="{
+                                        'border-destructive':
+                                            databaseForm.errors.password,
+                                    }"
                                 />
                                 <Button
                                     type="button"
@@ -524,19 +580,33 @@ function handleScriptClick(script: ProvisionScriptData) {
                                     class="absolute top-1/2 right-1 size-8 -translate-y-1/2"
                                     @click="showDbPassword = !showDbPassword"
                                 >
-                                    <Eye v-if="!showDbPassword" class="size-4" />
+                                    <Eye
+                                        v-if="!showDbPassword"
+                                        class="size-4"
+                                    />
                                     <EyeOff v-else class="size-4" />
                                 </Button>
                             </div>
-                            <p v-if="databaseForm.errors.password" class="text-sm text-destructive">
+                            <p
+                                v-if="databaseForm.errors.password"
+                                class="text-sm text-destructive"
+                            >
                                 {{ databaseForm.errors.password }}
                             </p>
                         </div>
                     </div>
 
                     <DialogFooter class="mt-6">
-                        <Button type="submit" class="w-full" :disabled="databaseForm.processing">
-                            {{ databaseForm.processing ? 'Creating...' : 'Create database' }}
+                        <Button
+                            type="submit"
+                            class="w-full"
+                            :disabled="databaseForm.processing"
+                        >
+                            {{
+                                databaseForm.processing
+                                    ? 'Creating...'
+                                    : 'Create database'
+                            }}
                         </Button>
                     </DialogFooter>
                 </form>
@@ -549,7 +619,9 @@ function handleScriptClick(script: ProvisionScriptData) {
                 <DialogHeader>
                     <DialogTitle>New database user</DialogTitle>
                     <DialogDescription>
-                        Create a new database user for the server <strong>{{ server.name }}</strong>.
+                        Create a new database user for the server
+                        <strong>{{ server.name }}</strong
+                        >.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -561,9 +633,15 @@ function handleScriptClick(script: ProvisionScriptData) {
                                 id="username"
                                 v-model="userForm.username"
                                 placeholder="db_user"
-                                :class="{ 'border-destructive': userForm.errors.username }"
+                                :class="{
+                                    'border-destructive':
+                                        userForm.errors.username,
+                                }"
                             />
-                            <p v-if="userForm.errors.username" class="text-sm text-destructive">
+                            <p
+                                v-if="userForm.errors.username"
+                                class="text-sm text-destructive"
+                            >
                                 {{ userForm.errors.username }}
                             </p>
                         </div>
@@ -585,23 +663,36 @@ function handleScriptClick(script: ProvisionScriptData) {
                                 <Input
                                     id="user-password"
                                     v-model="userForm.password"
-                                    :type="showUserPassword ? 'text' : 'password'"
+                                    :type="
+                                        showUserPassword ? 'text' : 'password'
+                                    "
                                     placeholder="••••••••"
                                     class="pr-10"
-                                    :class="{ 'border-destructive': userForm.errors.password }"
+                                    :class="{
+                                        'border-destructive':
+                                            userForm.errors.password,
+                                    }"
                                 />
                                 <Button
                                     type="button"
                                     variant="ghost"
                                     size="icon"
                                     class="absolute top-1/2 right-1 size-8 -translate-y-1/2"
-                                    @click="showUserPassword = !showUserPassword"
+                                    @click="
+                                        showUserPassword = !showUserPassword
+                                    "
                                 >
-                                    <Eye v-if="!showUserPassword" class="size-4" />
+                                    <Eye
+                                        v-if="!showUserPassword"
+                                        class="size-4"
+                                    />
                                     <EyeOff v-else class="size-4" />
                                 </Button>
                             </div>
-                            <p v-if="userForm.errors.password" class="text-sm text-destructive">
+                            <p
+                                v-if="userForm.errors.password"
+                                class="text-sm text-destructive"
+                            >
                                 {{ userForm.errors.password }}
                             </p>
                         </div>
@@ -613,7 +704,9 @@ function handleScriptClick(script: ProvisionScriptData) {
                                 placeholder="Search"
                                 class="mb-2"
                             />
-                            <div class="max-h-48 space-y-1 overflow-y-auto rounded-md border p-2">
+                            <div
+                                class="max-h-48 space-y-1 overflow-y-auto rounded-md border p-2"
+                            >
                                 <div
                                     v-for="db in filteredDatabases"
                                     :key="db.id"
@@ -621,8 +714,12 @@ function handleScriptClick(script: ProvisionScriptData) {
                                 >
                                     <Checkbox
                                         :id="`db-${db.id}`"
-                                        :model-value="userForm.databases.includes(db.id)"
-                                        @update:model-value="toggleDatabase(db.id)"
+                                        :model-value="
+                                            userForm.databases.includes(db.id)
+                                        "
+                                        @update:model-value="
+                                            toggleDatabase(db.id)
+                                        "
                                     />
                                     <label
                                         :for="`db-${db.id}`"
@@ -652,9 +749,13 @@ function handleScriptClick(script: ProvisionScriptData) {
                         <div class="space-y-2">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <Label for="readonly">Read-only access?</Label>
+                                    <Label for="readonly"
+                                        >Read-only access?</Label
+                                    >
                                     <p class="text-sm text-muted-foreground">
-                                        If enabled, this user will only be able to read data from the selected databases.
+                                        If enabled, this user will only be able
+                                        to read data from the selected
+                                        databases.
                                     </p>
                                 </div>
                                 <Switch
@@ -666,8 +767,16 @@ function handleScriptClick(script: ProvisionScriptData) {
                     </div>
 
                     <DialogFooter class="mt-6">
-                        <Button type="submit" class="w-full" :disabled="userForm.processing">
-                            {{ userForm.processing ? 'Creating...' : 'Add database user' }}
+                        <Button
+                            type="submit"
+                            class="w-full"
+                            :disabled="userForm.processing"
+                        >
+                            {{
+                                userForm.processing
+                                    ? 'Creating...'
+                                    : 'Add database user'
+                            }}
                         </Button>
                     </DialogFooter>
                 </form>
@@ -680,7 +789,10 @@ function handleScriptClick(script: ProvisionScriptData) {
                 <DialogHeader>
                     <DialogTitle>Edit database user</DialogTitle>
                     <DialogDescription>
-                        Update the database user <strong>{{ editingUser?.username }}</strong> on server <strong>{{ server.name }}</strong>.
+                        Update the database user
+                        <strong>{{ editingUser?.username }}</strong> on server
+                        <strong>{{ server.name }}</strong
+                        >.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -689,8 +801,14 @@ function handleScriptClick(script: ProvisionScriptData) {
                         <div class="space-y-2">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-2">
-                                    <Label for="edit-user-password">Password</Label>
-                                    <Badge variant="outline" class="text-xs font-normal">Optional</Badge>
+                                    <Label for="edit-user-password"
+                                        >Password</Label
+                                    >
+                                    <Badge
+                                        variant="outline"
+                                        class="text-xs font-normal"
+                                        >Optional</Badge
+                                    >
                                 </div>
                                 <Button
                                     type="button"
@@ -706,23 +824,39 @@ function handleScriptClick(script: ProvisionScriptData) {
                                 <Input
                                     id="edit-user-password"
                                     v-model="editUserForm.password"
-                                    :type="showEditUserPassword ? 'text' : 'password'"
+                                    :type="
+                                        showEditUserPassword
+                                            ? 'text'
+                                            : 'password'
+                                    "
                                     placeholder="Leave empty to keep current"
                                     class="pr-10"
-                                    :class="{ 'border-destructive': editUserForm.errors.password }"
+                                    :class="{
+                                        'border-destructive':
+                                            editUserForm.errors.password,
+                                    }"
                                 />
                                 <Button
                                     type="button"
                                     variant="ghost"
                                     size="icon"
                                     class="absolute top-1/2 right-1 size-8 -translate-y-1/2"
-                                    @click="showEditUserPassword = !showEditUserPassword"
+                                    @click="
+                                        showEditUserPassword =
+                                            !showEditUserPassword
+                                    "
                                 >
-                                    <Eye v-if="!showEditUserPassword" class="size-4" />
+                                    <Eye
+                                        v-if="!showEditUserPassword"
+                                        class="size-4"
+                                    />
                                     <EyeOff v-else class="size-4" />
                                 </Button>
                             </div>
-                            <p v-if="editUserForm.errors.password" class="text-sm text-destructive">
+                            <p
+                                v-if="editUserForm.errors.password"
+                                class="text-sm text-destructive"
+                            >
                                 {{ editUserForm.errors.password }}
                             </p>
                         </div>
@@ -734,7 +868,9 @@ function handleScriptClick(script: ProvisionScriptData) {
                                 placeholder="Search"
                                 class="mb-2"
                             />
-                            <div class="max-h-48 space-y-1 overflow-y-auto rounded-md border p-2">
+                            <div
+                                class="max-h-48 space-y-1 overflow-y-auto rounded-md border p-2"
+                            >
                                 <div
                                     v-for="db in filteredEditDatabases"
                                     :key="db.id"
@@ -742,8 +878,14 @@ function handleScriptClick(script: ProvisionScriptData) {
                                 >
                                     <Checkbox
                                         :id="`edit-db-${db.id}`"
-                                        :model-value="editUserForm.databases.includes(db.id)"
-                                        @update:model-value="toggleEditDatabase(db.id)"
+                                        :model-value="
+                                            editUserForm.databases.includes(
+                                                db.id,
+                                            )
+                                        "
+                                        @update:model-value="
+                                            toggleEditDatabase(db.id)
+                                        "
                                     />
                                     <label
                                         :for="`edit-db-${db.id}`"
@@ -773,9 +915,13 @@ function handleScriptClick(script: ProvisionScriptData) {
                         <div class="space-y-2">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <Label for="edit-readonly">Read-only access?</Label>
+                                    <Label for="edit-readonly"
+                                        >Read-only access?</Label
+                                    >
                                     <p class="text-sm text-muted-foreground">
-                                        If enabled, this user will only be able to read data from the selected databases.
+                                        If enabled, this user will only be able
+                                        to read data from the selected
+                                        databases.
                                     </p>
                                 </div>
                                 <Switch
@@ -787,8 +933,16 @@ function handleScriptClick(script: ProvisionScriptData) {
                     </div>
 
                     <DialogFooter class="mt-6">
-                        <Button type="submit" class="w-full" :disabled="editUserForm.processing">
-                            {{ editUserForm.processing ? 'Saving...' : 'Save changes' }}
+                        <Button
+                            type="submit"
+                            class="w-full"
+                            :disabled="editUserForm.processing"
+                        >
+                            {{
+                                editUserForm.processing
+                                    ? 'Saving...'
+                                    : 'Save changes'
+                            }}
                         </Button>
                     </DialogFooter>
                 </form>
@@ -841,7 +995,10 @@ function handleScriptClick(script: ProvisionScriptData) {
                             @delete="deleteDatabase"
                         />
                     </div>
-                    <Pagination v-if="hasDatabases" :meta="props.databases.meta" />
+                    <Pagination
+                        v-if="hasDatabases"
+                        :meta="props.databases.meta"
+                    />
                 </CardContent>
             </Card>
 

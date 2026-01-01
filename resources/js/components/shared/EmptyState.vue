@@ -17,9 +17,7 @@ withDefaults(defineProps<Props>(), {
     <div
         :class="[
             'flex flex-col items-center justify-center text-center',
-            compact
-                ? 'rounded-lg border border-dashed p-8'
-                : 'py-12',
+            compact ? 'rounded-lg border border-dashed p-8' : 'py-12',
         ]"
     >
         <component

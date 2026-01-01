@@ -235,9 +235,7 @@ async function deleteRule(rule: RedirectRule) {
                                         {{ rule.displayableStatus }}
                                     </Badge>
                                 </div>
-                                <p
-                                    class="mt-1 text-sm text-muted-foreground"
-                                >
+                                <p class="mt-1 text-sm text-muted-foreground">
                                     {{ rule.displayableType }}
                                 </p>
                             </div>

@@ -144,7 +144,9 @@ function isActive(item: NavItem): boolean {
     return window.location.pathname === item.href;
 }
 
-const scriptOutputModal = ref<InstanceType<typeof ScriptOutputModal> | null>(null);
+const scriptOutputModal = ref<InstanceType<typeof ScriptOutputModal> | null>(
+    null,
+);
 
 function handleScriptClick(script: ProvisionScriptData) {
     scriptOutputModal.value?.open(script);
@@ -166,7 +168,10 @@ function handleScriptClick(script: ProvisionScriptData) {
                     <!-- Server Header -->
                     <div class="border-b p-4">
                         <div class="flex items-center gap-3">
-                            <Avatar :name="server.name" :color="server.avatarColor" />
+                            <Avatar
+                                :name="server.name"
+                                :color="server.avatarColor"
+                            />
 
                             <div class="min-w-0 flex-1">
                                 <div class="flex items-center gap-2">

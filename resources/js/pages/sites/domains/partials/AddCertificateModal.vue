@@ -23,7 +23,14 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import type { CertificateData, DomainRecordData, Site } from '@/types';
 import { useForm } from '@inertiajs/vue3';
-import { ArrowLeft, Copy, FileKey, Lock, RefreshCcw, Shield } from 'lucide-vue-next';
+import {
+    ArrowLeft,
+    Copy,
+    FileKey,
+    Lock,
+    RefreshCcw,
+    Shield,
+} from 'lucide-vue-next';
 import { computed, onUnmounted, ref, watch } from 'vue';
 
 interface CertificateTypeOption {
@@ -97,8 +104,8 @@ const allRecordsVerified = ref(false);
 
 const availableDomains = computed(() => {
     return props.domainRecords
-        .filter(d => d.status === 'enabled' && !d.hasActiveCertificate)
-        .map(d => ({
+        .filter((d) => d.status === 'enabled' && !d.hasActiveCertificate)
+        .map((d) => ({
             ...d,
             // Show wildcard format if allowWildcard is enabled
             displayName: d.allowWildcard ? `*.${d.name}` : d.name,
@@ -107,7 +114,7 @@ const availableDomains = computed(() => {
 
 // Find the selected domain record
 const selectedDomainRecord = computed(() => {
-    return availableDomains.value.find(d => d.name === form.domain);
+    return availableDomains.value.find((d) => d.name === form.domain);
 });
 
 const isWildcardDomain = computed(() => {
@@ -130,7 +137,7 @@ const verificationRecords = computed(() => {
 });
 
 const cloneableCertificates = computed(() => {
-    return props.certificates.filter(c => c.status === 'installed');
+    return props.certificates.filter((c) => c.status === 'installed');
 });
 
 const formTitle = computed(() => {
@@ -151,7 +158,7 @@ const formTitle = computed(() => {
 const formDescription = computed(() => {
     switch (selectedType.value) {
         case 'letsencrypt':
-            return 'Configure and obtain a free SSL certificate from Let\'s Encrypt.';
+            return "Configure and obtain a free SSL certificate from Let's Encrypt.";
         case 'existing':
             return 'Provide your existing SSL certificate and private key.';
         case 'csr':
@@ -191,7 +198,14 @@ const canSubmit = computed(() => {
         case 'existing':
             return form.domain && form.certificate && form.private_key;
         case 'csr':
-            return form.domain && form.csr_country && form.csr_state && form.csr_city && form.csr_organization && form.csr_department;
+            return (
+                form.domain &&
+                form.csr_country &&
+                form.csr_state &&
+                form.csr_city &&
+                form.csr_organization &&
+                form.csr_department
+            );
         case 'clone':
             return form.domain && form.source_certificate_id;
         default:
@@ -199,14 +213,17 @@ const canSubmit = computed(() => {
     }
 });
 
-watch(() => props.open, (isOpen) => {
-    if (isOpen) {
-        resetForm();
-    } else {
-        // Stop polling when modal closes
-        stopPolling();
-    }
-});
+watch(
+    () => props.open,
+    (isOpen) => {
+        if (isOpen) {
+            resetForm();
+        } else {
+            // Stop polling when modal closes
+            stopPolling();
+        }
+    },
+);
 
 // Auto-set DNS verification for wildcard domains and copy stored subdomains
 watch(isWildcardDomain, (isWildcard) => {
@@ -216,16 +233,21 @@ watch(isWildcardDomain, (isWildcard) => {
 });
 
 // Copy stored acme_subdomains when domain is selected and reset live records
-watch(() => form.domain, () => {
-    if (selectedDomainRecord.value?.acmeSubdomains) {
-        form.acme_subdomains = { ...selectedDomainRecord.value.acmeSubdomains };
-    } else {
-        form.acme_subdomains = {};
-    }
-    // Reset live records when domain changes
-    liveVerificationRecords.value = [];
-    allRecordsVerified.value = false;
-});
+watch(
+    () => form.domain,
+    () => {
+        if (selectedDomainRecord.value?.acmeSubdomains) {
+            form.acme_subdomains = {
+                ...selectedDomainRecord.value.acmeSubdomains,
+            };
+        } else {
+            form.acme_subdomains = {};
+        }
+        // Reset live records when domain changes
+        liveVerificationRecords.value = [];
+        allRecordsVerified.value = false;
+    },
+);
 
 // Start/stop polling when DNS verification is selected
 watch([isDnsVerification, () => form.domain], ([isDns, domain]) => {
@@ -252,16 +274,19 @@ async function checkDnsVerification() {
     }
 
     try {
-        const response = await fetch(verifyDns.url({
-            site: props.site.slug,
-            domainRecord: selectedDomainRecord.value.id,
-        }), {
-            credentials: 'include',
-            headers: {
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
+        const response = await fetch(
+            verifyDns.url({
+                site: props.site.slug,
+                domainRecord: selectedDomainRecord.value.id,
+            }),
+            {
+                credentials: 'include',
+                headers: {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
             },
-        });
+        );
 
         if (!response.ok) {
             console.error('DNS verification check failed:', response.status);
@@ -357,11 +382,18 @@ function close() {
                         :key="certType.value"
                         type="button"
                         class="flex w-full items-center gap-3 rounded-lg border p-4 text-left transition-colors hover:bg-muted/50"
-                        :class="{ 'border-primary bg-primary/5': selectedType === certType.value }"
+                        :class="{
+                            'border-primary bg-primary/5':
+                                selectedType === certType.value,
+                        }"
                         @click="selectType(certType.value)"
                     >
                         <component
-                            :is="typeIcons[certType.value as keyof typeof typeIcons]"
+                            :is="
+                                typeIcons[
+                                    certType.value as keyof typeof typeIcons
+                                ]
+                            "
                             class="size-5 shrink-0 text-muted-foreground"
                         />
                         <div class="min-w-0 flex-1">
@@ -374,12 +406,8 @@ function close() {
                 </div>
 
                 <DialogFooter>
-                    <Button variant="outline" @click="close">
-                        Cancel
-                    </Button>
-                    <Button @click="continueToForm">
-                        Continue
-                    </Button>
+                    <Button variant="outline" @click="close"> Cancel </Button>
+                    <Button @click="continueToForm"> Continue </Button>
                 </DialogFooter>
             </template>
 
@@ -409,7 +437,10 @@ function close() {
                             <Select v-model="form.domain">
                                 <SelectTrigger id="le-domain">
                                     <SelectValue placeholder="Select domain">
-                                        {{ selectedDomainRecord?.displayName ?? 'Select domain' }}
+                                        {{
+                                            selectedDomainRecord?.displayName ??
+                                            'Select domain'
+                                        }}
                                     </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
@@ -422,10 +453,16 @@ function close() {
                                     </SelectItem>
                                 </SelectContent>
                             </Select>
-                            <p v-if="availableDomains.length === 0" class="text-xs text-muted-foreground">
+                            <p
+                                v-if="availableDomains.length === 0"
+                                class="text-xs text-muted-foreground"
+                            >
                                 No enabled domains available.
                             </p>
-                            <p v-if="form.errors.domain" class="text-sm text-destructive">
+                            <p
+                                v-if="form.errors.domain"
+                                class="text-sm text-destructive"
+                            >
                                 {{ form.errors.domain }}
                             </p>
                         </div>
@@ -437,72 +474,109 @@ function close() {
                                 <button
                                     type="button"
                                     class="flex w-full items-start gap-3 rounded-md border p-3 text-left transition-colors"
-                                    :class="form.verification_method === 'http'
-                                        ? 'border-primary bg-primary/5'
-                                        : 'border-border hover:bg-muted/50'"
+                                    :class="
+                                        form.verification_method === 'http'
+                                            ? 'border-primary bg-primary/5'
+                                            : 'border-border hover:bg-muted/50'
+                                    "
                                     @click="form.verification_method = 'http'"
                                 >
                                     <div
                                         class="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border"
-                                        :class="form.verification_method === 'http'
-                                            ? 'border-primary'
-                                            : 'border-muted-foreground'"
+                                        :class="
+                                            form.verification_method === 'http'
+                                                ? 'border-primary'
+                                                : 'border-muted-foreground'
+                                        "
                                     >
                                         <div
-                                            v-if="form.verification_method === 'http'"
+                                            v-if="
+                                                form.verification_method ===
+                                                'http'
+                                            "
                                             class="size-2 rounded-full bg-primary"
                                         />
                                     </div>
                                     <div class="flex-1">
                                         <div class="flex items-center gap-2">
-                                            <span class="font-medium">HTTP-01</span>
-                                            <span class="rounded border border-green-600 px-1.5 py-0.5 text-xs font-normal text-green-600 dark:border-green-500 dark:text-green-500">
+                                            <span class="font-medium"
+                                                >HTTP-01</span
+                                            >
+                                            <span
+                                                class="rounded border border-green-600 px-1.5 py-0.5 text-xs font-normal text-green-600 dark:border-green-500 dark:text-green-500"
+                                            >
                                                 Recommended
                                             </span>
                                         </div>
-                                        <p class="text-sm text-muted-foreground">
-                                            Verify domain ownership via HTTP request.
+                                        <p
+                                            class="text-sm text-muted-foreground"
+                                        >
+                                            Verify domain ownership via HTTP
+                                            request.
                                         </p>
                                     </div>
                                 </button>
                                 <button
                                     type="button"
                                     class="flex w-full items-start gap-3 rounded-md border p-3 text-left transition-colors"
-                                    :class="form.verification_method === 'dns'
-                                        ? 'border-primary bg-primary/5'
-                                        : 'border-border hover:bg-muted/50'"
+                                    :class="
+                                        form.verification_method === 'dns'
+                                            ? 'border-primary bg-primary/5'
+                                            : 'border-border hover:bg-muted/50'
+                                    "
                                     @click="form.verification_method = 'dns'"
                                 >
                                     <div
                                         class="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border"
-                                        :class="form.verification_method === 'dns'
-                                            ? 'border-primary'
-                                            : 'border-muted-foreground'"
+                                        :class="
+                                            form.verification_method === 'dns'
+                                                ? 'border-primary'
+                                                : 'border-muted-foreground'
+                                        "
                                     >
                                         <div
-                                            v-if="form.verification_method === 'dns'"
+                                            v-if="
+                                                form.verification_method ===
+                                                'dns'
+                                            "
                                             class="size-2 rounded-full bg-primary"
                                         />
                                     </div>
                                     <div class="flex-1">
                                         <span class="font-medium">DNS-01</span>
-                                        <p class="text-sm text-muted-foreground">
-                                            Verify domain ownership via DNS record.
+                                        <p
+                                            class="text-sm text-muted-foreground"
+                                        >
+                                            Verify domain ownership via DNS
+                                            record.
                                         </p>
                                     </div>
                                 </button>
                             </div>
-                            <p v-if="form.errors.verification_method" class="text-sm text-destructive">
+                            <p
+                                v-if="form.errors.verification_method"
+                                class="text-sm text-destructive"
+                            >
                                 {{ form.errors.verification_method }}
                             </p>
                         </div>
 
                         <!-- Verification Records Preview (for DNS-01 verification) -->
-                        <div v-if="isDnsVerification && verificationRecords.length > 0" class="space-y-3">
+                        <div
+                            v-if="
+                                isDnsVerification &&
+                                verificationRecords.length > 0
+                            "
+                            class="space-y-3"
+                        >
                             <div>
-                                <Label class="mb-2 block">Verification records</Label>
+                                <Label class="mb-2 block"
+                                    >Verification records</Label
+                                >
                                 <p class="mb-3 text-sm text-muted-foreground">
-                                    The following DNS records must be added to your DNS provider before you can obtain a Let's Encrypt certificate.
+                                    The following DNS records must be added to
+                                    your DNS provider before you can obtain a
+                                    Let's Encrypt certificate.
                                 </p>
                             </div>
 
@@ -512,62 +586,101 @@ function close() {
                                 :key="record.name"
                                 class="rounded-md border"
                             >
-                                <div class="flex items-center justify-between border-b px-4 py-2.5">
-                                    <span class="text-sm text-muted-foreground">Type</span>
+                                <div
+                                    class="flex items-center justify-between border-b px-4 py-2.5"
+                                >
+                                    <span class="text-sm text-muted-foreground"
+                                        >Type</span
+                                    >
                                     <div class="flex items-center gap-3">
-                                        <span class="font-mono text-sm">{{ record.type }}</span>
+                                        <span class="font-mono text-sm">{{
+                                            record.type
+                                        }}</span>
                                         <span
                                             v-if="record.verified"
                                             class="flex items-center gap-1 text-xs text-green-600 dark:text-green-500"
                                         >
-                                            <span class="size-1.5 rounded-full bg-green-500" />
+                                            <span
+                                                class="size-1.5 rounded-full bg-green-500"
+                                            />
                                             Verified
                                         </span>
                                         <span
                                             v-else
                                             class="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-500"
                                         >
-                                            <span class="size-1.5 animate-pulse rounded-full bg-amber-500" />
+                                            <span
+                                                class="size-1.5 animate-pulse rounded-full bg-amber-500"
+                                            />
                                             Verifying
                                         </span>
                                     </div>
                                 </div>
-                                <div class="flex items-center justify-between border-b px-4 py-2.5">
-                                    <span class="text-sm text-muted-foreground">Name</span>
+                                <div
+                                    class="flex items-center justify-between border-b px-4 py-2.5"
+                                >
+                                    <span class="text-sm text-muted-foreground"
+                                        >Name</span
+                                    >
                                     <div class="flex items-center gap-2">
-                                        <code class="font-mono text-sm">{{ record.name }}</code>
+                                        <code class="font-mono text-sm">{{
+                                            record.name
+                                        }}</code>
                                         <button
                                             type="button"
                                             class="text-muted-foreground hover:text-foreground"
-                                            @click="copyToClipboard(record.name)"
+                                            @click="
+                                                copyToClipboard(record.name)
+                                            "
                                         >
                                             <Copy class="size-4" />
                                         </button>
                                     </div>
                                 </div>
-                                <div class="flex items-center justify-between border-b px-4 py-2.5">
-                                    <span class="text-sm text-muted-foreground">Value</span>
+                                <div
+                                    class="flex items-center justify-between border-b px-4 py-2.5"
+                                >
+                                    <span class="text-sm text-muted-foreground"
+                                        >Value</span
+                                    >
                                     <div class="flex items-center gap-2">
-                                        <code class="font-mono text-sm">{{ record.value }}</code>
+                                        <code class="font-mono text-sm">{{
+                                            record.value
+                                        }}</code>
                                         <button
                                             type="button"
                                             class="text-muted-foreground hover:text-foreground"
-                                            @click="copyToClipboard(record.value)"
+                                            @click="
+                                                copyToClipboard(record.value)
+                                            "
                                         >
                                             <Copy class="size-4" />
                                         </button>
                                     </div>
                                 </div>
-                                <div class="flex items-center justify-between px-4 py-2.5">
-                                    <span class="text-sm text-muted-foreground">TTL</span>
-                                    <span class="font-mono text-sm">{{ record.ttl }} seconds</span>
+                                <div
+                                    class="flex items-center justify-between px-4 py-2.5"
+                                >
+                                    <span class="text-sm text-muted-foreground"
+                                        >TTL</span
+                                    >
+                                    <span class="font-mono text-sm"
+                                        >{{ record.ttl }} seconds</span
+                                    >
                                 </div>
                             </div>
 
                             <!-- Cloudflare Warning -->
-                            <div class="rounded-md border border-amber-500/50 bg-amber-500/10 p-3">
-                                <p class="text-sm text-amber-700 dark:text-amber-400">
-                                    <strong>Using Cloudflare?</strong> Make sure the CNAME records have the proxy (orange cloud) turned off for DNS-01 verification to work.
+                            <div
+                                class="rounded-md border border-amber-500/50 bg-amber-500/10 p-3"
+                            >
+                                <p
+                                    class="text-sm text-amber-700 dark:text-amber-400"
+                                >
+                                    <strong>Using Cloudflare?</strong> Make sure
+                                    the CNAME records have the proxy (orange
+                                    cloud) turned off for DNS-01 verification to
+                                    work.
                                 </p>
                             </div>
                         </div>
@@ -579,47 +692,64 @@ function close() {
                                 <button
                                     type="button"
                                     class="flex w-full items-start gap-3 rounded-md border p-3 text-left transition-colors"
-                                    :class="form.key_algorithm === 'ecdsa'
-                                        ? 'border-primary bg-primary/5'
-                                        : 'border-border hover:bg-muted/50'"
+                                    :class="
+                                        form.key_algorithm === 'ecdsa'
+                                            ? 'border-primary bg-primary/5'
+                                            : 'border-border hover:bg-muted/50'
+                                    "
                                     @click="form.key_algorithm = 'ecdsa'"
                                 >
                                     <div
                                         class="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border"
-                                        :class="form.key_algorithm === 'ecdsa'
-                                            ? 'border-primary'
-                                            : 'border-muted-foreground'"
+                                        :class="
+                                            form.key_algorithm === 'ecdsa'
+                                                ? 'border-primary'
+                                                : 'border-muted-foreground'
+                                        "
                                     >
                                         <div
-                                            v-if="form.key_algorithm === 'ecdsa'"
+                                            v-if="
+                                                form.key_algorithm === 'ecdsa'
+                                            "
                                             class="size-2 rounded-full bg-primary"
                                         />
                                     </div>
                                     <div class="flex-1">
                                         <div class="flex items-center gap-2">
-                                            <span class="font-medium">ECDSA secp384r1</span>
-                                            <span class="rounded border border-green-600 px-1.5 py-0.5 text-xs font-normal text-green-600 dark:border-green-500 dark:text-green-500">
+                                            <span class="font-medium"
+                                                >ECDSA secp384r1</span
+                                            >
+                                            <span
+                                                class="rounded border border-green-600 px-1.5 py-0.5 text-xs font-normal text-green-600 dark:border-green-500 dark:text-green-500"
+                                            >
                                                 Recommended
                                             </span>
                                         </div>
-                                        <p class="text-sm text-muted-foreground">
-                                            Modern algorithm with smaller keys and faster performance.
+                                        <p
+                                            class="text-sm text-muted-foreground"
+                                        >
+                                            Modern algorithm with smaller keys
+                                            and faster performance.
                                         </p>
                                     </div>
                                 </button>
                                 <button
                                     type="button"
                                     class="flex w-full items-start gap-3 rounded-md border p-3 text-left transition-colors"
-                                    :class="form.key_algorithm === 'rsa'
-                                        ? 'border-primary bg-primary/5'
-                                        : 'border-border hover:bg-muted/50'"
+                                    :class="
+                                        form.key_algorithm === 'rsa'
+                                            ? 'border-primary bg-primary/5'
+                                            : 'border-border hover:bg-muted/50'
+                                    "
                                     @click="form.key_algorithm = 'rsa'"
                                 >
                                     <div
                                         class="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border"
-                                        :class="form.key_algorithm === 'rsa'
-                                            ? 'border-primary'
-                                            : 'border-muted-foreground'"
+                                        :class="
+                                            form.key_algorithm === 'rsa'
+                                                ? 'border-primary'
+                                                : 'border-muted-foreground'
+                                        "
                                     >
                                         <div
                                             v-if="form.key_algorithm === 'rsa'"
@@ -628,13 +758,19 @@ function close() {
                                     </div>
                                     <div class="flex-1">
                                         <span class="font-medium">RSA</span>
-                                        <p class="text-sm text-muted-foreground">
-                                            Traditional algorithm with maximum compatibility.
+                                        <p
+                                            class="text-sm text-muted-foreground"
+                                        >
+                                            Traditional algorithm with maximum
+                                            compatibility.
                                         </p>
                                     </div>
                                 </button>
                             </div>
-                            <p v-if="form.errors.key_algorithm" class="text-sm text-destructive">
+                            <p
+                                v-if="form.errors.key_algorithm"
+                                class="text-sm text-destructive"
+                            >
                                 {{ form.errors.key_algorithm }}
                             </p>
                         </div>
@@ -642,9 +778,12 @@ function close() {
                         <!-- ISRG Root X1 Chain -->
                         <div class="flex items-center justify-between">
                             <div class="space-y-0.5">
-                                <Label for="isrg-root-chain">Enable "ISRG Root X1" chain</Label>
+                                <Label for="isrg-root-chain"
+                                    >Enable "ISRG Root X1" chain</Label
+                                >
                                 <p class="text-xs text-muted-foreground">
-                                    Use the modern ISRG Root X1 certificate chain for broader compatibility.
+                                    Use the modern ISRG Root X1 certificate
+                                    chain for broader compatibility.
                                 </p>
                             </div>
                             <Switch
@@ -672,7 +811,10 @@ function close() {
                                     </SelectItem>
                                 </SelectContent>
                             </Select>
-                            <p v-if="form.errors.domain" class="text-sm text-destructive">
+                            <p
+                                v-if="form.errors.domain"
+                                class="text-sm text-destructive"
+                            >
                                 {{ form.errors.domain }}
                             </p>
                         </div>
@@ -687,9 +829,14 @@ function close() {
                                 class="font-mono text-xs"
                             />
                             <p class="text-xs text-muted-foreground">
-                                Paste your full certificate chain here. This usually includes your primary certificate followed by any intermediate certificates.
+                                Paste your full certificate chain here. This
+                                usually includes your primary certificate
+                                followed by any intermediate certificates.
                             </p>
-                            <p v-if="form.errors.certificate" class="text-sm text-destructive">
+                            <p
+                                v-if="form.errors.certificate"
+                                class="text-sm text-destructive"
+                            >
                                 {{ form.errors.certificate }}
                             </p>
                         </div>
@@ -706,14 +853,20 @@ function close() {
                             <p class="text-xs text-muted-foreground">
                                 Your private key should be unencrypted.
                             </p>
-                            <p v-if="form.errors.private_key" class="text-sm text-destructive">
+                            <p
+                                v-if="form.errors.private_key"
+                                class="text-sm text-destructive"
+                            >
                                 {{ form.errors.private_key }}
                             </p>
                         </div>
 
                         <div class="flex items-center justify-between">
                             <div class="space-y-0.5">
-                                <Label for="auto-activate">Automatically enable certificate after installation</Label>
+                                <Label for="auto-activate"
+                                    >Automatically enable certificate after
+                                    installation</Label
+                                >
                             </div>
                             <Switch
                                 id="auto-activate"
@@ -743,13 +896,18 @@ function close() {
                             <p class="text-xs text-muted-foreground">
                                 Select the domain to create the certificate for.
                             </p>
-                            <p v-if="form.errors.domain" class="text-sm text-destructive">
+                            <p
+                                v-if="form.errors.domain"
+                                class="text-sm text-destructive"
+                            >
                                 {{ form.errors.domain }}
                             </p>
                         </div>
 
                         <div class="space-y-2">
-                            <Label for="sans">Subject Alternative Names (SANs)</Label>
+                            <Label for="sans"
+                                >Subject Alternative Names (SANs)</Label
+                            >
                             <Textarea
                                 id="sans"
                                 v-model="form.sans"
@@ -777,7 +935,10 @@ function close() {
                                     </SelectItem>
                                 </SelectContent>
                             </Select>
-                            <p v-if="form.errors.csr_country" class="text-sm text-destructive">
+                            <p
+                                v-if="form.errors.csr_country"
+                                class="text-sm text-destructive"
+                            >
                                 {{ form.errors.csr_country }}
                             </p>
                         </div>
@@ -790,7 +951,10 @@ function close() {
                                     v-model="form.csr_state"
                                     placeholder="California"
                                 />
-                                <p v-if="form.errors.csr_state" class="text-sm text-destructive">
+                                <p
+                                    v-if="form.errors.csr_state"
+                                    class="text-sm text-destructive"
+                                >
                                     {{ form.errors.csr_state }}
                                 </p>
                             </div>
@@ -802,7 +966,10 @@ function close() {
                                     v-model="form.csr_city"
                                     placeholder="San Francisco"
                                 />
-                                <p v-if="form.errors.csr_city" class="text-sm text-destructive">
+                                <p
+                                    v-if="form.errors.csr_city"
+                                    class="text-sm text-destructive"
+                                >
                                     {{ form.errors.csr_city }}
                                 </p>
                             </div>
@@ -815,7 +982,10 @@ function close() {
                                 v-model="form.csr_organization"
                                 placeholder="My Company Inc."
                             />
-                            <p v-if="form.errors.csr_organization" class="text-sm text-destructive">
+                            <p
+                                v-if="form.errors.csr_organization"
+                                class="text-sm text-destructive"
+                            >
                                 {{ form.errors.csr_organization }}
                             </p>
                         </div>
@@ -827,7 +997,10 @@ function close() {
                                 v-model="form.csr_department"
                                 placeholder="IT Department"
                             />
-                            <p v-if="form.errors.csr_department" class="text-sm text-destructive">
+                            <p
+                                v-if="form.errors.csr_department"
+                                class="text-sm text-destructive"
+                            >
                                 {{ form.errors.csr_department }}
                             </p>
                         </div>
@@ -854,7 +1027,10 @@ function close() {
                             <p class="text-xs text-muted-foreground">
                                 Select the domain to create the certificate for.
                             </p>
-                            <p v-if="form.errors.domain" class="text-sm text-destructive">
+                            <p
+                                v-if="form.errors.domain"
+                                class="text-sm text-destructive"
+                            >
                                 {{ form.errors.domain }}
                             </p>
                         </div>
@@ -863,7 +1039,9 @@ function close() {
                             <Label for="source-certificate">Certificate</Label>
                             <Select v-model="form.source_certificate_id">
                                 <SelectTrigger id="source-certificate">
-                                    <SelectValue placeholder="Select a certificate" />
+                                    <SelectValue
+                                        placeholder="Select a certificate"
+                                    />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem
@@ -871,14 +1049,25 @@ function close() {
                                         :key="cert.id"
                                         :value="cert.id"
                                     >
-                                        {{ cert.displayableType }} - {{ Object.values(cert.domains).join(', ') }}
+                                        {{ cert.displayableType }} -
+                                        {{
+                                            Object.values(cert.domains).join(
+                                                ', ',
+                                            )
+                                        }}
                                     </SelectItem>
                                 </SelectContent>
                             </Select>
-                            <p v-if="cloneableCertificates.length === 0" class="text-sm text-muted-foreground">
+                            <p
+                                v-if="cloneableCertificates.length === 0"
+                                class="text-sm text-muted-foreground"
+                            >
                                 No certificates available to clone.
                             </p>
-                            <p v-if="form.errors.source_certificate_id" class="text-sm text-destructive">
+                            <p
+                                v-if="form.errors.source_certificate_id"
+                                class="text-sm text-destructive"
+                            >
                                 {{ form.errors.source_certificate_id }}
                             </p>
                         </div>

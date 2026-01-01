@@ -33,7 +33,9 @@ const isInstalled = computed(() => props.site.status === 'installed');
                     {{ site.domain }}
                 </span>
             </div>
-            <span class="flex items-center gap-x-1 text-xs text-muted-foreground">
+            <span
+                class="flex items-center gap-x-1 text-xs text-muted-foreground"
+            >
                 <template v-if="site.serverName && showServer">
                     <span>{{ site.serverName }}</span>
                     <span>·</span>

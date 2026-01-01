@@ -114,8 +114,16 @@ onMounted(() => {
                                 >
                                     on {{ script.serverName }}
                                 </span>
-                                <span class="text-xs text-red-600/70 dark:text-red-400/70">
-                                    {{ script.createdAt ? new Date(script.createdAt).toLocaleString() : '' }}
+                                <span
+                                    class="text-xs text-red-600/70 dark:text-red-400/70"
+                                >
+                                    {{
+                                        script.createdAt
+                                            ? new Date(
+                                                  script.createdAt,
+                                              ).toLocaleString()
+                                            : ''
+                                    }}
                                 </span>
                             </div>
                             <p

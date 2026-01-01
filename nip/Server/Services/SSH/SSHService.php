@@ -3,7 +3,6 @@
 namespace Nip\Server\Services\SSH;
 
 use Exception;
-use Illuminate\Support\Facades\Log;
 use Nip\Server\Models\Server;
 use phpseclib3\Crypt\PublicKeyLoader;
 use phpseclib3\Net\SSH2;
@@ -40,8 +39,6 @@ class SSHService
 
         for ($attempt = 1; $attempt <= $this->maxRetries; $attempt++) {
             try {
-                Log::info("SSH connection attempt {$attempt} to {$this->server->ip_address} as {$this->connectedUser}");
-
                 $this->connection = new SSH2(
                     $this->server->ip_address,
                     $this->server->ssh_port ?? 22
@@ -52,15 +49,12 @@ class SSHService
                 $privateKey = $this->getPrivateKey();
 
                 if ($this->connection->login($this->connectedUser, $privateKey)) {
-                    Log::info("SSH connection successful to {$this->server->ip_address} as {$this->connectedUser}");
-
                     return;
                 }
 
                 throw new Exception("SSH authentication failed for user {$this->connectedUser}");
             } catch (Exception $e) {
                 $lastException = $e;
-                Log::warning("SSH connection attempt {$attempt} failed: ".$e->getMessage());
 
                 if ($attempt < $this->maxRetries) {
                     sleep(pow(2, $attempt - 1));
@@ -82,8 +76,6 @@ class SSHService
             throw new SSHConnectionException("No SSH key configured for server {$this->server->name}");
         }
 
-        Log::debug("Using server's own SSH key for authentication");
-
         return PublicKeyLoader::loadPrivateKey($privateKeyString);
     }
 
@@ -93,14 +85,10 @@ class SSHService
             throw new Exception('Not connected to server');
         }
 
-        Log::debug("Executing command on {$this->server->ip_address}: {$command}");
-
         $startTime = microtime(true);
         $output = $this->connection->exec($command);
         $exitCode = $this->connection->getExitStatus();
         $duration = microtime(true) - $startTime;
-
-        Log::debug("Command completed with exit code {$exitCode} in {$duration}s");
 
         return new ExecutionResult(
             output: $output,
@@ -109,7 +97,7 @@ class SSHService
         );
     }
 
-    public function executeScript(string $scriptContent): ExecutionResult
+    public function executeScript(string $scriptContent, ?callable $onOutput = null): ExecutionResult
     {
         $scriptId = time().'_'.uniqid();
 
@@ -118,27 +106,46 @@ class SSHService
         $remotePath = "{$scriptDir}/provision-{$scriptId}.sh";
         $outputPath = "{$scriptDir}/provision-{$scriptId}.output";
 
-        try {
-            $this->exec("mkdir -p {$scriptDir}");
+        $this->exec("mkdir -p {$scriptDir}");
+        $this->uploadContent($scriptContent, $remotePath);
+        $this->exec("chmod +x {$remotePath}");
 
-            Log::info("Uploading script to {$remotePath}");
-            $this->uploadContent($scriptContent, $remotePath);
-
-            $this->exec("chmod +x {$remotePath}");
-
-            // Execute script and tee output to .output file for debugging (like Forge)
-            Log::info("Executing script {$remotePath} as {$this->connectedUser}");
-            $result = $this->exec("bash {$remotePath} 2>&1 | tee {$outputPath}; exit \${PIPESTATUS[0]}");
-
-            Log::info("Script output saved to {$outputPath}");
-
-            return $result;
-
-        } catch (Exception $e) {
-            Log::error("Script execution failed. Script kept at {$remotePath}, output at {$outputPath}");
-
-            throw $e;
+        if ($onOutput) {
+            return $this->execWithStreaming(
+                "bash {$remotePath} 2>&1 | tee {$outputPath}; exit \${PIPESTATUS[0]}",
+                $onOutput
+            );
         }
+
+        return $this->exec("bash {$remotePath} 2>&1 | tee {$outputPath}; exit \${PIPESTATUS[0]}");
+    }
+
+    /**
+     * Execute a command with real-time output streaming.
+     */
+    public function execWithStreaming(string $command, callable $onOutput): ExecutionResult
+    {
+        if (! $this->connection) {
+            throw new Exception('Not connected to server');
+        }
+
+        $startTime = microtime(true);
+        $fullOutput = '';
+
+        // Use phpseclib's callback mechanism for streaming
+        $this->connection->exec($command, function ($output) use (&$fullOutput, $onOutput) {
+            $fullOutput .= $output;
+            $onOutput($output, $fullOutput);
+        });
+
+        $exitCode = $this->connection->getExitStatus();
+        $duration = microtime(true) - $startTime;
+
+        return new ExecutionResult(
+            output: $fullOutput,
+            exitCode: $exitCode,
+            duration: $duration
+        );
     }
 
     public function uploadContent(string $content, string $remotePath): void
@@ -171,9 +178,7 @@ class SSHService
             $result = $this->exec("cat {$path}");
 
             return $result->isSuccessful() ? $result->output : null;
-        } catch (Exception $e) {
-            Log::warning("Failed to read file {$path}: ".$e->getMessage());
-
+        } catch (Exception) {
             return null;
         }
     }

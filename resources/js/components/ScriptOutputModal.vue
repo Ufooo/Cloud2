@@ -72,22 +72,26 @@ defineExpose({ open, close });
                 </DialogTitle>
                 <DialogDescription class="flex items-center gap-4 text-sm">
                     <span v-if="script?.executedAt">
-                        Executed: {{ new Date(script.executedAt).toLocaleString() }}
+                        Executed:
+                        {{ new Date(script.executedAt).toLocaleString() }}
                     </span>
                     <span v-if="formattedDuration">
                         Duration: {{ formattedDuration }}
                     </span>
-                    <span v-if="script?.exitCode !== null">
+                    <span v-if="script && script.exitCode !== null">
                         Exit Code: {{ script.exitCode }}
                     </span>
                 </DialogDescription>
             </DialogHeader>
 
-            <div class="h-[400px] overflow-auto rounded-md border bg-zinc-950 p-4">
+            <div
+                class="h-[400px] overflow-auto rounded-md border bg-zinc-950 p-4"
+            >
                 <pre
                     v-if="script?.output"
-                    class="whitespace-pre-wrap font-mono text-sm text-zinc-100"
-                >{{ script.output }}</pre>
+                    class="font-mono text-sm whitespace-pre-wrap text-zinc-100"
+                    >{{ script.output }}</pre
+                >
                 <p v-else class="text-sm text-zinc-500">No output available</p>
             </div>
 

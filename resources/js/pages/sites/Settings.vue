@@ -70,7 +70,9 @@ const directoriesForm = useForm({
 });
 
 // Base path for the site (e.g., /home/netipar/aaaaa.hu)
-const basePath = computed(() => `/home/${props.site.user}/${props.site.domain}`);
+const basePath = computed(
+    () => `/home/${props.site.user}/${props.site.domain}`,
+);
 
 // Full path including root directory (for web directory prefix)
 const fullPathWithRoot = computed(() => {
@@ -115,7 +117,14 @@ async function handleDelete() {
 }
 
 // Check if site type is PHP-based to show PHP version selector
-const phpBasedTypes = ['laravel', 'symfony', 'statamic', 'wordpress', 'phpmyadmin', 'php'];
+const phpBasedTypes = [
+    'laravel',
+    'symfony',
+    'statamic',
+    'wordpress',
+    'phpmyadmin',
+    'php',
+];
 const isPhpBased = phpBasedTypes.includes(props.site.type || '');
 </script>
 
@@ -140,7 +149,9 @@ const isPhpBased = phpBasedTypes.includes(props.site.type || '');
                             <Label for="type">Framework</Label>
                             <Select v-model="generalForm.type">
                                 <SelectTrigger id="type">
-                                    <SelectValue placeholder="Select framework" />
+                                    <SelectValue
+                                        placeholder="Select framework"
+                                    />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem
@@ -209,8 +220,9 @@ const isPhpBased = phpBasedTypes.includes(props.site.type || '');
                                     type="button"
                                     class="size-8 rounded-md ring-offset-background transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
                                     :class="[
-                                        colorMap[color.value as IdentityColor] ||
-                                            'bg-gray-500',
+                                        colorMap[
+                                            color.value as IdentityColor
+                                        ] || 'bg-gray-500',
                                         generalForm.avatar_color === color.value
                                             ? 'ring-2 ring-ring ring-offset-2'
                                             : 'hover:opacity-80',

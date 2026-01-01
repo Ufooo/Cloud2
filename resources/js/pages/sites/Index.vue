@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { create, index } from '@/actions/Nip/Site/Http/Controllers/SiteController';
+import {
+    create,
+    index,
+} from '@/actions/Nip/Site/Http/Controllers/SiteController';
 import SiteTypeIcon from '@/components/icons/SiteTypeIcon.vue';
 import EmptyState from '@/components/shared/EmptyState.vue';
 import Pagination from '@/components/shared/Pagination.vue';
@@ -58,14 +61,27 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 // Group site types for the type selection modal
 const siteTypeGroups = computed(() => {
-    const phpTypes = ['laravel', 'symfony', 'statamic', 'wordpress', 'phpmyadmin', 'php'];
+    const phpTypes = [
+        'laravel',
+        'symfony',
+        'statamic',
+        'wordpress',
+        'phpmyadmin',
+        'php',
+    ];
     const nodeTypes = ['nextjs', 'nuxtjs'];
     const staticTypes = ['html', 'other'];
 
     return {
-        'PHP Applications': props.siteTypes.filter(t => phpTypes.includes(t.value)),
-        'Node.js Applications': props.siteTypes.filter(t => nodeTypes.includes(t.value)),
-        'Static Sites': props.siteTypes.filter(t => staticTypes.includes(t.value)),
+        'PHP Applications': props.siteTypes.filter((t) =>
+            phpTypes.includes(t.value),
+        ),
+        'Node.js Applications': props.siteTypes.filter((t) =>
+            nodeTypes.includes(t.value),
+        ),
+        'Static Sites': props.siteTypes.filter((t) =>
+            staticTypes.includes(t.value),
+        ),
     };
 });
 
@@ -137,8 +153,14 @@ function selectTypeAndNavigate(type: string) {
                 </DialogHeader>
 
                 <div class="flex flex-col gap-y-1 px-1">
-                    <template v-for="(types, groupName, idx) in siteTypeGroups" :key="groupName">
-                        <p v-if="types.length > 0" class="mt-2 h-7 px-2 text-xs font-medium leading-7 text-muted-foreground first:mt-0">
+                    <template
+                        v-for="(types, groupName, idx) in siteTypeGroups"
+                        :key="groupName"
+                    >
+                        <p
+                            v-if="types.length > 0"
+                            class="mt-2 h-7 px-2 text-xs leading-7 font-medium text-muted-foreground first:mt-0"
+                        >
                             {{ groupName }}
                         </p>
                         <div class="flex flex-col gap-y-1">
@@ -149,11 +171,20 @@ function selectTypeAndNavigate(type: string) {
                                 class="flex h-9 items-center gap-x-2 rounded px-3 text-left text-sm transition-colors hover:bg-muted"
                                 @click="selectTypeAndNavigate(siteType.value)"
                             >
-                                <SiteTypeIcon :type="siteType.value" class="size-7" />
+                                <SiteTypeIcon
+                                    :type="siteType.value"
+                                    class="size-7"
+                                />
                                 <span>{{ siteType.label }}</span>
                             </button>
                         </div>
-                        <hr v-if="idx < Object.keys(siteTypeGroups).length - 1 && types.length > 0" class="mt-2 border-border" />
+                        <hr
+                            v-if="
+                                idx < Object.keys(siteTypeGroups).length - 1 &&
+                                types.length > 0
+                            "
+                            class="mt-2 border-border"
+                        />
                     </template>
                 </div>
             </DialogContent>

@@ -14,7 +14,16 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 // Avatar color definitions with background, text, and border colors
-const colorStyles: Record<IdentityColor, { bg: string; bgDark: string; text: string; border: string; borderDark: string }> = {
+const colorStyles: Record<
+    IdentityColor,
+    {
+        bg: string;
+        bgDark: string;
+        text: string;
+        border: string;
+        borderDark: string;
+    }
+> = {
     blue: {
         bg: 'bg-[#EDF6FF]',
         bgDark: 'dark:bg-[#10243E]',
@@ -75,11 +84,17 @@ const colorStyles: Record<IdentityColor, { bg: string; bgDark: string; text: str
 
 const defaultColor = colorStyles.gray;
 
-const styles = computed(() => props.color ? colorStyles[props.color] : defaultColor);
+const styles = computed(() =>
+    props.color ? colorStyles[props.color] : defaultColor,
+);
 
-const avatarClasses = computed(() => `${styles.value.bg} ${styles.value.bgDark}`);
+const avatarClasses = computed(
+    () => `${styles.value.bg} ${styles.value.bgDark}`,
+);
 const textClasses = computed(() => styles.value.text);
-const borderClasses = computed(() => `${styles.value.border} ${styles.value.borderDark}`);
+const borderClasses = computed(
+    () => `${styles.value.border} ${styles.value.borderDark}`,
+);
 
 const sizeClasses = computed(() => {
     switch (props.size) {
@@ -100,7 +115,11 @@ const initial = computed(() => props.name?.charAt(0)?.toUpperCase() ?? '');
         :class="[avatarClasses, sizeClasses]"
         class="inline-grid shrink-0 rounded *:col-start-1 *:row-start-1 *:rounded"
     >
-        <svg :class="textClasses" class="fill-current text-5xl font-medium uppercase" viewBox="0 0 100 100">
+        <svg
+            :class="textClasses"
+            class="fill-current text-5xl font-medium uppercase"
+            viewBox="0 0 100 100"
+        >
             <title>{{ name }}</title>
             <text
                 x="50%"

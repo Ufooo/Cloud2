@@ -10,6 +10,7 @@ export default defineConfig({
             input: ['resources/js/app.ts'],
             ssr: 'resources/js/ssr.ts',
             refresh: true,
+            detectTls: 'cloud.test',
         }),
         tailwindcss(),
         wayfinder({

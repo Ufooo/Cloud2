@@ -14,12 +14,14 @@ import type { Site } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
 import {
     ExternalLink,
-    GitBranch,
     Folder,
+    GitBranch,
     Globe,
     Rocket,
     Server,
 } from 'lucide-vue-next';
+import { computed } from 'vue';
+import SiteProvisioning from './partials/SiteProvisioning.vue';
 
 interface Props {
     site: Site;
@@ -27,11 +29,15 @@ interface Props {
 
 const props = defineProps<Props>();
 
+const isInstalling = computed(() => props.site.status === 'installing');
+
 function triggerDeploy() {
     router.post(deploy.url(props.site));
 }
 
-function getDeployStatusVariant(status: string | null): 'default' | 'secondary' | 'destructive' | 'outline' {
+function getDeployStatusVariant(
+    status: string | null,
+): 'default' | 'secondary' | 'destructive' | 'outline' {
     switch (status) {
         case 'deployed':
             return 'default';
@@ -48,8 +54,10 @@ function getDeployStatusVariant(status: string | null): 'default' | 'secondary' 
 <template>
     <Head :title="site.domain" />
 
-    <SiteLayout :site="site">
-        <div class="space-y-6">
+    <SiteLayout :site="site" :show-sidebar="!isInstalling">
+        <SiteProvisioning v-if="isInstalling" :site="site" />
+
+        <div v-else class="space-y-6">
             <!-- Quick Actions -->
             <Card>
                 <CardHeader>
@@ -64,7 +72,11 @@ function getDeployStatusVariant(status: string | null): 'default' | 'secondary' 
                             </CardDescription>
                         </div>
                         <div class="flex items-center gap-2">
-                            <Badge :variant="getDeployStatusVariant(site.deployStatus)">
+                            <Badge
+                                :variant="
+                                    getDeployStatusVariant(site.deployStatus)
+                                "
+                            >
                                 {{ site.displayableDeployStatus }}
                             </Badge>
                             <Button
@@ -97,7 +109,9 @@ function getDeployStatusVariant(status: string | null): 'default' | 'secondary' 
                     </CardHeader>
                     <CardContent class="space-y-4">
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-muted-foreground">Domain</span>
+                            <span class="text-sm text-muted-foreground"
+                                >Domain</span
+                            >
                             <a
                                 :href="site.url"
                                 target="_blank"
@@ -109,16 +123,28 @@ function getDeployStatusVariant(status: string | null): 'default' | 'secondary' 
                             </a>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-muted-foreground">Type</span>
-                            <span class="text-sm font-medium">{{ site.displayableType }}</span>
+                            <span class="text-sm text-muted-foreground"
+                                >Type</span
+                            >
+                            <span class="text-sm font-medium">{{
+                                site.displayableType
+                            }}</span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-muted-foreground">PHP Version</span>
-                            <span class="text-sm font-medium">{{ site.phpVersion ?? 'N/A' }}</span>
+                            <span class="text-sm text-muted-foreground"
+                                >PHP Version</span
+                            >
+                            <span class="text-sm font-medium">{{
+                                site.phpVersion ?? 'N/A'
+                            }}</span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-muted-foreground">Unix User</span>
-                            <span class="text-sm font-medium font-mono">{{ site.user }}</span>
+                            <span class="text-sm text-muted-foreground"
+                                >Unix User</span
+                            >
+                            <span class="font-mono text-sm font-medium">{{
+                                site.user
+                            }}</span>
                         </div>
                     </CardContent>
                 </Card>
@@ -133,16 +159,28 @@ function getDeployStatusVariant(status: string | null): 'default' | 'secondary' 
                     </CardHeader>
                     <CardContent class="space-y-4">
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-muted-foreground">Server</span>
-                            <span class="text-sm font-medium">{{ site.serverName }}</span>
+                            <span class="text-sm text-muted-foreground"
+                                >Server</span
+                            >
+                            <span class="text-sm font-medium">{{
+                                site.serverName
+                            }}</span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-muted-foreground">Root Directory</span>
-                            <span class="text-sm font-medium font-mono">{{ site.rootDirectory }}</span>
+                            <span class="text-sm text-muted-foreground"
+                                >Root Directory</span
+                            >
+                            <span class="font-mono text-sm font-medium">{{
+                                site.rootDirectory
+                            }}</span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-muted-foreground">Web Directory</span>
-                            <span class="text-sm font-medium font-mono">{{ site.webDirectory }}</span>
+                            <span class="text-sm text-muted-foreground"
+                                >Web Directory</span
+                            >
+                            <span class="font-mono text-sm font-medium">{{
+                                site.webDirectory
+                            }}</span>
                         </div>
                     </CardContent>
                 </Card>
@@ -157,11 +195,17 @@ function getDeployStatusVariant(status: string | null): 'default' | 'secondary' 
                     </CardHeader>
                     <CardContent class="space-y-4">
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-muted-foreground">Repository</span>
-                            <span class="text-sm font-medium">{{ site.displayableRepository }}</span>
+                            <span class="text-sm text-muted-foreground"
+                                >Repository</span
+                            >
+                            <span class="text-sm font-medium">{{
+                                site.displayableRepository
+                            }}</span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-muted-foreground">Branch</span>
+                            <span class="text-sm text-muted-foreground"
+                                >Branch</span
+                            >
                             <Badge variant="secondary" class="font-mono">
                                 {{ site.branch }}
                             </Badge>
@@ -179,14 +223,22 @@ function getDeployStatusVariant(status: string | null): 'default' | 'secondary' 
                     </CardHeader>
                     <CardContent class="space-y-4">
                         <div>
-                            <span class="text-sm text-muted-foreground">Full Path</span>
-                            <p class="mt-1 text-sm font-medium font-mono break-all">
+                            <span class="text-sm text-muted-foreground"
+                                >Full Path</span
+                            >
+                            <p
+                                class="mt-1 font-mono text-sm font-medium break-all"
+                            >
                                 {{ site.fullPath }}
                             </p>
                         </div>
                         <div>
-                            <span class="text-sm text-muted-foreground">Web Path</span>
-                            <p class="mt-1 text-sm font-medium font-mono break-all">
+                            <span class="text-sm text-muted-foreground"
+                                >Web Path</span
+                            >
+                            <p
+                                class="mt-1 font-mono text-sm font-medium break-all"
+                            >
                                 {{ site.webPath }}
                             </p>
                         </div>

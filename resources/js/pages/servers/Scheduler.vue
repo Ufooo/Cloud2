@@ -304,7 +304,9 @@ watch(
                                             Resume
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator
-                                            v-if="job.can.pause || job.can.resume"
+                                            v-if="
+                                                job.can.pause || job.can.resume
+                                            "
                                         />
                                         <DropdownMenuItem
                                             v-if="job.can.update"
@@ -431,9 +433,7 @@ watch(
                                 class="text-primary hover:underline"
                             >
                                 crontab.guru
-                                <ExternalLink
-                                    class="ml-0.5 inline size-3"
-                                />
+                                <ExternalLink class="ml-0.5 inline size-3" />
                             </a>
                         </p>
                         <Input
@@ -609,9 +609,7 @@ watch(
                                 class="text-primary hover:underline"
                             >
                                 crontab.guru
-                                <ExternalLink
-                                    class="ml-0.5 inline size-3"
-                                />
+                                <ExternalLink class="ml-0.5 inline size-3" />
                             </a>
                         </p>
                         <Input
@@ -680,7 +678,7 @@ watch(
                         >
                             <Label class="text-xs">Heartbeat URL</Label>
                             <p
-                                class="mt-1 break-all font-mono text-xs text-muted-foreground"
+                                class="mt-1 font-mono text-xs break-all text-muted-foreground"
                             >
                                 {{ editingJob.heartbeatUrl }}
                             </p>

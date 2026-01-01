@@ -41,6 +41,7 @@ interface UnixUser {
     id: number;
     username: string;
     status: UnixUserStatus;
+    sitesCount: number;
     createdAt: string | null;
     can: {
         delete: boolean;
@@ -67,7 +68,8 @@ useResourceStatusUpdates({
 const { deleteResource: deleteUser } = useResourceDelete<UnixUser>({
     resourceName: 'Unix User',
     getDisplayName: (user) => user.username,
-    getDeleteUrl: (user) => destroy.url({ server: props.server, user: user.id }),
+    getDeleteUrl: (user) =>
+        destroy.url({ server: props.server, user: user.id }),
 });
 </script>
 
@@ -128,6 +130,13 @@ const { deleteResource: deleteUser } = useResourceDelete<UnixUser>({
                         >
                             <div>
                                 <p class="font-medium">{{ user.username }}</p>
+                                <p
+                                    v-if="user.sitesCount > 0"
+                                    class="text-muted-foreground text-sm"
+                                >
+                                    {{ user.sitesCount }}
+                                    {{ user.sitesCount === 1 ? 'site' : 'sites' }}
+                                </p>
                             </div>
                             <div class="flex items-center gap-2">
                                 <Badge

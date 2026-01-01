@@ -93,14 +93,17 @@ useResourceStatusUpdates({
 const { deleteResource: deleteRule } = useResourceDelete<FirewallRule>({
     resourceName: 'Firewall Rule',
     getDisplayName: (rule) => rule.name,
-    getDeleteUrl: (rule) => destroy.url({ server: props.server, rule: rule.id }),
+    getDeleteUrl: (rule) =>
+        destroy.url({ server: props.server, rule: rule.id }),
 });
 
 function syncRules() {
     router.reload({ only: ['rules'] });
 }
 
-function getBadgeVariant(rule: FirewallRule): 'default' | 'secondary' | 'destructive' {
+function getBadgeVariant(
+    rule: FirewallRule,
+): 'default' | 'secondary' | 'destructive' {
     if (rule.status.value !== 'installed') {
         return rule.status.variant;
     }
@@ -187,7 +190,9 @@ function getBadgeVariant(rule: FirewallRule): 'default' | 'secondary' | 'destruc
                             </div>
                             <div class="flex items-center gap-2">
                                 <Badge :variant="getBadgeVariant(rule)">
-                                    <span v-if="rule.status.value === 'installed'">
+                                    <span
+                                        v-if="rule.status.value === 'installed'"
+                                    >
                                         {{ rule.type.label }}
                                     </span>
                                     <span v-else>
@@ -202,7 +207,10 @@ function getBadgeVariant(rule: FirewallRule): 'default' | 'secondary' | 'destruc
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuItem
-                                            v-if="rule.can.delete && rule.status.value !== 'deleting'"
+                                            v-if="
+                                                rule.can.delete &&
+                                                rule.status.value !== 'deleting'
+                                            "
                                             class="text-destructive focus:text-destructive"
                                             @click="deleteRule(rule)"
                                         >

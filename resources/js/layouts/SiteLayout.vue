@@ -30,9 +30,12 @@ import { computed, ref } from 'vue';
 
 interface Props {
     site: Site;
+    showSidebar?: boolean;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    showSidebar: true,
+});
 
 // Real-time updates via WebSocket (useEcho handles lifecycle automatically)
 useEcho(`sites.${props.site.id}`, '.SiteStatusUpdated', () => {
@@ -123,7 +126,9 @@ function isActive(item: NavItem): boolean {
     return pathname.startsWith(item.href);
 }
 
-const scriptOutputModal = ref<InstanceType<typeof ScriptOutputModal> | null>(null);
+const scriptOutputModal = ref<InstanceType<typeof ScriptOutputModal> | null>(
+    null,
+);
 
 function handleScriptClick(script: ProvisionScriptData) {
     scriptOutputModal.value?.open(script);
@@ -134,7 +139,10 @@ function handleScriptClick(script: ProvisionScriptData) {
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 overflow-hidden">
             <!-- Left Sidebar -->
-            <aside class="flex w-64 shrink-0 flex-col border-r bg-muted/30">
+            <aside
+                v-if="showSidebar"
+                class="flex w-64 shrink-0 flex-col border-r bg-muted/30"
+            >
                 <!-- Site Header -->
                 <div class="border-b p-4">
                     <div class="flex items-center gap-3">
@@ -152,7 +160,10 @@ function handleScriptClick(script: ProvisionScriptData) {
                                     {{ site.domain }}
                                 </h1>
                             </div>
-                            <SiteStatusBadge :status="site.status" class="mt-1" />
+                            <SiteStatusBadge
+                                :status="site.status"
+                                class="mt-1"
+                            />
                         </div>
                     </div>
 

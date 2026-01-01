@@ -11,7 +11,13 @@ import {
 import { MoreHorizontal, Pencil, Trash2, User } from 'lucide-vue-next';
 import { computed } from 'vue';
 
-type BadgeVariant = 'default' | 'secondary' | 'destructive' | 'outline' | null | undefined;
+type BadgeVariant =
+    | 'default'
+    | 'secondary'
+    | 'destructive'
+    | 'outline'
+    | null
+    | undefined;
 
 interface DatabaseUserItem {
     id: string;
@@ -49,15 +55,19 @@ const emit = defineEmits<{
 
 const canUpdate = computed(() => props.user.can?.update ?? true);
 const canDelete = computed(() => props.user.can?.delete ?? true);
-const showStatusBadge = computed(() =>
-    props.user.status && props.user.status !== 'installed',
+const showStatusBadge = computed(
+    () => props.user.status && props.user.status !== 'installed',
 );
 const showDropdown = computed(() => canUpdate.value || canDelete.value);
 </script>
 
 <template>
-    <div class="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-accent/50">
-        <div class="flex size-10 items-center justify-center rounded-lg bg-muted">
+    <div
+        class="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-accent/50"
+    >
+        <div
+            class="flex size-10 items-center justify-center rounded-lg bg-muted"
+        >
             <User class="size-5 text-muted-foreground" />
         </div>
 
@@ -67,17 +77,24 @@ const showDropdown = computed(() => canUpdate.value || canDelete.value);
                 <span class="truncate font-medium text-foreground">
                     {{ user.username }}
                 </span>
-                <span v-if="user.readonly" class="text-xs text-muted-foreground">
+                <span
+                    v-if="user.readonly"
+                    class="text-xs text-muted-foreground"
+                >
                     Read only
                 </span>
             </div>
-            <span class="flex items-center gap-x-1 text-xs text-muted-foreground">
+            <span
+                class="flex items-center gap-x-1 text-xs text-muted-foreground"
+            >
                 <template v-if="user.serverName && showServer">
                     <span>{{ user.serverName }}</span>
                     <span v-if="user.databaseCount !== undefined">·</span>
                 </template>
                 <span v-if="user.databaseCount !== undefined">
-                    {{ user.databaseCount }} database{{ user.databaseCount !== 1 ? 's' : '' }}
+                    {{ user.databaseCount }} database{{
+                        user.databaseCount !== 1 ? 's' : ''
+                    }}
                 </span>
             </span>
         </div>
@@ -95,7 +112,10 @@ const showDropdown = computed(() => canUpdate.value || canDelete.value);
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                    <DropdownMenuItem v-if="canUpdate" @click="emit('edit', props.user)">
+                    <DropdownMenuItem
+                        v-if="canUpdate"
+                        @click="emit('edit', props.user)"
+                    >
                         <Pencil class="mr-2 size-4" />
                         Edit
                     </DropdownMenuItem>

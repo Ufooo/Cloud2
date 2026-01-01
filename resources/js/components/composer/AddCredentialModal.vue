@@ -50,7 +50,7 @@ function submit() {
                   repository: data.repository,
                   username: data.username,
                   password: data.password,
-              }
+              },
     ).post(props.storeUrl, {
         preserveScroll: true,
         onSuccess: () => {
@@ -110,11 +110,7 @@ function close() {
 
                 <div class="space-y-2">
                     <Label for="add-username">Username</Label>
-                    <Input
-                        id="add-username"
-                        v-model="form.username"
-                        required
-                    />
+                    <Input id="add-username" v-model="form.username" required />
                     <InputError :message="form.errors.username" />
                 </div>
 
@@ -130,7 +126,7 @@ function close() {
                         />
                         <button
                             type="button"
-                            class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            class="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                             @click="showPassword = !showPassword"
                         >
                             <EyeOff v-if="showPassword" class="size-4" />

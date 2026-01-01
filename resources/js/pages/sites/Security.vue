@@ -36,14 +36,7 @@ import SiteLayout from '@/layouts/SiteLayout.vue';
 import type { Site } from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
 import { Head, router, useForm } from '@inertiajs/vue3';
-import {
-    Lock,
-    MoreHorizontal,
-    Pencil,
-    Plus,
-    Trash2,
-    X,
-} from 'lucide-vue-next';
+import { Lock, MoreHorizontal, Pencil, Plus, Trash2, X } from 'lucide-vue-next';
 import { ref } from 'vue';
 
 type BadgeVariant =

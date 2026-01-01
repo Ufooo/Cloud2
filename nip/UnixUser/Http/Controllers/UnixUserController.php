@@ -10,6 +10,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Nip\Server\Data\ServerData;
 use Nip\Server\Models\Server;
+use Nip\Site\Models\Site;
 use Nip\UnixUser\Actions\CreateUnixUser;
 use Nip\UnixUser\Enums\UserStatus;
 use Nip\UnixUser\Http\Requests\StoreUnixUserRequest;
@@ -43,7 +44,7 @@ class UnixUserController extends Controller
         $unixUser = (new CreateUnixUser)->handle(
             $server,
             $request->validated('username'),
-            UserStatus::Installing
+            UserStatus::Installing,
         );
 
         CreateUnixUserJob::dispatch($unixUser);
@@ -62,6 +63,12 @@ class UnixUserController extends Controller
         abort_if($user->username === 'netipar', 403, 'Cannot delete the netipar user.');
         abort_if($user->status === UserStatus::Installing, 403, 'Cannot delete a user while installation is in progress.');
         abort_if($user->status === UserStatus::Deleting, 403, 'User deletion is already in progress.');
+
+        $sitesCount = Site::where('server_id', $server->id)
+            ->where('user', $user->username)
+            ->count();
+
+        abort_if($sitesCount > 0, 403, "Cannot delete user. {$sitesCount} site(s) are using this user. Delete the sites first.");
 
         $user->update(['status' => UserStatus::Deleting]);
 

@@ -10,7 +10,13 @@ import {
 import { Database, MoreHorizontal, Trash2 } from 'lucide-vue-next';
 import { computed } from 'vue';
 
-type BadgeVariant = 'default' | 'secondary' | 'destructive' | 'outline' | null | undefined;
+type BadgeVariant =
+    | 'default'
+    | 'secondary'
+    | 'destructive'
+    | 'outline'
+    | null
+    | undefined;
 
 interface DatabaseItem {
     id: string;
@@ -49,14 +55,18 @@ const emit = defineEmits<{
 }>();
 
 const canDelete = computed(() => props.database.can?.delete ?? true);
-const showStatusBadge = computed(() =>
-    props.database.status && props.database.status !== 'installed',
+const showStatusBadge = computed(
+    () => props.database.status && props.database.status !== 'installed',
 );
 </script>
 
 <template>
-    <div class="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-accent/50">
-        <div class="flex size-10 items-center justify-center rounded-lg bg-muted">
+    <div
+        class="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-accent/50"
+    >
+        <div
+            class="flex size-10 items-center justify-center rounded-lg bg-muted"
+        >
             <Database class="size-5 text-muted-foreground" />
         </div>
 
@@ -67,7 +77,9 @@ const showStatusBadge = computed(() =>
                     {{ database.name }}
                 </span>
             </div>
-            <span class="flex items-center gap-x-1 text-xs text-muted-foreground">
+            <span
+                class="flex items-center gap-x-1 text-xs text-muted-foreground"
+            >
                 <template v-if="database.serverName && showServer">
                     <span>{{ database.serverName }}</span>
                 </template>
@@ -80,7 +92,10 @@ const showStatusBadge = computed(() =>
 
         <!-- Right side -->
         <div class="flex items-center gap-4">
-            <Badge v-if="showStatusBadge" :variant="database.statusBadgeVariant">
+            <Badge
+                v-if="showStatusBadge"
+                :variant="database.statusBadgeVariant"
+            >
                 {{ database.displayableStatus }}
             </Badge>
             <Badge v-else-if="database.displayableSize" variant="secondary">

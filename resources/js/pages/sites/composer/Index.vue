@@ -64,7 +64,10 @@ const editingCredential = ref<Credential | null>(null);
 
 const editUpdateUrl = computed(() => {
     if (!editingCredential.value) return '';
-    return update.url({ site: props.site, credential: editingCredential.value.id });
+    return update.url({
+        site: props.site,
+        credential: editingCredential.value.id,
+    });
 });
 
 function openEditDialog(credential: Credential) {
@@ -85,7 +88,7 @@ async function handleDelete(credential: Credential) {
         destroy.url({ site: props.site, credential: credential.id }),
         {
             preserveScroll: true,
-        }
+        },
     );
 }
 </script>
@@ -149,8 +152,13 @@ async function handleDelete(credential: Credential) {
                                     {{ credential.repository }}
                                 </p>
                                 <Badge
-                                    v-if="credential.status && credential.status !== 'synced'"
-                                    :variant="credential.statusBadgeVariant as any"
+                                    v-if="
+                                        credential.status &&
+                                        credential.status !== 'synced'
+                                    "
+                                    :variant="
+                                        credential.statusBadgeVariant as any
+                                    "
                                 >
                                     {{ credential.displayableStatus }}
                                 </Badge>
@@ -172,7 +180,10 @@ async function handleDelete(credential: Credential) {
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        :disabled="credential.status === 'deleting' || credential.status === 'syncing'"
+                                        :disabled="
+                                            credential.status === 'deleting' ||
+                                            credential.status === 'syncing'
+                                        "
                                     >
                                         <MoreHorizontal class="size-4" />
                                     </Button>

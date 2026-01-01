@@ -432,7 +432,10 @@ function submitForm() {
                                     id="add_ssh_keys"
                                     v-model="addSshKeys"
                                 />
-                                <Label for="add_ssh_keys" class="cursor-pointer">
+                                <Label
+                                    for="add_ssh_keys"
+                                    class="cursor-pointer"
+                                >
                                     Add my SSH keys to this server
                                 </Label>
                             </div>
@@ -447,8 +450,8 @@ function submitForm() {
                                     v-if="props.userSshKeys.length === 0"
                                     class="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground"
                                 >
-                                    No SSH keys in your account. Add keys in your
-                                    account settings.
+                                    No SSH keys in your account. Add keys in
+                                    your account settings.
                                 </div>
 
                                 <div

@@ -414,7 +414,10 @@ function pluralize(count: number, singular: string, plural: string): string {
 
                     <div class="space-y-2">
                         <Label for="user">Unix user</Label>
-                        <Select name="user" :default-value="users[0] || 'netipar'">
+                        <Select
+                            name="user"
+                            :default-value="users[0] || 'netipar'"
+                        >
                             <SelectTrigger>
                                 <SelectValue placeholder="Select a unix user" />
                             </SelectTrigger>
@@ -450,8 +453,16 @@ function pluralize(count: number, singular: string, plural: string): string {
                         <template v-if="!showAdvanced">
                             <input type="hidden" name="processes" value="1" />
                             <input type="hidden" name="startsecs" value="1" />
-                            <input type="hidden" name="stopwaitsecs" value="15" />
-                            <input type="hidden" name="stopsignal" value="TERM" />
+                            <input
+                                type="hidden"
+                                name="stopwaitsecs"
+                                value="15"
+                            />
+                            <input
+                                type="hidden"
+                                name="stopsignal"
+                                value="TERM"
+                            />
                         </template>
 
                         <div v-if="showAdvanced" class="mt-4 space-y-4">
@@ -641,9 +652,7 @@ function pluralize(count: number, singular: string, plural: string): string {
                             type="number"
                             min="1"
                             max="100"
-                            :default-value="
-                                editingProcess.processes.toString()
-                            "
+                            :default-value="editingProcess.processes.toString()"
                         />
                         <InputError :message="errors.processes" />
                     </div>
@@ -655,9 +664,7 @@ function pluralize(count: number, singular: string, plural: string): string {
                             name="startsecs"
                             type="number"
                             min="0"
-                            :default-value="
-                                editingProcess.startsecs.toString()
-                            "
+                            :default-value="editingProcess.startsecs.toString()"
                         />
                         <InputError :message="errors.startsecs" />
                     </div>

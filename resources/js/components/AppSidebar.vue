@@ -2,7 +2,7 @@
 import { index as databasesIndex } from '@/actions/Nip/Database/Http/Controllers/DatabaseController';
 import { index as serversIndex } from '@/actions/Nip/Server/Http/Controllers/ServerController';
 import { index as sitesIndex } from '@/actions/Nip/Site/Http/Controllers/SiteController';
-import NavFooter from '@/components/NavFooter.vue';
+import { index as sourceControlIndex } from '@/actions/Nip/SourceControl/Http/Controllers/SourceControlController';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import {
@@ -17,7 +17,14 @@ import {
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, Database, Folder, LayoutGrid, PanelTop, Server } from 'lucide-vue-next';
+import {
+    Database,
+    GitBranch,
+    LayoutGrid,
+    PanelTop,
+    Server,
+    Settings,
+} from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 const mainNavItems: NavItem[] = [
@@ -41,18 +48,17 @@ const mainNavItems: NavItem[] = [
         href: databasesIndex.url(),
         icon: Database,
     },
-];
-
-const footerNavItems: NavItem[] = [
     {
-        title: 'Github Repo',
-        href: 'https://github.com/laravel/vue-starter-kit',
-        icon: Folder,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#vue',
-        icon: BookOpen,
+        title: 'Settings',
+        href: sourceControlIndex.url(),
+        icon: Settings,
+        items: [
+            {
+                title: 'Source Control',
+                href: sourceControlIndex.url(),
+                icon: GitBranch,
+            },
+        ],
     },
 ];
 </script>
@@ -76,7 +82,6 @@ const footerNavItems: NavItem[] = [
         </SidebarContent>
 
         <SidebarFooter>
-            <NavFooter :items="footerNavItems" />
             <NavUser />
         </SidebarFooter>
     </Sidebar>

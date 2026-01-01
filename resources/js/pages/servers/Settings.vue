@@ -83,7 +83,6 @@ async function handleDelete() {
         router.delete(destroy.url(props.server));
     }
 }
-
 </script>
 
 <template>

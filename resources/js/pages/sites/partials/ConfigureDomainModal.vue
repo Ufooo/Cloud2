@@ -40,12 +40,15 @@ const emit = defineEmits<{
 const localWwwRedirectType = ref(props.wwwRedirectType);
 const localAllowWildcard = ref(props.allowWildcard);
 
-watch(() => props.open, (isOpen) => {
-    if (isOpen) {
-        localWwwRedirectType.value = props.wwwRedirectType;
-        localAllowWildcard.value = props.allowWildcard;
-    }
-});
+watch(
+    () => props.open,
+    (isOpen) => {
+        if (isOpen) {
+            localWwwRedirectType.value = props.wwwRedirectType;
+            localAllowWildcard.value = props.allowWildcard;
+        }
+    },
+);
 
 function setWildcard(value: boolean) {
     localAllowWildcard.value = value;
@@ -66,7 +69,11 @@ function save() {
             <DialogHeader>
                 <DialogTitle>Configure {{ domain || 'domain' }}</DialogTitle>
                 <DialogDescription>
-                    <span class="font-medium">{{ domain || 'Your domain' }}</span> will be used to access your site and can be configured with various redirect options.
+                    <span class="font-medium">{{
+                        domain || 'Your domain'
+                    }}</span>
+                    will be used to access your site and can be configured with
+                    various redirect options.
                 </DialogDescription>
             </DialogHeader>
 
@@ -81,16 +88,20 @@ function save() {
                         <button
                             type="button"
                             class="flex w-full items-start gap-3 rounded-md border p-3 text-left transition-colors"
-                            :class="!localAllowWildcard
-                                ? 'border-primary bg-primary/5'
-                                : 'border-border hover:bg-muted/50'"
+                            :class="
+                                !localAllowWildcard
+                                    ? 'border-primary bg-primary/5'
+                                    : 'border-border hover:bg-muted/50'
+                            "
                             @click="setWildcard(false)"
                         >
                             <div
                                 class="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border"
-                                :class="!localAllowWildcard
-                                    ? 'border-primary'
-                                    : 'border-muted-foreground'"
+                                :class="
+                                    !localAllowWildcard
+                                        ? 'border-primary'
+                                        : 'border-muted-foreground'
+                                "
                             >
                                 <div
                                     v-if="!localAllowWildcard"
@@ -100,23 +111,28 @@ function save() {
                             <div class="flex-1">
                                 <span class="font-medium">Off</span>
                                 <p class="text-sm text-muted-foreground">
-                                    Support only the root domain, e.g. {{ domain || 'example.com' }}
+                                    Support only the root domain, e.g.
+                                    {{ domain || 'example.com' }}
                                 </p>
                             </div>
                         </button>
                         <button
                             type="button"
                             class="flex w-full items-start gap-3 rounded-md border p-3 text-left transition-colors"
-                            :class="localAllowWildcard
-                                ? 'border-primary bg-primary/5'
-                                : 'border-border hover:bg-muted/50'"
+                            :class="
+                                localAllowWildcard
+                                    ? 'border-primary bg-primary/5'
+                                    : 'border-border hover:bg-muted/50'
+                            "
                             @click="setWildcard(true)"
                         >
                             <div
                                 class="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border"
-                                :class="localAllowWildcard
-                                    ? 'border-primary'
-                                    : 'border-muted-foreground'"
+                                :class="
+                                    localAllowWildcard
+                                        ? 'border-primary'
+                                        : 'border-muted-foreground'
+                                "
                             >
                                 <div
                                     v-if="localAllowWildcard"
@@ -126,7 +142,9 @@ function save() {
                             <div class="flex-1">
                                 <span class="font-medium">On</span>
                                 <p class="text-sm text-muted-foreground">
-                                    Support all subdomains, e.g. blog.{{ domain || 'example.com' }}
+                                    Support all subdomains, e.g. blog.{{
+                                        domain || 'example.com'
+                                    }}
                                 </p>
                             </div>
                         </button>
@@ -137,7 +155,8 @@ function save() {
                 <div class="space-y-3">
                     <Label>Redirects</Label>
                     <p class="text-sm text-muted-foreground">
-                        Manage how your domain handles www. redirects for this domain.
+                        Manage how your domain handles www. redirects for this
+                        domain.
                     </p>
                     <div class="space-y-2">
                         <button
@@ -149,27 +168,43 @@ function save() {
                                 localWwwRedirectType === redirectType.value
                                     ? 'border-primary bg-primary/5'
                                     : 'border-border hover:bg-muted/50',
-                                localAllowWildcard && redirectType.value !== 'none' ? 'cursor-not-allowed opacity-50' : ''
+                                localAllowWildcard &&
+                                redirectType.value !== 'none'
+                                    ? 'cursor-not-allowed opacity-50'
+                                    : '',
                             ]"
-                            :disabled="localAllowWildcard && redirectType.value !== 'none'"
+                            :disabled="
+                                localAllowWildcard &&
+                                redirectType.value !== 'none'
+                            "
                             @click="localWwwRedirectType = redirectType.value"
                         >
                             <div
                                 class="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border"
-                                :class="localWwwRedirectType === redirectType.value
-                                    ? 'border-primary'
-                                    : 'border-muted-foreground'"
+                                :class="
+                                    localWwwRedirectType === redirectType.value
+                                        ? 'border-primary'
+                                        : 'border-muted-foreground'
+                                "
                             >
                                 <div
-                                    v-if="localWwwRedirectType === redirectType.value"
+                                    v-if="
+                                        localWwwRedirectType ===
+                                        redirectType.value
+                                    "
                                     class="size-2 rounded-full bg-primary"
                                 />
                             </div>
                             <div class="flex-1">
                                 <div class="flex items-center gap-2">
-                                    <span class="font-medium">{{ redirectType.label }}</span>
+                                    <span class="font-medium">{{
+                                        redirectType.label
+                                    }}</span>
                                     <span
-                                        v-if="redirectType.isDefault && !localAllowWildcard"
+                                        v-if="
+                                            redirectType.isDefault &&
+                                            !localAllowWildcard
+                                        "
                                         class="rounded border border-green-600 px-1.5 py-0.5 text-xs font-normal text-green-600 dark:border-green-500 dark:text-green-500"
                                     >
                                         Recommended
@@ -182,7 +217,12 @@ function save() {
             </div>
 
             <DialogFooter>
-                <Button type="button" variant="outline" @click="$emit('update:open', false)">Cancel</Button>
+                <Button
+                    type="button"
+                    variant="outline"
+                    @click="$emit('update:open', false)"
+                    >Cancel</Button
+                >
                 <Button type="button" @click="save">Save</Button>
             </DialogFooter>
         </DialogContent>

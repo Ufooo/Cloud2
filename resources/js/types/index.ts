@@ -1,6 +1,8 @@
 import { InertiaLinkProps } from '@inertiajs/vue3';
 import type { LucideIcon } from 'lucide-vue-next';
 
+export type { PaginatedResponse as Paginated } from './pagination';
+
 export interface Auth {
     user: User;
 }
@@ -37,6 +39,29 @@ export interface User {
 }
 
 export type BreadcrumbItemType = BreadcrumbItem;
+
+export interface Deployment {
+    id: string;
+    status: string;
+    statusLabel: string;
+    statusColor: string;
+    commitHash: string | null;
+    shortCommitHash: string | null;
+    commitMessage: string | null;
+    commitAuthor: string | null;
+    branch: string | null;
+    deployedBy: string | null;
+    startedAt: string | null;
+    endedAt: string | null;
+    duration: number | null;
+    durationForHumans: string | null;
+    createdAt: string | null;
+    createdAtForHumans: string | null;
+}
+
+export interface DeploymentDetail extends Deployment {
+    output: string | null;
+}
 
 export {
     IdentityColor,

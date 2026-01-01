@@ -65,7 +65,7 @@ watch(
             form.password = credential.password;
             form.clearErrors();
         }
-    }
+    },
 );
 
 function submit() {
@@ -76,7 +76,7 @@ function submit() {
                   repository: data.repository,
                   username: data.username,
                   password: data.password,
-              }
+              },
     ).put(props.updateUrl, {
         preserveScroll: true,
         onSuccess: () => {
@@ -155,7 +155,7 @@ function close() {
                         />
                         <button
                             type="button"
-                            class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            class="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                             @click="showPassword = !showPassword"
                         >
                             <EyeOff v-if="showPassword" class="size-4" />

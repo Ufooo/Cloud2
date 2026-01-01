@@ -1,4 +1,4 @@
- <script setup lang="ts">
+<script setup lang="ts">
 import { destroy } from '@/actions/Nip/Server/Http/Controllers/ServerController';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

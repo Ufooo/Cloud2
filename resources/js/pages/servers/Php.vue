@@ -44,10 +44,7 @@ import { useConfirmation } from '@/composables/useConfirmation';
 import { useResourceStatusUpdates } from '@/composables/useResourceStatusUpdates';
 import ServerLayout from '@/layouts/ServerLayout.vue';
 import type { Server } from '@/types';
-import type {
-    PhpSettingData,
-    PhpVersionData,
-} from '@/types/generated';
+import type { PhpSettingData, PhpVersionData } from '@/types/generated';
 import { Form, Head, router } from '@inertiajs/vue3';
 import { Code, MoreHorizontal, Plus, Trash2 } from 'lucide-vue-next';
 import { computed, reactive, ref } from 'vue';
@@ -100,7 +97,9 @@ const settingsFormData = reactive({
 });
 
 // Computed for hidden input value - ensures reactivity
-const opcacheHiddenValue = computed(() => settingsFormData.opcache_enabled ? '1' : '0');
+const opcacheHiddenValue = computed(() =>
+    settingsFormData.opcache_enabled ? '1' : '0',
+);
 
 // Install version dialog
 const showInstallDialog = ref(false);
@@ -109,7 +108,7 @@ const selectedVersion = ref<string>('');
 const notInstalledVersions = computed(() => {
     const installedVersionValues = phpVersions.value.map((v) => v.version);
     return props.availableVersions.filter(
-        (v) => !installedVersionValues.includes(v.value)
+        (v) => !installedVersionValues.includes(v.value),
     );
 });
 
@@ -130,7 +129,7 @@ function installPhpVersion() {
                 showInstallDialog.value = false;
                 selectedVersion.value = '';
             },
-        }
+        },
     );
 }
 
@@ -148,7 +147,7 @@ async function handleUninstall(version: PhpVersionResource) {
         uninstallVersion.url({ server: props.server, phpVersion: version.id }),
         {
             preserveScroll: true,
-        }
+        },
     );
 }
 
@@ -158,7 +157,7 @@ function handleSetDefault(version: PhpVersionResource, type: 'cli' | 'site') {
         { type },
         {
             preserveScroll: true,
-        }
+        },
     );
 }
 
@@ -199,14 +198,16 @@ function getVersionLabel(versionValue: string): string {
                                 <div class="relative">
                                     <Input
                                         id="max-upload-size"
-                                        v-model.number="settingsFormData.max_upload_size"
+                                        v-model.number="
+                                            settingsFormData.max_upload_size
+                                        "
                                         name="max_upload_size"
                                         type="number"
                                         min="1"
                                         class="pr-16"
                                     />
                                     <span
-                                        class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground"
+                                        class="absolute top-1/2 right-3 -translate-y-1/2 text-sm text-muted-foreground"
                                     >
                                         MBs
                                     </span>
@@ -222,19 +223,23 @@ function getVersionLabel(versionValue: string): string {
                                 <div class="relative">
                                     <Input
                                         id="max-execution-time"
-                                        v-model.number="settingsFormData.max_execution_time"
+                                        v-model.number="
+                                            settingsFormData.max_execution_time
+                                        "
                                         name="max_execution_time"
                                         type="number"
                                         min="1"
                                         class="pr-20"
                                     />
                                     <span
-                                        class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground"
+                                        class="absolute top-1/2 right-3 -translate-y-1/2 text-sm text-muted-foreground"
                                     >
                                         seconds
                                     </span>
                                 </div>
-                                <InputError :message="errors.max_execution_time" />
+                                <InputError
+                                    :message="errors.max_execution_time"
+                                />
                             </div>
                         </div>
 
@@ -258,10 +263,7 @@ function getVersionLabel(versionValue: string): string {
                         </div>
 
                         <!-- Action Buttons -->
-                        <Button
-                            type="submit"
-                            :disabled="processing"
-                        >
+                        <Button type="submit" :disabled="processing">
                             {{ processing ? 'Saving...' : 'Save' }}
                         </Button>
                     </Form>
@@ -339,7 +341,9 @@ function getVersionLabel(versionValue: string): string {
                                     >
                                         CLI default
                                     </Badge>
-                                    <Badge :variant="version.statusBadgeVariant">
+                                    <Badge
+                                        :variant="version.statusBadgeVariant"
+                                    >
                                         {{ version.statusLabel }}
                                     </Badge>
                                 </div>
@@ -368,7 +372,9 @@ function getVersionLabel(versionValue: string): string {
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                         v-if="version.can.setCliDefault"
-                                        @click="handleSetDefault(version, 'cli')"
+                                        @click="
+                                            handleSetDefault(version, 'cli')
+                                        "
                                     >
                                         Set as CLI default
                                     </DropdownMenuItem>

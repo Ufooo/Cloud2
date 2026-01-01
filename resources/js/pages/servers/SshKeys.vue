@@ -86,7 +86,8 @@ useResourceStatusUpdates({
 const { deleteResource: deleteKey } = useResourceDelete<SshKey>({
     resourceName: 'SSH Key',
     getDisplayName: (key) => key.name,
-    getDeleteUrl: (key) => destroy.url({ server: props.server, sshKey: key.id }),
+    getDeleteUrl: (key) =>
+        destroy.url({ server: props.server, sshKey: key.id }),
 });
 </script>
 
@@ -180,7 +181,10 @@ const { deleteResource: deleteKey } = useResourceDelete<SshKey>({
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuItem
-                                            v-if="key.can.delete && key.status.value !== 'deleting'"
+                                            v-if="
+                                                key.can.delete &&
+                                                key.status.value !== 'deleting'
+                                            "
                                             class="text-destructive focus:text-destructive"
                                             @click="deleteKey(key)"
                                         >
