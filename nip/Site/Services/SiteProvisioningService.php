@@ -34,7 +34,7 @@ class SiteProvisioningService
         $jobs = $this->buildJobChain($site);
 
         $batch = Bus::batch([
-            Bus::chain($jobs),
+            $jobs,
         ])
             ->name("Installing site: {$site->domain}")
             ->then(function (Batch $batch) use ($site) {
@@ -49,9 +49,6 @@ class SiteProvisioningService
                     'status' => SiteStatus::Failed,
                     'batch_id' => null,
                 ]);
-            })
-            ->finally(function (Batch $batch) {
-                // Cleanup or logging
             })
             ->onQueue('provisioning')
             ->dispatch();
