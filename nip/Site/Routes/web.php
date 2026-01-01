@@ -22,4 +22,5 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
     Route::match(['put', 'patch'], '/sites/{site}', [SiteController::class, 'update'])->name('sites.update');
     Route::delete('/sites/{site}', [SiteController::class, 'destroy'])->name('sites.destroy');
     Route::post('/sites/{site}/deploy', [SiteController::class, 'deploy'])->name('sites.deploy');
+    Route::post('/sites/{site}/detect-packages', [SiteController::class, 'detectPackages'])->name('sites.detectPackages');
 });

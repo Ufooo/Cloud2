@@ -33,6 +33,14 @@ export enum DatabaseType { Mysql80 = 'mysql80', Mariadb1011 = 'mariadb1011', Mar
 export enum DatabaseUserStatus { Pending = 'pending', Installing = 'installing', Syncing = 'syncing', Installed = 'installed', Deleting = 'deleting', Failed = 'failed' };
 export enum DeployStatus { NeverDeployed = 'never_deployed', Deploying = 'deploying', Deployed = 'deployed', Failed = 'failed' };
 export enum DeploymentStatus { Pending = 'pending', Deploying = 'deploying', Finished = 'finished', Failed = 'failed' };
+export enum DetectedPackage { Laravel = 'laravel', Horizon = 'horizon', Inertia = 'inertia', Octane = 'octane', Reverb = 'reverb', Pulse = 'pulse', Telescope = 'telescope', Nova = 'nova', Cashier = 'cashier', Pennant = 'pennant', Sanctum = 'sanctum', Passport = 'passport', Socialite = 'socialite', Scout = 'scout', Breeze = 'breeze', Jetstream = 'jetstream', Folio = 'folio', Livewire = 'livewire' };
+export type DetectedPackageData = {
+value: string;
+label: string;
+description: string;
+hasEnableAction: boolean;
+enableActionLabel: string | null;
+};
 export type DomainRecordData = {
 id: string;
 siteId: string;
@@ -212,6 +220,8 @@ deploymentRetention: number;
 zeroDowntime: boolean;
 healthcheckEndpoint: string | null;
 deployKey: string | null;
+detectedPackages: Array<string> | null;
+packageDetails: Array<DetectedPackageData> | null;
 can: SitePermissionsData;
 };
 export type SitePermissionsData = {

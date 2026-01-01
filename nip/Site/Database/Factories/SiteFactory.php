@@ -91,4 +91,11 @@ class SiteFactory extends Factory
             'branch' => $branch,
         ]);
     }
+
+    public function installed(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => SiteStatus::Installed,
+        ]);
+    }
 }

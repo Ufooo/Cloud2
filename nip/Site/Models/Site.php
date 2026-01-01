@@ -80,6 +80,7 @@ class Site extends Model
         'environment',
         'avatar_color',
         'notes',
+        'detected_packages',
         'last_deployed_at',
     ];
 
@@ -101,6 +102,7 @@ class Site extends Model
             'auto_source' => 'boolean',
             'zero_downtime' => 'boolean',
             'deployment_retention' => 'integer',
+            'detected_packages' => 'array',
             'last_deployed_at' => 'datetime',
         ];
     }

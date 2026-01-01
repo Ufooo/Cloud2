@@ -21,6 +21,7 @@ import {
     Server,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
+import DetectedPackages from './partials/DetectedPackages.vue';
 import SiteProvisioning from './partials/SiteProvisioning.vue';
 
 interface Props {
@@ -245,6 +246,9 @@ function getDeployStatusVariant(
                     </CardContent>
                 </Card>
             </div>
+
+            <!-- Detected Packages -->
+            <DetectedPackages :site="site" />
         </div>
     </SiteLayout>
 </template>

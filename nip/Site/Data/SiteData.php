@@ -57,6 +57,10 @@ class SiteData extends Data
         public bool $zeroDowntime,
         public ?string $healthcheckEndpoint,
         public ?string $deployKey,
+        /** @var string[]|null */
+        public ?array $detectedPackages,
+        /** @var DetectedPackageData[]|null */
+        public ?array $packageDetails,
         public SitePermissionsData $can,
     ) {}
 
@@ -108,6 +112,10 @@ class SiteData extends Data
             zeroDowntime: $site->zero_downtime ?? false,
             healthcheckEndpoint: $site->healthcheck_endpoint,
             deployKey: $site->deploy_key,
+            detectedPackages: $site->detected_packages,
+            packageDetails: $site->detected_packages
+                ? DetectedPackageData::fromPackageValues($site->detected_packages)
+                : null,
             can: new SitePermissionsData(
                 update: $canUpdate && $isInstalled,
                 delete: $canUpdate && $site->status !== SiteStatus::Installing,

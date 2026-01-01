@@ -3,6 +3,7 @@
 namespace Nip\Site\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -29,6 +30,7 @@ use Nip\Site\Http\Resources\SiteResource;
 use Nip\Site\Jobs\DeleteSiteJob;
 use Nip\Site\Jobs\DeploySiteJob;
 use Nip\Site\Models\Site;
+use Nip\Site\Services\PackageDetectionService;
 use Nip\Site\Services\SitePhpVersionService;
 use Nip\Site\Services\SiteProvisioningService;
 use Nip\SourceControl\Models\SourceControl;
@@ -294,5 +296,20 @@ class SiteController extends Controller
         return redirect()
             ->route('sites.deployments.show', [$site, $deployment])
             ->with('success', 'Deployment started.');
+    }
+
+    public function detectPackages(Site $site, PackageDetectionService $packageDetectionService): JsonResponse
+    {
+        Gate::authorize('view', $site->server);
+
+        abort_unless($site->status === SiteStatus::Installed, 403, 'Site must be installed to detect packages.');
+
+        $packages = $packageDetectionService->detectPackages($site);
+        $packageDetails = $packageDetectionService->getPackageDetails($site);
+
+        return response()->json([
+            'packages' => $packages,
+            'packageDetails' => $packageDetails,
+        ]);
     }
 }
