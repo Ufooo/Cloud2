@@ -96,10 +96,9 @@ it('can dismiss a failed provision script', function () {
     ]);
 
     $response = $this->actingAs($this->user)
-        ->postJson("/provision-scripts/{$script->id}/dismiss");
+        ->post("/provision-scripts/{$script->id}/dismiss");
 
-    $response->assertOk()
-        ->assertJsonPath('success', true);
+    $response->assertRedirect();
 
     expect($script->fresh()->status)->toBe(ProvisionScriptStatus::Completed);
 });
