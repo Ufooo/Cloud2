@@ -2,16 +2,20 @@
 
 namespace Nip\Deployment\Models;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Nip\Deployment\Database\Factories\DeploymentFactory;
 use Nip\Deployment\Enums\DeploymentStatus;
 use Nip\Site\Models\Site;
-use Nip\User\Models\User;
 
 class Deployment extends Model
 {
+    private const SHORT_HASH_LENGTH = 7;
+
+    private const SECONDS_PER_MINUTE = 60;
+
     /** @use HasFactory<DeploymentFactory> */
     use HasFactory;
 
@@ -67,7 +71,7 @@ class Deployment extends Model
             return null;
         }
 
-        return substr($this->commit_hash, 0, 7);
+        return substr($this->commit_hash, 0, self::SHORT_HASH_LENGTH);
     }
 
     public function getDuration(): ?int
@@ -77,5 +81,27 @@ class Deployment extends Model
         }
 
         return $this->ended_at->diffInSeconds($this->started_at);
+    }
+
+    public function getDurationForHumans(): ?string
+    {
+        $duration = $this->getDuration();
+
+        if ($duration === null) {
+            return null;
+        }
+
+        if ($duration < self::SECONDS_PER_MINUTE) {
+            return "{$duration} seconds";
+        }
+
+        $minutes = (int) floor($duration / self::SECONDS_PER_MINUTE);
+        $seconds = $duration % self::SECONDS_PER_MINUTE;
+
+        if ($seconds === 0) {
+            return "{$minutes} minutes";
+        }
+
+        return "{$minutes}m {$seconds}s";
     }
 }
