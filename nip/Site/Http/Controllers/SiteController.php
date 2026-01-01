@@ -9,6 +9,8 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Nip\Database\Enums\DatabaseStatus;
 use Nip\Database\Enums\DatabaseUserStatus;
+use Nip\Deployment\Enums\DeploymentStatus;
+use Nip\Deployment\Models\Deployment;
 use Nip\Domain\Enums\DomainRecordStatus;
 use Nip\Domain\Enums\DomainRecordType;
 use Nip\Php\Enums\PhpVersion;
@@ -24,11 +26,13 @@ use Nip\Site\Enums\WwwRedirectType;
 use Nip\Site\Http\Requests\StoreSiteRequest;
 use Nip\Site\Http\Requests\UpdateSiteRequest;
 use Nip\Site\Http\Resources\SiteResource;
-use Nip\Site\Jobs\CreateSiteDirectoryJob;
 use Nip\Site\Jobs\DeleteSiteJob;
 use Nip\Site\Jobs\DeploySiteJob;
 use Nip\Site\Models\Site;
 use Nip\Site\Services\SitePhpVersionService;
+use Nip\Site\Services\SiteProvisioningService;
+use Nip\SourceControl\Models\SourceControl;
+use Nip\SourceControl\Services\GitHubService;
 
 class SiteController extends Controller
 {
@@ -95,12 +99,26 @@ class SiteController extends Controller
                 ])->values()->all(),
             ]);
 
+        $sourceControls = SourceControl::query()
+            ->where('user_id', auth()->id())
+            ->get()
+            ->map(fn (SourceControl $sc) => [
+                'id' => $sc->id,
+                'provider' => $sc->provider->value,
+                'providerLabel' => $sc->provider->label(),
+                'name' => $sc->name,
+            ]);
+
         return Inertia::render('sites/Create', [
             'siteType' => [
                 'value' => $siteType->value,
                 'label' => $siteType->label(),
+                'webDirectory' => $siteType->defaultWebDirectory(),
+                'buildCommand' => $siteType->defaultBuildCommand(),
+                'isPhpBased' => $siteType->isPhpBased(),
             ],
             'servers' => $servers,
+            'sourceControls' => $sourceControls,
             'packageManagers' => PackageManager::options(),
             'wwwRedirectTypes' => WwwRedirectType::options(),
         ]);
@@ -136,7 +154,7 @@ class SiteController extends Controller
 
         $site = $server->sites()->create([
             ...$data,
-            'status' => SiteStatus::Installing,
+            'status' => SiteStatus::Pending,
             'deploy_status' => DeployStatus::NeverDeployed,
             'deploy_hook_token' => bin2hex(random_bytes(32)),
         ]);
@@ -150,7 +168,8 @@ class SiteController extends Controller
             'allow_wildcard' => $site->allow_wildcard,
         ]);
 
-        CreateSiteDirectoryJob::dispatch($site);
+        // Dispatch site provisioning batch
+        app(SiteProvisioningService::class)->dispatch($site);
 
         return redirect()
             ->route('sites.show', $site)
@@ -248,12 +267,32 @@ class SiteController extends Controller
 
         abort_unless($site->status === SiteStatus::Installed, 403, 'Site must be installed to deploy.');
 
+        $branch = $site->branch ?? 'main';
+        $commitInfo = null;
+
+        // Fetch latest commit info from GitHub if source control is connected
+        if ($site->sourceControl && $site->repository) {
+            $github = new GitHubService($site->sourceControl);
+            $commitInfo = $github->getLatestCommit($site->repository, $branch);
+        }
+
+        $deployment = Deployment::create([
+            'site_id' => $site->id,
+            'user_id' => auth()->id(),
+            'status' => DeploymentStatus::Deploying,
+            'branch' => $branch,
+            'commit_hash' => $commitInfo['sha'] ?? null,
+            'commit_message' => $commitInfo['message'] ?? null,
+            'commit_author' => $commitInfo['author'] ?? null,
+            'started_at' => now(),
+        ]);
+
         $site->update(['deploy_status' => DeployStatus::Deploying]);
 
-        DeploySiteJob::dispatch($site);
+        DeploySiteJob::dispatch($site, $deployment);
 
         return redirect()
-            ->route('sites.show', $site)
+            ->route('sites.deployments.show', [$site, $deployment])
             ->with('success', 'Deployment started.');
     }
 }
