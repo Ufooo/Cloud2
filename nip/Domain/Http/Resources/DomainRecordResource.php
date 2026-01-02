@@ -30,7 +30,7 @@ class DomainRecordResource extends JsonResource
             'siteId' => $this->site_id,
             'certificateId' => $this->certificate_id,
             'hasActiveCertificate' => $hasActiveCertificate,
-            'isSecured' => $this->certificate_id && $this->certificate?->status === CertificateStatus::Active,
+            'isSecured' => $this->certificate_id && $this->certificate?->status === CertificateStatus::Installed,
             'certificateType' => $this->certificate?->type?->label(),
             'name' => $this->name,
             'type' => $this->type->value,
