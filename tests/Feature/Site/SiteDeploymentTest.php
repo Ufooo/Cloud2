@@ -38,6 +38,10 @@ it('can deploy an installed site', function () {
     $site->refresh();
     expect($site->deploy_status)->toBe(DeployStatus::Deploying);
     expect(Deployment::where('site_id', $site->id)->count())->toBe(1);
+
+    $deployment = Deployment::where('site_id', $site->id)->first();
+    expect($deployment->callback_token)->not->toBeNull();
+    expect(strlen($deployment->callback_token))->toBe(64);
 });
 
 it('fetches and stores commit info from github when deploying', function () {

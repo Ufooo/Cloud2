@@ -32,6 +32,7 @@ class Deployment extends Model
         'commit_message',
         'commit_author',
         'branch',
+        'callback_token',
         'output',
         'started_at',
         'ended_at',

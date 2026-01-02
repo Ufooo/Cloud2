@@ -83,3 +83,8 @@ fi
 @endif
 
 echo -e '\e[32m=> Deployment complete\e[0m'
+
+@if($callbackUrl)
+echo -e '\e[32m=> Notifying NETipar Cloud\e[0m'
+curl -s -X POST "{{ $callbackUrl }}" -H "Content-Type: application/json" -d '{}' > /dev/null 2>&1 || true
+@endif

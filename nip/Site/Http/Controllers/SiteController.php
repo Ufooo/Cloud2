@@ -286,6 +286,7 @@ class SiteController extends Controller
             'commit_hash' => $commitInfo['sha'] ?? null,
             'commit_message' => $commitInfo['message'] ?? null,
             'commit_author' => $commitInfo['author'] ?? null,
+            'callback_token' => bin2hex(random_bytes(32)),
             'started_at' => now(),
         ]);
 

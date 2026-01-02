@@ -72,6 +72,10 @@ class DeploySiteJob extends BaseProvisionJob
         $deployScriptContent = $this->site->deploy_script ?? $this->site->type->defaultDeployScript();
 
         // Wrap the deploy script with environment setup and error handling
+        $callbackUrl = $this->deployment->callback_token
+            ? route('deploy.callback', ['token' => $this->deployment->callback_token])
+            : null;
+
         return view('provisioning.scripts.site.deploy-wrapper', [
             'site' => $this->site,
             'deployment' => $this->deployment,
@@ -82,6 +86,7 @@ class DeploySiteJob extends BaseProvisionJob
             'branch' => $this->site->branch ?? 'main',
             'phpVersion' => $this->site->getEffectivePhpVersion(),
             'deployScriptContent' => $deployScriptContent,
+            'callbackUrl' => $callbackUrl,
         ])->render();
     }
 

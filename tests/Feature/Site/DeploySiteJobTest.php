@@ -274,3 +274,34 @@ it('uses custom deploy script when set on site', function () {
         ->toContain('echo "Custom deploy script"')
         ->not->toContain('$NIP_COMPOSER install');
 });
+
+it('includes callback curl when callback token is set', function () {
+    $server = Server::factory()->create();
+    $site = Site::factory()
+        ->for($server)
+        ->laravel()
+        ->create([
+            'status' => SiteStatus::Installed,
+            'deploy_status' => DeployStatus::Deploying,
+        ]);
+    $deployment = Deployment::factory()->for($site)->create([
+        'status' => DeploymentStatus::Deploying,
+        'callback_token' => 'test-callback-token-abc123',
+    ]);
+
+    $ssh = Mockery::mock(SSHService::class);
+    $ssh->shouldReceive('setTimeout')->once()->andReturnSelf();
+    $ssh->shouldReceive('connect')->once();
+    $ssh->shouldReceive('executeScript')->once()->andReturn(new ExecutionResult('Success', 0, 1.0));
+    $ssh->shouldReceive('disconnect')->once();
+
+    $job = new DeploySiteJob($site, $deployment);
+    $job->handle($ssh);
+
+    $script = ProvisionScript::query()->where('resource_type', 'site')->first();
+
+    expect($script->content)
+        ->toContain('Notifying NETipar Cloud')
+        ->toContain('curl -s -X POST')
+        ->toContain('deploy/callback/test-callback-token-abc123');
+});

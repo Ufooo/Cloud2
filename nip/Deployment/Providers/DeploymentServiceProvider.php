@@ -4,6 +4,7 @@ namespace Nip\Deployment\Providers;
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Nip\Deployment\Http\Controllers\DeploymentCallbackController;
 
 class DeploymentServiceProvider extends ServiceProvider
 {
@@ -16,5 +17,10 @@ class DeploymentServiceProvider extends ServiceProvider
         ], function () {
             $this->loadRoutesFrom(__DIR__.'/../Routes/web.php');
         });
+
+        Route::middleware('api')->post(
+            '/deploy/callback/{token}',
+            DeploymentCallbackController::class
+        )->name('deploy.callback');
     }
 }
