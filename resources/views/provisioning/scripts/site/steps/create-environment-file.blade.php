@@ -1,34 +1,21 @@
 #!/bin/bash
 set -e
 
-# Netipar Cloud - Create Environment File
-# Site: {{ $site->domain }}
-# Step: Creating Environment File
-
-echo "Creating environment file for {{ $site->domain }}..."
+echo -e '\e[32m=> Creating environment file for {{ $site->domain }}\e[0m'
 
 SITE_PATH="{{ $fullPath }}"
 CURRENT_PATH="$SITE_PATH/current"
 ENV_FILE="$CURRENT_PATH/.env"
 SHARED_ENV="$SITE_PATH/.env"
 
-#
-# Check if .env.example exists and copy it
-#
-
 if [ -f "$CURRENT_PATH/.env.example" ]; then
-    echo "Copying .env.example to .env..."
+    echo -e '\e[32m=> Copying .env.example to .env\e[0m'
     cp "$CURRENT_PATH/.env.example" "$ENV_FILE"
 fi
 
-#
-# Generate Laravel .env if it's a Laravel project and no .env exists
-#
-
 if [ -f "$CURRENT_PATH/artisan" ] && [ ! -f "$ENV_FILE" ]; then
-    echo "Detected Laravel project, generating .env file..."
+    echo -e '\e[32m=> Detected Laravel project, generating .env file\e[0m'
 
-    # Detect Laravel version from composer.json
     LARAVEL_VERSION=$(cat "$CURRENT_PATH/composer.json" | sed -n -e 's/.*"laravel\/framework": "[^0-9]*\([0-9.]\+\)".*/\1/p1' | cut -d "." -f 1)
 
     if [ -z "$LARAVEL_VERSION" ]; then
@@ -36,7 +23,6 @@ if [ -f "$CURRENT_PATH/artisan" ] && [ ! -f "$ENV_FILE" ]; then
     fi
 
     if [ "$LARAVEL_VERSION" -gt 10 ]; then
-        # Laravel 11+ template
         cat > "$ENV_FILE" << 'ENVEOF'
 APP_NAME=Laravel
 APP_ENV=production
@@ -82,7 +68,6 @@ MAIL_FROM_NAME="${APP_NAME}"
 VITE_APP_NAME="${APP_NAME}"
 ENVEOF
     else
-        # Laravel <=10 template
         cat > "$ENV_FILE" << 'ENVEOF'
 APP_NAME=Laravel
 APP_ENV=production
@@ -120,34 +105,25 @@ MAIL_FROM_NAME="${APP_NAME}"
 ENVEOF
     fi
 
-    echo "Laravel $LARAVEL_VERSION .env template created"
+    echo -e "\e[32m=> Laravel $LARAVEL_VERSION .env template created\e[0m"
 fi
 
-#
-# Update common values
-#
-
 if [ -f "$ENV_FILE" ]; then
-    echo "Updating environment values..."
+    echo -e '\e[32m=> Updating environment values\e[0m'
 
-    # APP settings
     sed -i -r "s|APP_ENV=.*|APP_ENV=production|" "$ENV_FILE"
     sed -i -r "s|APP_URL=.*|APP_URL=\"https://{{ $site->domain }}\"|" "$ENV_FILE"
     sed -i -r "s|APP_DEBUG=.*|APP_DEBUG=false|" "$ENV_FILE"
 
 @if($database)
-    # Database settings
-    # Escape special sed characters in password (& / \ | need escaping)
     SAFE_DB_PASSWORD=$(printf '%s' '{!! $database->password !!}' | sed 's/[&/\|]/\\&/g')
 
-    # First uncomment any commented DB_ lines
     sed -i 's/^# DB_HOST=/DB_HOST=/' "$ENV_FILE"
     sed -i 's/^# DB_PORT=/DB_PORT=/' "$ENV_FILE"
     sed -i 's/^# DB_DATABASE=/DB_DATABASE=/' "$ENV_FILE"
     sed -i 's/^# DB_USERNAME=/DB_USERNAME=/' "$ENV_FILE"
     sed -i 's/^# DB_PASSWORD=/DB_PASSWORD=/' "$ENV_FILE"
 
-    # Now set the values
     sed -i -r "s|^DB_CONNECTION=.*|DB_CONNECTION={!! $database->type !!}|" "$ENV_FILE"
     sed -i -r "s|^DB_HOST=.*|DB_HOST={!! $database->host !!}|" "$ENV_FILE"
     sed -i -r "s|^DB_PORT=.*|DB_PORT={!! $database->port !!}|" "$ENV_FILE"
@@ -156,25 +132,20 @@ if [ -f "$ENV_FILE" ]; then
     sed -i -r "s|^DB_PASSWORD=.*|DB_PASSWORD=\"$SAFE_DB_PASSWORD\"|" "$ENV_FILE"
 @endif
 
-    # Generate APP_KEY if empty
     if grep -q "APP_KEY=$" "$ENV_FILE" || grep -q "APP_KEY=\"\"" "$ENV_FILE"; then
-        echo "Generating APP_KEY..."
+        echo -e '\e[32m=> Generating APP_KEY\e[0m'
         APP_KEY="base64:$(openssl rand -base64 32)"
         SAFE_APP_KEY=$(printf '%s' "$APP_KEY" | sed 's/[&/\]/\\&/g')
         sed -i -r "s|APP_KEY=.*|APP_KEY=$SAFE_APP_KEY|" "$ENV_FILE"
     fi
 fi
 
-#
-# Symlink shared .env
-#
-
 if [ -f "$ENV_FILE" ]; then
-    echo "Creating shared .env symlink..."
+    echo -e '\e[32m=> Creating shared .env symlink\e[0m'
     cp "$ENV_FILE" "$SHARED_ENV"
     rm -f "$ENV_FILE"
     ln -sf "$SHARED_ENV" "$ENV_FILE"
     chmod 644 "$SHARED_ENV"
 fi
 
-echo "Environment file created successfully!"
+echo -e '\e[32m=> Environment file created successfully!\e[0m'

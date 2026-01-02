@@ -1,7 +1,8 @@
-$NIP_COMPOSER install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+$CREATE_RELEASE()
 
-( flock -w 10 9 || exit 1
-    echo 'Restarting FPM...'; sudo -S service $NIP_PHP_FPM reload ) 9>/tmp/fpmlock-$(whoami)
+cd $NIP_RELEASE_DIRECTORY
+
+$NIP_COMPOSER install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
 if [ -f artisan ]; then
     $NIP_PHP artisan optimize
@@ -14,3 +15,7 @@ if [ -f package.json ]; then
     npm ci || npm install
     npm run build
 fi
+
+$ACTIVATE_RELEASE()
+
+$RESTART_FPM()

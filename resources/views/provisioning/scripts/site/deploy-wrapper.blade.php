@@ -1,105 +1,85 @@
+@php
+$createReleasePlaceholder = $site->type->supportsZeroDowntime()
+    ? view('provisioning.scripts.deploy.placeholders.create-release')->render()
+    : '';
+
+$activateReleasePlaceholder = $site->type->supportsZeroDowntime()
+    ? view('provisioning.scripts.deploy.placeholders.activate-release')->render()
+    : '';
+
+$restartFpmPlaceholder = view('provisioning.scripts.deploy.placeholders.restart-fpm')->render();
+
+$processedDeployScript = $deployScriptContent;
+
+if ($site->type->supportsZeroDowntime()) {
+    $processedDeployScript = str_replace(
+        ['$CREATE_RELEASE()', '$ACTIVATE_RELEASE()'],
+        [trim($createReleasePlaceholder), trim($activateReleasePlaceholder)],
+        $processedDeployScript
+    );
+}
+
+$processedDeployScript = str_replace(
+    '$RESTART_FPM()',
+    trim($restartFpmPlaceholder),
+    $processedDeployScript
+);
+@endphp
 #!/bin/bash
-set -e
+set -eo pipefail
 
-# Netipar Cloud - Deploy Site
-# Site: {{ $domain }}
-# User: {{ $user }}
-# Branch: {{ $branch }}
+echo $(date)
+export NETIPAR_CLOUD=1
 
-echo "Deploying site {{ $domain }}..."
-
-#
-# Set Environment Variables for Deploy Script
-#
+mkdir -p /tmp/site-{{ $site->id }}
+ln -sf /usr/bin/php{{ $phpVersion }} /tmp/site-{{ $site->id }}/php
+export PATH="/tmp/site-{{ $site->id }}:$PATH"
 
 export NIP_SITE_ROOT="{{ $fullPath }}"
 export NIP_RELEASES_PATH="{{ $fullPath }}/releases"
 export NIP_SITE_PATH="{{ $currentPath }}"
 export NIP_SITE_BRANCH="{{ $branch }}"
 export NIP_SITE_REPOSITORY="{{ $site->getCloneUrl() }}"
+
 export NIP_PHP="/usr/bin/php{{ $phpVersion }}"
 export NIP_PHP_FPM="php{{ $phpVersion }}-fpm"
-export NIP_COMPOSER="composer"
+export NIP_COMPOSER="php{{ $phpVersion }} /usr/local/bin/composer"
+
+export NIP_DEPLOYMENT_ID="{{ $deployment->id ?? '' }}"
+export NIP_DEPLOY_AUTHOR="{{ $deployment->user->name ?? 'System' }}"
+export NIP_DEPLOY_COMMIT="{{ $deployment->commit_hash ?? '' }}"
+export NIP_DEPLOY_MESSAGE='{{ str_replace("'", "'\\''", $deployment->commit_message ?? '') }}'
+export NIP_SERVER_ID="{{ $site->server_id }}"
+export NIP_SITE_ID="{{ $site->id }}"
+export NIP_SITE_USER="{{ $user }}"
+export NIP_CUSTOM_DEPLOY="{{ $site->deploy_script ? '1' : '0' }}"
+export NIP_MANUAL_DEPLOY="{{ ($deployment->is_manual ?? true) ? '1' : '0' }}"
+export NIP_QUICK_DEPLOY="{{ ($deployment->is_quick ?? false) ? '1' : '0' }}"
+export NIP_ROLLBACK="{{ ($deployment->is_rollback ?? false) ? '1' : '0' }}"
+
+echo -e '\e[32m=> Deploying site {{ $domain }}\e[0m'
 
 @if($site->type->supportsZeroDowntime())
-#
-# $CREATE_RELEASE() - Zero-Downtime Deployment Setup
-#
-
-# Generate release directory name
-export NIP_RELEASE_NAME=$(date +%Y%m%d%H%M%S)
-export NIP_NEW_RELEASE_PATH="$NIP_RELEASES_PATH/$NIP_RELEASE_NAME"
-
-echo "Creating new release: $NIP_RELEASE_NAME"
-
-# Clone repository
-echo "Cloning repository..."
-git clone --branch $NIP_SITE_BRANCH --depth 1 "$NIP_SITE_REPOSITORY" "$NIP_NEW_RELEASE_PATH"
-
-# Link environment file
-echo "Linking environment file..."
-rm -f "$NIP_NEW_RELEASE_PATH/.env"
-ln -sfn "$NIP_SITE_ROOT/.env" "$NIP_NEW_RELEASE_PATH/.env"
-
-# Link auth.json if it exists (for Composer authentication)
-if [ -f "$NIP_SITE_ROOT/auth.json" ]; then
-    echo "Linking auth.json file..."
-    rm -f "$NIP_NEW_RELEASE_PATH/auth.json"
-    ln -sfn "$NIP_SITE_ROOT/auth.json" "$NIP_NEW_RELEASE_PATH/auth.json"
-fi
-
-# Link shared storage directory
-echo "Linking storage directories..."
-rm -rf "$NIP_NEW_RELEASE_PATH/storage"
-ln -sfn "$NIP_SITE_ROOT/storage" "$NIP_NEW_RELEASE_PATH/storage"
-
-cd "$NIP_NEW_RELEASE_PATH"
-
-#
-# Executing deployment script
-#
-
-{!! $deployScriptContent !!}
-
-#
-# $ACTIVATE_RELEASE() - Activate new release
-#
-
-echo "Activating new release..."
-ln -s "$NIP_NEW_RELEASE_PATH" "$NIP_SITE_ROOT/current-temp" && mv -Tf "$NIP_SITE_ROOT/current-temp" "$NIP_SITE_ROOT/current"
-
-# Clean up old releases (keep last 5)
-echo "Purging old releases..."
-cd "$NIP_RELEASES_PATH"
-ls -1dt */ | tail -n +6 | xargs -r rm -rf
+{!! $processedDeployScript !!}
 @else
-#
-# Simple Deployment (no zero-downtime)
-#
-
 cd "$NIP_SITE_PATH"
 
-echo "Pulling latest changes..."
+echo -e '\e[32m=> Pulling latest changes\e[0m'
 git pull origin $NIP_SITE_BRANCH
 
-#
-# Executing deployment script
-#
+echo -e '\e[32m=> Executing deployment script\e[0m'
 
-{!! $deployScriptContent !!}
+{!! $processedDeployScript !!}
 @endif
 
-#
-# Set Permissions
-#
-
-echo "Setting permissions..."
+echo -e '\e[32m=> Setting permissions\e[0m'
 chown -R {{ $user }}:{{ $user }} "{{ $fullPath }}"
 
 @if($site->type->supportsZeroDowntime())
-# Ensure storage and cache directories are writable
 chmod -R 775 "{{ $fullPath }}/storage"
-chmod -R 775 "$NIP_NEW_RELEASE_PATH/bootstrap/cache" 2>/dev/null || true
+if [ -n "$NIP_RELEASE_DIRECTORY" ]; then
+    chmod -R 775 "$NIP_RELEASE_DIRECTORY/bootstrap/cache" 2>/dev/null || true
+fi
 @endif
 
-echo "Deployment completed successfully for {{ $domain }}!"
+echo -e '\e[32m=> Deployment complete\e[0m'

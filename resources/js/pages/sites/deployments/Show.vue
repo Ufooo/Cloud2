@@ -23,7 +23,7 @@ import {
     Loader2,
     User,
 } from 'lucide-vue-next';
-import { computed, ref, toRef, watch } from 'vue';
+import { computed, nextTick, ref, toRef, watch } from 'vue';
 
 interface Props {
     site: Site;
@@ -66,15 +66,29 @@ watch(
 
 const buildLogsOpen = ref(true);
 const deploymentLogsOpen = ref(true);
+const logContainerRef = ref<HTMLElement | null>(null);
 
 const isDeploying = computed(() =>
     checkIsDeploying(currentDeployment.value.status),
 );
 
+// Auto-scroll to bottom when output changes
+watch(
+    () => currentDeployment.value.output,
+    () => {
+        nextTick(() => {
+            if (logContainerRef.value) {
+                logContainerRef.value.scrollTop =
+                    logContainerRef.value.scrollHeight;
+            }
+        });
+    },
+);
+
 // Real-time updates via WebSocket - triggers reload to fetch full output
 const { stopListening } = useEcho(
     `deployments.${currentDeployment.value.id}`,
-    'DeploymentUpdated',
+    '.DeploymentUpdated',
     (event: { status: string; hasOutput: boolean; endedAt: string | null }) => {
         // Update status immediately for responsiveness
         currentDeployment.value = {
@@ -337,6 +351,7 @@ watch(isDeploying, (deploying) => {
                         <CardContent class="pt-0">
                             <div
                                 v-if="currentDeployment.output"
+                                ref="logContainerRef"
                                 class="max-h-[600px] overflow-auto rounded-lg bg-zinc-900 p-4 font-mono text-sm text-zinc-100"
                             >
                                 <pre

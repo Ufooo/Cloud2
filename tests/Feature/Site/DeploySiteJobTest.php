@@ -81,8 +81,9 @@ it('generates deploy script with correct environment variables', function () {
         ->toContain('export NIP_PHP=')
         ->toContain('export NIP_PHP_FPM=')
         ->toContain('export NIP_COMPOSER=')
-        ->toContain('export NIP_RELEASE_NAME=')
-        ->toContain('export NIP_NEW_RELEASE_PATH=');
+        // Zero-downtime vars are inside placeholder expansion
+        ->toContain('NIP_RELEASE_NAME=')
+        ->toContain('NIP_RELEASE_DIRECTORY=');
 });
 
 it('includes zero-downtime deployment for laravel sites', function () {
@@ -112,7 +113,7 @@ it('includes zero-downtime deployment for laravel sites', function () {
     expect($script->content)
         // CREATE_RELEASE macro
         ->toContain('Creating new release')
-        ->toContain('Cloning repository')
+        ->toContain('Cloning from')
         ->toContain('git clone')
         ->toContain('Linking environment file')
         ->toContain('Linking auth.json')
@@ -122,8 +123,8 @@ it('includes zero-downtime deployment for laravel sites', function () {
         ->toContain('$NIP_PHP artisan optimize')
         ->toContain('$NIP_PHP artisan migrate --force')
         // ACTIVATE_RELEASE macro
-        ->toContain('Activating new release')
-        ->toContain('ln -s "$NIP_NEW_RELEASE_PATH" "$NIP_SITE_ROOT/current-temp" && mv -Tf "$NIP_SITE_ROOT/current-temp" "$NIP_SITE_ROOT/current"')
+        ->toContain('Activating release')
+        ->toContain('ln -s "$NIP_RELEASE_DIRECTORY" "$NIP_SITE_ROOT/current-temp" && mv -Tf "$NIP_SITE_ROOT/current-temp" "$NIP_SITE_ROOT/current"')
         ->toContain('Purging old releases');
 });
 
@@ -156,9 +157,9 @@ it('uses simple git pull for non-zero-downtime sites', function () {
         ->toContain('git pull origin')
         ->toContain('npm ci || npm install')
         ->toContain('npm run build')
-        ->not->toContain('$NIP_RELEASE_NAME')
-        ->not->toContain('$NIP_NEW_RELEASE_PATH')
-        ->not->toContain('Activating new release');
+        ->not->toContain('NIP_RELEASE_NAME')
+        ->not->toContain('NIP_RELEASE_DIRECTORY')
+        ->not->toContain('Activating release');
 });
 
 it('updates deploy status to deployed on success', function () {

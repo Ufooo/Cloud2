@@ -74,6 +74,7 @@ class DeploySiteJob extends BaseProvisionJob
         // Wrap the deploy script with environment setup and error handling
         return view('provisioning.scripts.site.deploy-wrapper', [
             'site' => $this->site,
+            'deployment' => $this->deployment,
             'user' => $this->site->user,
             'domain' => $this->site->domain,
             'fullPath' => $this->site->getFullPath(),
