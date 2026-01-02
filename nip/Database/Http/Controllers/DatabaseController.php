@@ -4,6 +4,7 @@ namespace Nip\Database\Http\Controllers;
 
 use App\Http\Controllers\Concerns\LoadsServerPermissions;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
@@ -22,6 +23,7 @@ use Nip\Database\Jobs\DeleteDatabaseUserJob;
 use Nip\Database\Jobs\SyncDatabaseUserJob;
 use Nip\Database\Models\Database;
 use Nip\Database\Models\DatabaseUser;
+use Nip\Database\Services\DatabaseSizeService;
 use Nip\Server\Data\ServerData;
 use Nip\Server\Models\Server;
 use Nip\Site\Data\SiteData;
@@ -218,5 +220,22 @@ class DatabaseController extends Controller
         return redirect()
             ->back()
             ->with('success', 'Database user is being deleted.');
+    }
+
+    public function refreshSizes(Server $server, DatabaseSizeService $service): JsonResponse
+    {
+        Gate::authorize('view', $server);
+
+        $sizes = $service->refreshSizes($server);
+
+        $databases = Database::where('server_id', $server->id)
+            ->with(['server', 'site'])
+            ->orderBy('name')
+            ->get();
+
+        return response()->json([
+            'databases' => DatabaseResource::collection($databases),
+            'sizes' => $sizes,
+        ]);
     }
 }

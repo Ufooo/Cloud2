@@ -9,6 +9,7 @@ Route::middleware('server.connected')->group(function () {
     Route::prefix('/servers/{server:slug}/databases')->group(function () {
         Route::get('/', [DatabaseController::class, 'indexForServer'])->name('servers.databases');
         Route::post('/', [DatabaseController::class, 'store'])->name('servers.databases.store');
+        Route::post('/refresh-sizes', [DatabaseController::class, 'refreshSizes'])->name('servers.databases.refreshSizes');
         Route::delete('/{database}', [DatabaseController::class, 'destroy'])->name('servers.databases.destroy');
         Route::post('/users', [DatabaseController::class, 'storeUser'])->name('servers.databases.users.store');
         Route::put('/users/{databaseUser}', [DatabaseController::class, 'updateUser'])->name('servers.databases.users.update');

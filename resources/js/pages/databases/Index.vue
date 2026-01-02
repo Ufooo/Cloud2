@@ -3,6 +3,7 @@ import {
     destroy,
     destroyUser,
     index,
+    refreshSizes,
     store,
     storeUser,
     updateUser,
@@ -40,7 +41,7 @@ import type {
 } from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { Database, Eye, EyeOff, Plus, User } from 'lucide-vue-next';
+import { Database, Eye, EyeOff, Loader2, Plus, RefreshCw, User } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import DatabaseCardListItem from './partials/DatabaseCardListItem.vue';
 import DatabaseUserCardListItem from './partials/DatabaseUserCardListItem.vue';
@@ -371,6 +372,34 @@ const databaseResourceTypes = ['database', 'database_user'];
 function handleScriptClick(script: ProvisionScriptData) {
     scriptOutputModal.value?.open(script);
 }
+
+// Refresh database sizes
+const isRefreshingSizes = ref(false);
+
+async function handleRefreshSizes() {
+    if (!props.server) return;
+
+    isRefreshingSizes.value = true;
+
+    try {
+        const response = await fetch(refreshSizes.url(props.server), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN':
+                    document
+                        .querySelector('meta[name="csrf-token"]')
+                        ?.getAttribute('content') ?? '',
+            },
+        });
+
+        if (response.ok) {
+            router.reload({ only: ['databases'] });
+        }
+    } finally {
+        isRefreshingSizes.value = false;
+    }
+}
 </script>
 
 <template>
@@ -417,10 +446,22 @@ function handleScriptClick(script: ProvisionScriptData) {
                         <Database class="size-5" />
                         Databases
                     </CardTitle>
-                    <Button size="sm" @click="openDatabaseDialog">
-                        <Plus class="mr-2 size-4" />
-                        New database
-                    </Button>
+                    <div class="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            :disabled="isRefreshingSizes"
+                            @click="handleRefreshSizes"
+                        >
+                            <Loader2 v-if="isRefreshingSizes" class="mr-2 size-4 animate-spin" />
+                            <RefreshCw v-else class="mr-2 size-4" />
+                            Refresh sizes
+                        </Button>
+                        <Button size="sm" @click="openDatabaseDialog">
+                            <Plus class="mr-2 size-4" />
+                            New database
+                        </Button>
+                    </div>
                 </CardHeader>
                 <CardContent class="p-0">
                     <EmptyState
