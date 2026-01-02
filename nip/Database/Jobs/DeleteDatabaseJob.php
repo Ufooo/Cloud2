@@ -5,12 +5,12 @@ namespace Nip\Database\Jobs;
 use Nip\Database\Enums\DatabaseStatus;
 use Nip\Database\Models\Database;
 use Nip\Server\Events\ServerResourceStatusUpdated;
-use Nip\Server\Jobs\BaseProvisionJob;
+use Nip\Server\Jobs\BaseCommandJob;
 use Nip\Server\Models\Server;
 use Nip\Server\Services\SSH\ExecutionResult;
 use Nip\Site\Events\SiteResourceStatusUpdated;
 
-class DeleteDatabaseJob extends BaseProvisionJob
+class DeleteDatabaseJob extends BaseCommandJob
 {
     public int $tries = 1;
 
@@ -22,27 +22,17 @@ class DeleteDatabaseJob extends BaseProvisionJob
         $this->onQueue('provisioning');
     }
 
-    protected function getResourceType(): string
-    {
-        return 'database';
-    }
-
-    protected function getResourceId(): ?int
-    {
-        return null;
-    }
-
     protected function getServer(): Server
     {
         return $this->database->server;
     }
 
-    protected function generateScript(): string
+    protected function getCommand(): string
     {
-        return view('provisioning.scripts.database.delete', [
-            'databaseName' => $this->database->name,
-            'mysqlRootPassword' => $this->database->server->database_password,
-        ])->render();
+        $password = $this->database->server->database_password;
+        $name = $this->database->name;
+
+        return "mysql --user=\"root\" --password=\"{$password}\" -e \"DROP DATABASE IF EXISTS \`{$name}\`;\"";
     }
 
     protected function handleSuccess(ExecutionResult $result): void

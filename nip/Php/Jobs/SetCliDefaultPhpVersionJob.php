@@ -5,11 +5,11 @@ namespace Nip\Php\Jobs;
 use Illuminate\Support\Facades\DB;
 use Nip\Php\Models\PhpVersion;
 use Nip\Server\Events\ServerResourceStatusUpdated;
-use Nip\Server\Jobs\BaseProvisionJob;
+use Nip\Server\Jobs\BaseCommandJob;
 use Nip\Server\Models\Server;
 use Nip\Server\Services\SSH\ExecutionResult;
 
-class SetCliDefaultPhpVersionJob extends BaseProvisionJob
+class SetCliDefaultPhpVersionJob extends BaseCommandJob
 {
     public int $tries = 1;
 
@@ -21,28 +21,14 @@ class SetCliDefaultPhpVersionJob extends BaseProvisionJob
         $this->onQueue('provisioning');
     }
 
-    protected function getResourceType(): string
-    {
-        return 'php_cli_default';
-    }
-
-    protected function getResourceId(): ?int
-    {
-        return $this->phpVersion->id;
-    }
-
     protected function getServer(): Server
     {
         return $this->phpVersion->server;
     }
 
-    protected function generateScript(): string
+    protected function getCommand(): string
     {
-        $version = $this->phpVersion->version;
-
-        return <<<BASH
-update-alternatives --set php /usr/bin/php{$version}
-BASH;
+        return "update-alternatives --set php /usr/bin/php{$this->phpVersion->version}";
     }
 
     protected function handleSuccess(ExecutionResult $result): void

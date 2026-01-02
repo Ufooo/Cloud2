@@ -5,12 +5,12 @@ namespace Nip\Database\Jobs;
 use Nip\Database\Enums\DatabaseStatus;
 use Nip\Database\Models\Database;
 use Nip\Server\Events\ServerResourceStatusUpdated;
-use Nip\Server\Jobs\BaseProvisionJob;
+use Nip\Server\Jobs\BaseCommandJob;
 use Nip\Server\Models\Server;
 use Nip\Server\Services\SSH\ExecutionResult;
 use Nip\Site\Events\SiteResourceStatusUpdated;
 
-class CreateDatabaseJob extends BaseProvisionJob
+class CreateDatabaseJob extends BaseCommandJob
 {
     public int $tries = 1;
 
@@ -22,27 +22,17 @@ class CreateDatabaseJob extends BaseProvisionJob
         $this->onQueue('provisioning');
     }
 
-    protected function getResourceType(): string
-    {
-        return 'database';
-    }
-
-    protected function getResourceId(): ?int
-    {
-        return null;
-    }
-
     protected function getServer(): Server
     {
         return $this->database->server;
     }
 
-    protected function generateScript(): string
+    protected function getCommand(): string
     {
-        return view('provisioning.scripts.database.create', [
-            'databaseName' => $this->database->name,
-            'mysqlRootPassword' => $this->database->server->database_password,
-        ])->render();
+        $password = $this->database->server->database_password;
+        $name = $this->database->name;
+
+        return "mysql --user=\"root\" --password=\"{$password}\" -e \"CREATE DATABASE \`{$name}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;\"";
     }
 
     protected function handleSuccess(ExecutionResult $result): void

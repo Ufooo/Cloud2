@@ -1,5 +1,8 @@
 {{-- PHP Configuration --}}
-{{-- Variables: $version, $unixUsers --}}
+{{-- Variables: $version, $unixUsers (optional, defaults to ['netipar']) --}}
+@php
+    $unixUsers = $unixUsers ?? ['netipar'];
+@endphp
 
 #
 # Install Composer (if not present)

@@ -4,12 +4,12 @@ namespace Nip\BackgroundProcess\Jobs;
 
 use Nip\BackgroundProcess\Models\BackgroundProcess;
 use Nip\Server\Events\ServerResourceStatusUpdated;
-use Nip\Server\Jobs\BaseProvisionJob;
+use Nip\Server\Jobs\BaseCommandJob;
 use Nip\Server\Models\Server;
 use Nip\Server\Services\SSH\ExecutionResult;
 use Nip\Site\Events\SiteResourceStatusUpdated;
 
-class StartBackgroundProcessJob extends BaseProvisionJob
+class StartBackgroundProcessJob extends BaseCommandJob
 {
     public int $tries = 1;
 
@@ -21,26 +21,14 @@ class StartBackgroundProcessJob extends BaseProvisionJob
         $this->onQueue('provisioning');
     }
 
-    protected function getResourceType(): string
-    {
-        return 'background_process';
-    }
-
-    protected function getResourceId(): ?int
-    {
-        return null;
-    }
-
     protected function getServer(): Server
     {
         return $this->process->server;
     }
 
-    protected function generateScript(): string
+    protected function getCommand(): string
     {
-        return view('provisioning.scripts.background-process.start', [
-            'programName' => 'netipar-'.$this->process->id,
-        ])->render();
+        return "supervisorctl start netipar-{$this->process->id}";
     }
 
     protected function handleSuccess(ExecutionResult $result): void
