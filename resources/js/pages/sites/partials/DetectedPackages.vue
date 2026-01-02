@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { detectPackages } from '@/actions/Nip/Site/Http/Controllers/SiteController';
+import { enableLaravelScheduler } from '@/actions/Nip/Scheduler/Http/Controllers/SiteScheduledJobController';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -10,9 +11,11 @@ import {
 } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { DetectedPackageData, Site } from '@/types';
+import { router } from '@inertiajs/vue3';
 import {
     Box,
     CheckCircle,
+    Circle,
     Loader2,
     Package,
     RefreshCw,
@@ -26,9 +29,39 @@ interface Props {
 const props = defineProps<Props>();
 
 const isDetecting = ref(false);
+const isEnablingScheduler = ref(false);
 const packageDetails = ref<DetectedPackageData[]>(props.site.packageDetails ?? []);
+const localPackages = ref<Record<string, boolean>>(props.site.packages ?? {});
 
 const hasDetected = computed(() => packageDetails.value.length > 0);
+
+// Features that can be enabled (not composer packages)
+interface EnableableFeature {
+    key: string;
+    label: string;
+    description: string;
+    enableLabel: string;
+    isEnabled: boolean;
+    isEnabling: boolean;
+    onEnable: () => void;
+}
+
+const enableableFeatures = computed<EnableableFeature[]>(() => {
+    const features: EnableableFeature[] = [];
+
+    // Scheduler - enabled if has scheduled jobs
+    features.push({
+        key: 'scheduler',
+        label: 'Scheduler',
+        description: 'Run scheduled tasks with cron',
+        enableLabel: 'Start Scheduler',
+        isEnabled: localPackages.value['scheduler'] === true,
+        isEnabling: isEnablingScheduler.value,
+        onEnable: handleEnableScheduler,
+    });
+
+    return features;
+});
 
 async function handleDetectPackages() {
     isDetecting.value = true;
@@ -52,6 +85,21 @@ async function handleDetectPackages() {
     } finally {
         isDetecting.value = false;
     }
+}
+
+function handleEnableScheduler() {
+    isEnablingScheduler.value = true;
+    localPackages.value['scheduler'] = true;
+    router.post(
+        enableLaravelScheduler.url(props.site),
+        {},
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                isEnablingScheduler.value = false;
+            },
+        },
+    );
 }
 </script>
 
@@ -101,8 +149,8 @@ async function handleDetectPackages() {
                 </div>
             </div>
 
-            <!-- Packages list -->
             <div v-else-if="hasDetected" class="space-y-3">
+                <!-- Detected packages -->
                 <div
                     v-for="pkg in packageDetails"
                     :key="pkg.value"
@@ -123,6 +171,34 @@ async function handleDetectPackages() {
                         size="sm"
                     >
                         {{ pkg.enableActionLabel }}
+                    </Button>
+                </div>
+
+                <!-- Enableable features -->
+                <div
+                    v-for="feature in enableableFeatures"
+                    :key="feature.key"
+                    class="flex items-center justify-between rounded-lg border p-3"
+                >
+                    <div class="flex items-center gap-3">
+                        <CheckCircle v-if="feature.isEnabled" class="size-5 text-green-500" />
+                        <Circle v-else class="size-5 text-muted-foreground/50" />
+                        <div>
+                            <p class="text-sm font-medium">{{ feature.label }}</p>
+                            <p class="text-xs text-muted-foreground">
+                                {{ feature.description }}
+                            </p>
+                        </div>
+                    </div>
+                    <Button
+                        v-if="!feature.isEnabled"
+                        variant="outline"
+                        size="sm"
+                        :disabled="feature.isEnabling"
+                        @click="feature.onEnable"
+                    >
+                        <Loader2 v-if="feature.isEnabling" class="mr-2 size-4 animate-spin" />
+                        {{ feature.enableLabel }}
                     </Button>
                 </div>
             </div>

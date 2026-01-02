@@ -21,6 +21,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::prefix('/sites/{site:slug}/scheduler')->group(function () {
         Route::get('/', [SiteScheduledJobController::class, 'index'])->name('sites.scheduler');
         Route::post('/', [SiteScheduledJobController::class, 'store'])->name('sites.scheduler.store');
+        Route::post('/enable-laravel', [SiteScheduledJobController::class, 'enableLaravelScheduler'])->name('sites.scheduler.enableLaravel');
         Route::patch('/{job}', [SiteScheduledJobController::class, 'update'])->name('sites.scheduler.update');
         Route::delete('/{job}', [SiteScheduledJobController::class, 'destroy'])->name('sites.scheduler.destroy');
         Route::post('/{job}/pause', [SiteScheduledJobController::class, 'pause'])->name('sites.scheduler.pause');

@@ -7,6 +7,7 @@ import SiteTypeIcon from '@/components/icons/SiteTypeIcon.vue';
 import ScriptOutputModal from '@/components/ScriptOutputModal.vue';
 import Avatar from '@/components/shared/Avatar.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
+import PackageBadges from '@/pages/sites/partials/PackageBadges.vue';
 import SiteStatusBadge from '@/pages/sites/partials/SiteStatusBadge.vue';
 import type { BreadcrumbItem, ProvisionScriptData, Site } from '@/types';
 import { Link, router } from '@inertiajs/vue3';
@@ -195,6 +196,8 @@ function handleScriptClick(script: ProvisionScriptData) {
                             <span>{{ site.serverName }}</span>
                         </div>
                     </div>
+
+                    <PackageBadges :site="site" />
                 </div>
 
                 <!-- Navigation -->

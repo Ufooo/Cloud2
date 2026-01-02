@@ -109,6 +109,13 @@ class SiteScheduledJobController extends Controller
             'Job deletion is already in progress.'
         );
 
+        // If deleting Laravel Scheduler, update packages
+        if ($job->name === 'Laravel Scheduler') {
+            $packages = $site->packages ?? [];
+            unset($packages['scheduler']);
+            $site->update(['packages' => $packages]);
+        }
+
         $job->update(['status' => JobStatus::Deleting]);
 
         RemoveScheduledJobJob::dispatch($job);
@@ -118,12 +125,55 @@ class SiteScheduledJobController extends Controller
             ->with('success', 'Scheduled job deletion started.');
     }
 
+    public function enableLaravelScheduler(Site $site): RedirectResponse
+    {
+        Gate::authorize('update', $site->server);
+
+        // Check if Laravel scheduler already exists
+        $existingScheduler = $site->scheduledJobs()
+            ->where('name', 'Laravel Scheduler')
+            ->first();
+
+        if ($existingScheduler) {
+            return redirect()
+                ->route('sites.scheduler', $site)
+                ->with('info', 'Laravel Scheduler is already configured.');
+        }
+
+        $phpVersion = $site->getEffectivePhpVersion();
+        $artisanPath = $site->getCurrentPath().'/artisan';
+
+        $job = $site->scheduledJobs()->create([
+            'server_id' => $site->server_id,
+            'name' => 'Laravel Scheduler',
+            'command' => "php{$phpVersion} {$artisanPath} schedule:run",
+            'user' => $site->user,
+            'frequency' => CronFrequency::EveryMinute,
+            'status' => JobStatus::Installing,
+        ]);
+
+        // Note: packages['scheduler'] will be set to true in SyncScheduledJobJob::handleSuccess
+
+        SyncScheduledJobJob::dispatch($job);
+
+        return redirect()
+            ->back()
+            ->with('success', 'Laravel Scheduler is being enabled.');
+    }
+
     public function pause(Site $site, ScheduledJob $job): RedirectResponse
     {
         Gate::authorize('update', $site->server);
 
         abort_unless($job->site_id === $site->id, 403);
         abort_unless($job->status === JobStatus::Installed, 403, 'Job must be installed to pause.');
+
+        // If pausing Laravel Scheduler, update packages
+        if ($job->name === 'Laravel Scheduler') {
+            $packages = $site->packages ?? [];
+            unset($packages['scheduler']);
+            $site->update(['packages' => $packages]);
+        }
 
         $job->update(['status' => JobStatus::Paused]);
 
@@ -140,6 +190,13 @@ class SiteScheduledJobController extends Controller
 
         abort_unless($job->site_id === $site->id, 403);
         abort_unless($job->status === JobStatus::Paused, 403, 'Job must be paused to resume.');
+
+        // If resuming Laravel Scheduler, update packages
+        if ($job->name === 'Laravel Scheduler') {
+            $packages = $site->packages ?? [];
+            $packages['scheduler'] = true;
+            $site->update(['packages' => $packages]);
+        }
 
         $job->update(['status' => JobStatus::Installing]);
 

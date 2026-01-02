@@ -54,6 +54,14 @@ class SyncScheduledJobJob extends BaseProvisionJob
             'status' => JobStatus::Installed,
         ]);
 
+        // Update site packages if this is the Laravel Scheduler
+        if ($this->scheduledJob->site_id && $this->scheduledJob->name === 'Laravel Scheduler') {
+            $site = $this->scheduledJob->site;
+            $packages = $site->packages ?? [];
+            $packages['scheduler'] = true;
+            $site->update(['packages' => $packages]);
+        }
+
         $this->dispatchStatusUpdate(JobStatus::Installed->value);
     }
 

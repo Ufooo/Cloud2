@@ -61,6 +61,8 @@ class SiteData extends Data
         public ?array $detectedPackages,
         /** @var DetectedPackageData[]|null */
         public ?array $packageDetails,
+        /** @var array<string, bool>|null */
+        public ?array $packages,
         public SitePermissionsData $can,
     ) {}
 
@@ -116,6 +118,7 @@ class SiteData extends Data
             packageDetails: $site->detected_packages
                 ? DetectedPackageData::fromPackageValues($site->detected_packages)
                 : null,
+            packages: $site->packages,
             can: new SitePermissionsData(
                 update: $canUpdate && $isInstalled,
                 delete: $canUpdate && $site->status !== SiteStatus::Installing,

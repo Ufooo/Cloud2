@@ -222,8 +222,10 @@ healthcheckEndpoint: string | null;
 deployKey: string | null;
 detectedPackages: Array<string> | null;
 packageDetails: Array<DetectedPackageData> | null;
+packages: { [key: string]: boolean } | null;
 can: SitePermissionsData;
 };
+export enum SitePackage { Laravel = 'laravel', Horizon = 'horizon', Octane = 'octane', Pulse = 'pulse', Reverb = 'reverb', Inertia = 'inertia', Nightwatch = 'nightwatch', InertiaSsr = 'inertia_ssr', Scheduler = 'scheduler', Maintenance = 'maintenance' };
 export type SitePermissionsData = {
 update: boolean;
 delete: boolean;
