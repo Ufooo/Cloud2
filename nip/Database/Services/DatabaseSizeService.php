@@ -36,7 +36,7 @@ class DatabaseSizeService
 
         try {
             $this->ssh->connect($server, 'root');
-            $result = $this->ssh->executeScript($command);
+            $result = $this->ssh->exec($command);
             $this->ssh->disconnect();
 
             if (! $result->isSuccessful()) {
