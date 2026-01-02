@@ -37,6 +37,19 @@ class DeleteSiteJob extends BaseProvisionJob
             ->whereNot('id', $this->site->id)
             ->exists();
 
+        // Get scheduled jobs for this site (to remove cron entries)
+        $scheduledJobs = $this->site->scheduledJobs()
+            ->select(['id', 'user'])
+            ->get()
+            ->map(fn ($job) => ['id' => $job->id, 'user' => $job->user])
+            ->toArray();
+
+        // Get background processes for this site (to remove supervisor configs)
+        $backgroundProcesses = $this->site->backgroundProcesses()
+            ->select(['id'])
+            ->pluck('id')
+            ->toArray();
+
         return view('provisioning.scripts.site.delete', [
             'site' => $this->site,
             'user' => $this->site->user,
@@ -46,6 +59,8 @@ class DeleteSiteJob extends BaseProvisionJob
             'shouldDeletePool' => ! $otherSitesWithSameUser,
             'installedPhpVersions' => $this->site->server->phpVersions->pluck('version')->toArray(),
             'domainRecords' => $this->site->domainRecords->pluck('name')->toArray(),
+            'scheduledJobs' => $scheduledJobs,
+            'backgroundProcesses' => $backgroundProcesses,
         ])->render();
     }
 

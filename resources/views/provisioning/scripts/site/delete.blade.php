@@ -88,6 +88,43 @@ if [ -f "/var/log/nginx/{{ $domain }}-error.log" ]; then
     rm -f /var/log/nginx/{{ $domain }}-error.log
 fi
 
+@if(count($scheduledJobs) > 0)
+#
+# Remove Scheduled Job Cron Entries
+#
+
+echo "Removing scheduled job cron entries..."
+@foreach($scheduledJobs as $job)
+# Remove job {{ $job['id'] }} from user {{ $job['user'] }}'s crontab
+CURRENT_CRONTAB=$(crontab -u "{{ $job['user'] }}" -l 2>/dev/null || echo "")
+NEW_CRONTAB=$(echo "${CURRENT_CRONTAB}" | grep -v "# netipar-job:{{ $job['id'] }}$" || true)
+if [ -z "${NEW_CRONTAB}" ]; then
+    crontab -u "{{ $job['user'] }}" -r 2>/dev/null || true
+else
+    echo "${NEW_CRONTAB}" | crontab -u "{{ $job['user'] }}" -
+fi
+echo "Removed scheduled job {{ $job['id'] }}"
+@endforeach
+@endif
+
+@if(count($backgroundProcesses) > 0)
+#
+# Remove Background Process Supervisor Configs
+#
+
+echo "Removing background process supervisor configs..."
+@foreach($backgroundProcesses as $processId)
+if [ -f "/etc/supervisor/conf.d/worker-{{ $processId }}.conf" ]; then
+    rm -f /etc/supervisor/conf.d/worker-{{ $processId }}.conf
+    echo "Removed supervisor config for worker {{ $processId }}"
+fi
+@endforeach
+
+# Update Supervisor Configuration State
+supervisorctl reread
+supervisorctl update
+@endif
+
 @if($shouldDeletePool)
 #
 # Remove Isolated PHP-FPM Pool (no other sites using this user)
