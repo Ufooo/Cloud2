@@ -26,6 +26,23 @@ class Server extends Model
 {
     use HasFactory, HasSlug, SoftDeletes;
 
+    protected static function booted(): void
+    {
+        static::deleting(function (Server $server) {
+            // Delete all related records when server is soft deleted
+            $server->databases()->forceDelete();
+            $server->databaseUsers()->forceDelete();
+            $server->sites()->forceDelete();
+            $server->unixUsers()->forceDelete();
+            $server->sshKeys()->forceDelete();
+            $server->phpVersions()->forceDelete();
+            $server->phpSetting()->forceDelete();
+            $server->firewallRules()->forceDelete();
+            $server->backgroundProcesses()->forceDelete();
+            $server->scheduledJobs()->forceDelete();
+        });
+    }
+
     protected static function newFactory(): ServerFactory
     {
         return ServerFactory::new();

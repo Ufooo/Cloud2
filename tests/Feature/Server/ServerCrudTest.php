@@ -1,10 +1,15 @@
 <?php
 
 use App\Models\User;
+use Nip\Database\Models\Database;
+use Nip\Database\Models\DatabaseUser;
 use Nip\Server\Models\Server;
+use Nip\Site\Models\Site;
+use Nip\UnixUser\Models\UnixUser;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\assertDatabaseHas;
+use function Pest\Laravel\assertDatabaseMissing;
 use function Pest\Laravel\assertSoftDeleted;
 
 it('can list servers', function () {
@@ -77,4 +82,25 @@ it('can delete a server', function () {
 
     $response->assertRedirect(route('servers.index'));
     assertSoftDeleted('servers', ['id' => $server->id]);
+});
+
+it('deletes related records when server is deleted', function () {
+    $user = User::factory()->create();
+    $server = Server::factory()->create();
+
+    // Create related records
+    $database = Database::factory()->create(['server_id' => $server->id]);
+    $databaseUser = DatabaseUser::factory()->create(['server_id' => $server->id]);
+    $site = Site::factory()->create(['server_id' => $server->id]);
+    $unixUser = UnixUser::factory()->create(['server_id' => $server->id]);
+
+    $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class)
+        ->actingAs($user)
+        ->delete(route('servers.destroy', $server));
+
+    assertSoftDeleted('servers', ['id' => $server->id]);
+    assertDatabaseMissing('databases', ['id' => $database->id]);
+    assertDatabaseMissing('database_users', ['id' => $databaseUser->id]);
+    assertDatabaseMissing('sites', ['id' => $site->id]);
+    assertDatabaseMissing('unix_users', ['id' => $unixUser->id]);
 });
