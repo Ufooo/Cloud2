@@ -39,10 +39,12 @@ class RemoveUnixUserJob extends BaseProvisionJob
     protected function generateScript(): string
     {
         $username = $this->unixUser->username;
+        $installedPhpVersions = $this->unixUser->server->phpVersions->pluck('version')->toArray();
 
         return view('provisioning.scripts.unix-user.remove', [
             'username' => $username,
             'homeDir' => $username === 'root' ? '/root' : "/home/{$username}",
+            'installedPhpVersions' => $installedPhpVersions,
         ])->render();
     }
 
