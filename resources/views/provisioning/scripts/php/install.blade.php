@@ -30,7 +30,7 @@ echo "Installing PHP {{ $version }} packages..."
 echo "Configuring PHP {{ $version }}..."
 
 # Configure PHP
-@include('provisioning.scripts.php.configure')
+@include('provisioning.scripts.php.configure', ['version' => $version, 'unixUsers' => $unixUsers])
 
 # Enable and start PHP-FPM
 echo "Starting PHP-FPM service..."

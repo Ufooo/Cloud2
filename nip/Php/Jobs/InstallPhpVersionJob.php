@@ -38,8 +38,15 @@ class InstallPhpVersionJob extends BaseProvisionJob
 
     protected function generateScript(): string
     {
+        $server = $this->phpVersion->server;
+        $unixUsers = $server->unixUsers()
+            ->where('username', '!=', 'root')
+            ->pluck('username')
+            ->toArray();
+
         return view('provisioning.scripts.php.install', [
             'version' => $this->phpVersion->version,
+            'unixUsers' => $unixUsers,
         ])->render();
     }
 
