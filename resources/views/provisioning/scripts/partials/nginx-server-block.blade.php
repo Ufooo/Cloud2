@@ -17,18 +17,12 @@ server {
     server_tokens off;
     root {{ $rootPath }};
 
-    # SSL placeholder - will be configured when certificate is installed
-    # listen 443 ssl http2;
-    # listen [::]:443 ssl http2;
+    # NETIPAR SSL (DO NOT REMOVE!)
+    # ssl_certificate;
+    # ssl_certificate_key;
 
-    add_header X-Frame-Options "SAMEORIGIN";
-    add_header X-Content-Type-Options "nosniff";
-
-    index index.html index.htm index.php;
-
-    charset utf-8;
-
-    include /etc/nginx/netipar-conf/{{ $site->id }}/server/*;
+    # Site common configuration
+    include /etc/nginx/netipar-conf/{{ $site->id }}/site.conf;
 
     # Site-specific Nginx includes
     include {{ $fullPath }}/nginx.conf*;

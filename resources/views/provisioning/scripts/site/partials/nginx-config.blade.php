@@ -2,12 +2,11 @@
 # Site: {{ $domain }}
 # Generated: {{ now()->toISOString() }}
 
+# Site-level includes
 include /etc/nginx/netipar-conf/{{ $site->id }}/before/*;
 
-@include('provisioning.scripts.partials.nginx-www-redirect', [
-    'domain' => $domain,
-    'wwwRedirectType' => $wwwRedirectType,
-])
+# Domain-level includes
+include /etc/nginx/netipar-conf/{{ $site->id }}/{{ $domain }}/before/*;
 
 @include('provisioning.scripts.partials.nginx-server-block', [
     'site' => $site,
@@ -20,4 +19,8 @@ include /etc/nginx/netipar-conf/{{ $site->id }}/before/*;
     'wwwRedirectType' => $wwwRedirectType,
 ])
 
+# Site-level includes
 include /etc/nginx/netipar-conf/{{ $site->id }}/after/*;
+
+# Domain-level includes
+include /etc/nginx/netipar-conf/{{ $site->id }}/{{ $domain }}/after/*;

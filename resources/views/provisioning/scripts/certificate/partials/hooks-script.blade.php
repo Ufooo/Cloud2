@@ -23,8 +23,9 @@ NGINXHOOK
 deploy_challenge() {
     local FQDN="$1"
 
-    echo "Deploying HTTP-01 challenge for domain: $FQDN"
+    echo "Deploying HTTP-01 challenge configuration..."
 
+    # Create letsencrypt.conf in site-level server directory (included by site.conf)
     mkdir -p "$SITE_CONF_DIR/server"
     printf '%s\n' "$HOOK_NGINX_CONF" > "$SITE_CONF_DIR/server/letsencrypt.conf"
 
@@ -33,9 +34,14 @@ deploy_challenge() {
 }
 
 clean_challenge() {
+    echo "Cleaning up ACME challenge configuration..."
+
+    # Remove letsencrypt.conf from site-level server directory
     if [ -f "$SITE_CONF_DIR/server/letsencrypt.conf" ]; then
         rm "$SITE_CONF_DIR/server/letsencrypt.conf"
+        echo "  Removed ACME config"
     fi
+
     nginx -t && service nginx reload
 }
 

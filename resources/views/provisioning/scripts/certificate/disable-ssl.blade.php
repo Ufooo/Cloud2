@@ -21,59 +21,48 @@ VERSION_NUM=$(echo "$NGINX_VERSION" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$
 MIN_VERSION=$(echo "1.26.0" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }')
 
 #
-# Update Nginx configuration for each domain in the certificate
+# Update Nginx configuration for each domain
 #
 
-echo "Updating Nginx configuration to disable SSL..."
+echo "Updating Nginx configuration..."
 
 @foreach($domains as $domain)
 NGINX_CONF="/etc/nginx/sites-available/{{ $domain }}"
+DOMAIN_CONF_DIR="$SITE_CONF_DIR/{{ $domain }}"
 
 if [ -f "$NGINX_CONF" ]; then
     echo "Disabling SSL for {{ $domain }}..."
 
+    # Update listen directives: change 443 ssl back to 80
     if [ $VERSION_NUM -ge $MIN_VERSION ]; then
-        # Nginx 1.26+ - comment SSL listen directives and remove http2 directive
-        sed -i 's/^    listen 443 ssl;$/    # listen 443 ssl http2;/' "$NGINX_CONF"
-        sed -i 's/^    http2 on;$//' "$NGINX_CONF"
-        sed -i 's/^    listen \[::\]:443 ssl;$/    # listen [::]:443 ssl http2;/' "$NGINX_CONF"
+        # Nginx 1.26+ - remove http2 directive and change to port 80
+        sed -i 's/^    listen 443 ssl;$/    listen 80;/' "$NGINX_CONF"
+        sed -i '/^    http2 on;$/d' "$NGINX_CONF"
+        sed -i 's/^    listen \[::\]:443 ssl;$/    listen [::]:80;/' "$NGINX_CONF"
     else
-        # Older nginx versions - comment SSL listen directives with http2
-        sed -i 's/^    listen 443 ssl http2;$/    # listen 443 ssl http2;/' "$NGINX_CONF"
-        sed -i 's/^    listen \[::\]:443 ssl http2;$/    # listen [::]:443 ssl http2;/' "$NGINX_CONF"
+        # Older nginx versions
+        sed -i 's/^    listen 443 ssl http2;$/    listen 80;/' "$NGINX_CONF"
+        sed -i 's/^    listen \[::\]:443 ssl http2;$/    listen [::]:80;/' "$NGINX_CONF"
     fi
+
+    # Comment out inline SSL certificate paths
+    sed -i 's|^    ssl_certificate .*$|    # ssl_certificate;|' "$NGINX_CONF"
+    sed -i 's|^    ssl_certificate_key .*$|    # ssl_certificate_key;|' "$NGINX_CONF"
+
+    echo "  SSL disabled in nginx config"
+
+    # Remove SSL redirect configuration
+    if [ -f "$DOMAIN_CONF_DIR/before/ssl_redirect.conf" ]; then
+        rm -f "$DOMAIN_CONF_DIR/before/ssl_redirect.conf"
+        echo "  SSL redirect removed"
+    fi
+
 else
     echo "WARNING: Nginx config not found for {{ $domain }}, skipping..."
 fi
 @endforeach
 
-echo "SSL listen directives disabled in Nginx config"
-
-#
-# Remove SSL configuration file (but keep certificate files for reactivation)
-#
-
-echo "Removing SSL configuration..."
-
-if [ -f "$SITE_CONF_DIR/server/ssl.conf" ]; then
-    rm -f "$SITE_CONF_DIR/server/ssl.conf"
-    echo "SSL configuration removed"
-else
-    echo "SSL configuration file not found (may have been removed already)"
-fi
-
-#
-# Remove SSL redirect configuration
-#
-
-echo "Removing SSL redirect configuration..."
-
-if [ -f "$SITE_CONF_DIR/before/ssl_redirect.conf" ]; then
-    rm -f "$SITE_CONF_DIR/before/ssl_redirect.conf"
-    echo "SSL redirect configuration removed"
-else
-    echo "SSL redirect configuration not found (may have been removed already)"
-fi
+echo "SSL configuration disabled for all domains"
 
 # Note: We intentionally keep certificate files at $CERT_PATH
 # This allows quick reactivation without re-obtaining the certificate

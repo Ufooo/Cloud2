@@ -38,30 +38,32 @@ fi
 ./dehydrated --cron --hook ./hooks/netipar-dns.sh --challenge dns-01
 
 #
-# Create SSL nginx config
+# Update Nginx configuration with inline SSL certificate paths
 #
 
-echo "Creating Nginx SSL configuration..."
+echo "Updating Nginx configuration for each domain..."
 
-mkdir -p "$SITE_CONF_DIR/server"
+@foreach($domains as $domain)
+@php
+// Skip wildcard domains - they don't have their own nginx config
+$displayDomain = str_starts_with($domain, '*.') ? substr($domain, 2) : $domain;
+@endphp
+NGINX_CONF="/etc/nginx/sites-available/{{ $displayDomain }}"
 
-cat > "$SITE_CONF_DIR/server/ssl.conf" << 'SSLEOF'
-ssl_certificate {{ $certPath }}/fullchain.crt;
-ssl_certificate_key {{ $certPath }}/private.key;
+if [ -f "$NGINX_CONF" ]; then
+    echo "Updating SSL certificate paths for {{ $displayDomain }}..."
 
-ssl_protocols TLSv1.2 TLSv1.3;
-ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
-ssl_prefer_server_ciphers off;
+    # Update inline SSL certificate paths
+    sed -i 's|^    # ssl_certificate;$|    ssl_certificate '"$CERT_PATH"'/fullchain.crt;|' "$NGINX_CONF"
+    sed -i 's|^    # ssl_certificate_key;$|    ssl_certificate_key '"$CERT_PATH"'/private.key;|' "$NGINX_CONF"
 
-ssl_session_timeout 1d;
-ssl_session_cache shared:SSL:10m;
-ssl_session_tickets off;
+    echo "  SSL paths updated"
+else
+    echo "WARNING: Nginx config not found for {{ $displayDomain }}, skipping..."
+fi
+@endforeach
 
-ssl_stapling on;
-ssl_stapling_verify on;
-resolver 1.1.1.1 8.8.8.8 valid=300s;
-resolver_timeout 5s;
-SSLEOF
+echo "SSL configuration updated for all domains"
 
 #
 # Test and reload Nginx
