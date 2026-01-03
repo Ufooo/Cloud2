@@ -105,6 +105,25 @@ it('cannot deploy site that is not installed', function () {
         ->assertForbidden();
 });
 
+it('cannot deploy site when deployment is already in progress', function () {
+    Queue::fake();
+
+    $server = Server::factory()->create();
+    $site = Site::factory()
+        ->for($server)
+        ->laravel()
+        ->create([
+            'status' => SiteStatus::Installed,
+            'deploy_status' => DeployStatus::Deploying,
+        ]);
+
+    $this->actingAs($this->user)
+        ->post(route('sites.deploy', $site))
+        ->assertStatus(409);
+
+    Queue::assertNothingPushed();
+});
+
 it('requires user to be authenticated to deploy site', function () {
     $server = Server::factory()->create();
     $site = Site::factory()

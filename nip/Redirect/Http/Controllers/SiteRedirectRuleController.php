@@ -45,8 +45,7 @@ class SiteRedirectRuleController extends Controller
         ]);
 
         return redirect()
-            ->route('sites.redirects', $site)
-            ->with('success', 'Redirect rule created successfully.');
+            ->route('sites.redirects', $site)->with('success', 'Redirect rule created successfully.');
     }
 
     public function update(UpdateRedirectRuleRequest $request, Site $site, RedirectRule $rule): RedirectResponse
@@ -62,8 +61,7 @@ class SiteRedirectRuleController extends Controller
         ]);
 
         return redirect()
-            ->route('sites.redirects', $site)
-            ->with('success', 'Redirect rule updated successfully.');
+            ->route('sites.redirects', $site)->with('success', 'Redirect rule updated successfully.');
     }
 
     public function destroy(Site $site, RedirectRule $rule): RedirectResponse
@@ -80,7 +78,6 @@ class SiteRedirectRuleController extends Controller
         $rule->delete();
 
         return redirect()
-            ->route('sites.redirects', $site)
-            ->with('success', 'Redirect rule deleted successfully.');
+            ->route('sites.redirects', $site)->with('success', 'Redirect rule deleted successfully.');
     }
 }

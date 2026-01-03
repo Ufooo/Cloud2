@@ -62,8 +62,7 @@ class SiteScheduledJobController extends Controller
         SyncScheduledJobJob::dispatch($job);
 
         return redirect()
-            ->route('sites.scheduler', $site)
-            ->with('success', 'Scheduled job creation started.');
+            ->route('sites.scheduler', $site)->with('success', 'Scheduled job creation started.');
     }
 
     public function update(UpdateSiteScheduledJobRequest $request, Site $site, ScheduledJob $job): RedirectResponse
@@ -89,8 +88,7 @@ class SiteScheduledJobController extends Controller
         SyncScheduledJobJob::dispatch($job);
 
         return redirect()
-            ->route('sites.scheduler', $site)
-            ->with('success', 'Scheduled job update started.');
+            ->route('sites.scheduler', $site)->with('success', 'Scheduled job update started.');
     }
 
     public function destroy(Site $site, ScheduledJob $job): RedirectResponse
@@ -121,8 +119,7 @@ class SiteScheduledJobController extends Controller
         RemoveScheduledJobJob::dispatch($job);
 
         return redirect()
-            ->route('sites.scheduler', $site)
-            ->with('success', 'Scheduled job deletion started.');
+            ->route('sites.scheduler', $site)->with('success', 'Scheduled job deletion started.');
     }
 
     public function enableLaravelScheduler(Site $site): RedirectResponse
@@ -136,8 +133,7 @@ class SiteScheduledJobController extends Controller
 
         if ($existingScheduler) {
             return redirect()
-                ->route('sites.scheduler', $site)
-                ->with('info', 'Laravel Scheduler is already configured.');
+                ->route('sites.scheduler', $site)->with('info', 'Laravel Scheduler is already configured.');
         }
 
         $phpVersion = $site->getEffectivePhpVersion();
@@ -157,8 +153,10 @@ class SiteScheduledJobController extends Controller
         SyncScheduledJobJob::dispatch($job);
 
         return redirect()
-            ->back()
-            ->with('success', 'Laravel Scheduler is being enabled.');
+            ->route('sites.scheduler', $site)->with('success', 'Laravel Scheduler is being enabled.');
+
+        return redirect()
+            ->back();
     }
 
     public function pause(Site $site, ScheduledJob $job): RedirectResponse
@@ -180,8 +178,7 @@ class SiteScheduledJobController extends Controller
         RemoveScheduledJobJob::dispatch($job);
 
         return redirect()
-            ->route('sites.scheduler', $site)
-            ->with('success', 'Scheduled job pause started.');
+            ->route('sites.scheduler', $site)->with('success', 'Scheduled job pause started.');
     }
 
     public function resume(Site $site, ScheduledJob $job): RedirectResponse
@@ -201,10 +198,6 @@ class SiteScheduledJobController extends Controller
         $job->update(['status' => JobStatus::Installing]);
 
         SyncScheduledJobJob::dispatch($job);
-
-        return redirect()
-            ->route('sites.scheduler', $site)
-            ->with('success', 'Scheduled job resume started.');
     }
 
     private function generateHeartbeatUrl(): string

@@ -20,7 +20,7 @@ import {
     Rocket,
     Server,
 } from 'lucide-vue-next';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import DetectedPackages from './partials/DetectedPackages.vue';
 import SiteProvisioning from './partials/SiteProvisioning.vue';
 
@@ -31,9 +31,17 @@ interface Props {
 const props = defineProps<Props>();
 
 const isInstalling = computed(() => props.site.status === 'installing');
+const isDeployingInProgress = ref(false);
 
 function triggerDeploy() {
-    router.post(deploy.url(props.site));
+    if (isDeployingInProgress.value) return;
+
+    isDeployingInProgress.value = true;
+    router.post(deploy.url(props.site), {}, {
+        onFinish: () => {
+            isDeployingInProgress.value = false;
+        },
+    });
 }
 
 function getDeployStatusVariant(
@@ -83,10 +91,10 @@ function getDeployStatusVariant(
                             <Button
                                 v-if="site.can?.deploy"
                                 @click="triggerDeploy"
-                                :disabled="site.deployStatus === 'deploying'"
+                                :disabled="site.deployStatus === 'deploying' || isDeployingInProgress"
                             >
                                 <Rocket class="mr-2 size-4" />
-                                Deploy now
+                                {{ isDeployingInProgress ? 'Starting...' : 'Deploy now' }}
                             </Button>
                         </div>
                     </div>

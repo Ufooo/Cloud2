@@ -174,8 +174,7 @@ class SiteController extends Controller
         app(SiteProvisioningService::class)->dispatch($site);
 
         return redirect()
-            ->route('sites.show', $site)
-            ->with('success', 'Site is being installed.');
+            ->route('sites.show', $site)->with('success', 'Site is being installed.');
     }
 
     public function show(Site $site): Response
@@ -240,8 +239,7 @@ class SiteController extends Controller
             : 'Site updated successfully.';
 
         return redirect()
-            ->back()
-            ->with('success', $message);
+            ->back()->with('success', $message);
     }
 
     public function destroy(Site $site): RedirectResponse
@@ -259,8 +257,7 @@ class SiteController extends Controller
         DeleteSiteJob::dispatch($site);
 
         return redirect()
-            ->route('sites.index')
-            ->with('success', 'Site is being deleted.');
+            ->route('sites.index')->with('success', 'Site is being deleted.');
     }
 
     public function deploy(Site $site): RedirectResponse
@@ -268,6 +265,7 @@ class SiteController extends Controller
         Gate::authorize('update', $site->server);
 
         abort_unless($site->status === SiteStatus::Installed, 403, 'Site must be installed to deploy.');
+        abort_if($site->deploy_status === DeployStatus::Deploying, 409, 'A deployment is already in progress.');
 
         $branch = $site->branch ?? 'main';
         $commitInfo = null;
@@ -295,8 +293,7 @@ class SiteController extends Controller
         DeploySiteJob::dispatch($site, $deployment);
 
         return redirect()
-            ->route('sites.deployments.show', [$site, $deployment])
-            ->with('success', 'Deployment started.');
+            ->route('sites.deployments.show', [$site, $deployment])->with('success', 'Deployment started.');
     }
 
     public function detectPackages(Site $site, PackageDetectionService $packageDetectionService): JsonResponse

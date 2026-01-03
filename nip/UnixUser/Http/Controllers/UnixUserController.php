@@ -50,8 +50,7 @@ class UnixUserController extends Controller
         CreateUnixUserJob::dispatch($unixUser);
 
         return redirect()
-            ->route('servers.unix-users', $server)
-            ->with('success', 'Unix user creation started.');
+            ->route('servers.unix-users', $server)->with('success', 'Unix user creation started.');
     }
 
     public function destroy(Server $server, UnixUser $user): RedirectResponse
@@ -75,7 +74,6 @@ class UnixUserController extends Controller
         RemoveUnixUserJob::dispatch($user);
 
         return redirect()
-            ->route('servers.unix-users', $server)
-            ->with('success', 'Unix user deletion started.');
+            ->route('servers.unix-users', $server)->with('success', 'Unix user deletion started.');
     }
 }

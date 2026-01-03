@@ -60,8 +60,7 @@ class BackgroundProcessController extends Controller
         SyncBackgroundProcessJob::dispatch($process);
 
         return redirect()
-            ->route('servers.background-processes', $server)
-            ->with('success', 'Background process creation started.');
+            ->route('servers.background-processes', $server)->with('success', 'Background process creation started.');
     }
 
     public function update(UpdateBackgroundProcessRequest $request, Server $server, BackgroundProcess $process): RedirectResponse
@@ -76,8 +75,7 @@ class BackgroundProcessController extends Controller
         SyncBackgroundProcessJob::dispatch($process);
 
         return redirect()
-            ->route('servers.background-processes', $server)
-            ->with('success', 'Background process update started.');
+            ->route('servers.background-processes', $server)->with('success', 'Background process update started.');
     }
 
     public function destroy(Server $server, BackgroundProcess $process): RedirectResponse
@@ -101,8 +99,7 @@ class BackgroundProcessController extends Controller
         RemoveBackgroundProcessJob::dispatch($process);
 
         return redirect()
-            ->route('servers.background-processes', $server)
-            ->with('success', 'Background process deletion started.');
+            ->route('servers.background-processes', $server)->with('success', 'Background process deletion started.');
     }
 
     public function restart(Server $server, BackgroundProcess $process): RedirectResponse
@@ -115,8 +112,7 @@ class BackgroundProcessController extends Controller
         RestartBackgroundProcessJob::dispatch($process);
 
         return redirect()
-            ->route('servers.background-processes', $server)
-            ->with('success', 'Background process restart initiated.');
+            ->route('servers.background-processes', $server)->with('success', 'Background process restart initiated.');
     }
 
     public function start(Server $server, BackgroundProcess $process): RedirectResponse
@@ -129,8 +125,7 @@ class BackgroundProcessController extends Controller
         StartBackgroundProcessJob::dispatch($process);
 
         return redirect()
-            ->route('servers.background-processes', $server)
-            ->with('success', 'Background process start initiated.');
+            ->route('servers.background-processes', $server)->with('success', 'Background process start initiated.');
     }
 
     public function stop(Server $server, BackgroundProcess $process): RedirectResponse
@@ -143,7 +138,6 @@ class BackgroundProcessController extends Controller
         StopBackgroundProcessJob::dispatch($process);
 
         return redirect()
-            ->route('servers.background-processes', $server)
-            ->with('success', 'Background process stop initiated.');
+            ->route('servers.background-processes', $server)->with('success', 'Background process stop initiated.');
     }
 }

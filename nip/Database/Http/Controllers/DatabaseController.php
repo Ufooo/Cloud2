@@ -130,8 +130,7 @@ class DatabaseController extends Controller
         }
 
         return redirect()
-            ->back()
-            ->with('success', 'Database is being created.');
+            ->back()->with('success', 'Database is being created.');
     }
 
     public function destroy(Server $server, Database $database): RedirectResponse
@@ -145,8 +144,7 @@ class DatabaseController extends Controller
         DeleteDatabaseJob::dispatch($database);
 
         return redirect()
-            ->back()
-            ->with('success', 'Database is being deleted.');
+            ->back()->with('success', 'Database is being deleted.');
     }
 
     public function storeUser(StoreDatabaseUserRequest $request, Server $server): RedirectResponse
@@ -172,8 +170,7 @@ class DatabaseController extends Controller
         SyncDatabaseUserJob::dispatch($user);
 
         return redirect()
-            ->back()
-            ->with('success', 'Database user is being created.');
+            ->back()->with('success', 'Database user is being created.');
     }
 
     public function updateUser(UpdateDatabaseUserRequest $request, Server $server, DatabaseUser $databaseUser): RedirectResponse
@@ -203,8 +200,7 @@ class DatabaseController extends Controller
         SyncDatabaseUserJob::dispatch($databaseUser);
 
         return redirect()
-            ->back()
-            ->with('success', 'Database user is being updated.');
+            ->back()->with('success', 'Database user is being updated.');
     }
 
     public function destroyUser(Server $server, DatabaseUser $databaseUser): RedirectResponse
@@ -218,8 +214,7 @@ class DatabaseController extends Controller
         DeleteDatabaseUserJob::dispatch($databaseUser);
 
         return redirect()
-            ->back()
-            ->with('success', 'Database user is being deleted.');
+            ->back()->with('success', 'Database user is being deleted.');
     }
 
     public function refreshSizes(Server $server, DatabaseSizeService $service): JsonResponse

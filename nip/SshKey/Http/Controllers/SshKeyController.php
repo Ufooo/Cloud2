@@ -61,8 +61,7 @@ class SshKeyController extends Controller
         SyncSshKeyJob::dispatch($sshKey);
 
         return redirect()
-            ->route('servers.ssh-keys', $server)
-            ->with('success', 'SSH key created. Deploying to server...');
+            ->route('servers.ssh-keys', $server)->with('success', 'SSH key created. Deploying to server...');
     }
 
     public function destroy(Server $server, SshKey $sshKey): RedirectResponse
@@ -76,7 +75,6 @@ class SshKeyController extends Controller
         RemoveSshKeyJob::dispatch($sshKey);
 
         return redirect()
-            ->route('servers.ssh-keys', $server)
-            ->with('success', 'Removing SSH key from server...');
+            ->route('servers.ssh-keys', $server)->with('success', 'Removing SSH key from server...');
     }
 }

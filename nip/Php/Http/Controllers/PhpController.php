@@ -66,8 +66,7 @@ class PhpController extends Controller
         UpdatePhpSettingsJob::dispatch($phpSetting);
 
         return redirect()
-            ->route('servers.php', $server)
-            ->with('success', 'PHP settings update started.');
+            ->route('servers.php', $server)->with('success', 'PHP settings update started.');
     }
 
     public function installVersion(InstallPhpVersionRequest $request, Server $server): RedirectResponse
@@ -91,8 +90,7 @@ class PhpController extends Controller
         InstallPhpVersionJob::dispatch($phpVersion);
 
         return redirect()
-            ->route('servers.php', $server)
-            ->with('success', 'PHP version installation started. This may take a few minutes.');
+            ->route('servers.php', $server)->with('success', 'PHP version installation started. This may take a few minutes.');
     }
 
     public function uninstallVersion(Server $server, PhpVersion $phpVersion): RedirectResponse
@@ -118,8 +116,7 @@ class PhpController extends Controller
         RemovePhpVersionJob::dispatch($phpVersion);
 
         return redirect()
-            ->route('servers.php', $server)
-            ->with('success', 'PHP version uninstallation started.');
+            ->route('servers.php', $server)->with('success', 'PHP version uninstallation started.');
     }
 
     public function setDefault(SetDefaultPhpVersionRequest $request, Server $server, PhpVersion $phpVersion): RedirectResponse
@@ -132,8 +129,7 @@ class PhpController extends Controller
             SetCliDefaultPhpVersionJob::dispatch($phpVersion);
 
             return redirect()
-                ->route('servers.php', $server)
-                ->with('success', 'CLI default PHP version update started.');
+                ->route('servers.php', $server)->with('success', 'CLI default PHP version update started.');
         }
 
         DB::transaction(function () use ($server, $phpVersion) {
@@ -142,7 +138,6 @@ class PhpController extends Controller
         });
 
         return redirect()
-            ->route('servers.php', $server)
-            ->with('success', 'Site default PHP version set successfully.');
+            ->route('servers.php', $server)->with('success', 'Site default PHP version set successfully.');
     }
 }

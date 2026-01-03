@@ -53,8 +53,7 @@ class SiteSecurityRuleController extends Controller
         }
 
         return redirect()
-            ->route('sites.security', $site)
-            ->with('success', 'Security rule created successfully.');
+            ->route('sites.security', $site)->with('success', 'Security rule created successfully.');
     }
 
     public function update(UpdateSecurityRuleRequest $request, Site $site, SecurityRule $rule): RedirectResponse
@@ -80,8 +79,7 @@ class SiteSecurityRuleController extends Controller
         }
 
         return redirect()
-            ->route('sites.security', $site)
-            ->with('success', 'Security rule updated successfully.');
+            ->route('sites.security', $site)->with('success', 'Security rule updated successfully.');
     }
 
     public function destroy(Site $site, SecurityRule $rule): RedirectResponse
@@ -98,7 +96,6 @@ class SiteSecurityRuleController extends Controller
         $rule->delete();
 
         return redirect()
-            ->route('sites.security', $site)
-            ->with('success', 'Security rule deleted successfully.');
+            ->route('sites.security', $site)->with('success', 'Security rule deleted successfully.');
     }
 }

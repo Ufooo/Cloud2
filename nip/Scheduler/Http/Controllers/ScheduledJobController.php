@@ -65,8 +65,7 @@ class ScheduledJobController extends Controller
         SyncScheduledJobJob::dispatch($job);
 
         return redirect()
-            ->route('servers.scheduler', $server)
-            ->with('success', 'Scheduled job creation started.');
+            ->route('servers.scheduler', $server)->with('success', 'Scheduled job creation started.');
     }
 
     public function update(UpdateScheduledJobRequest $request, Server $server, ScheduledJob $job): RedirectResponse
@@ -92,8 +91,7 @@ class ScheduledJobController extends Controller
         SyncScheduledJobJob::dispatch($job);
 
         return redirect()
-            ->route('servers.scheduler', $server)
-            ->with('success', 'Scheduled job update started.');
+            ->route('servers.scheduler', $server)->with('success', 'Scheduled job update started.');
     }
 
     public function destroy(Server $server, ScheduledJob $job): RedirectResponse
@@ -117,8 +115,7 @@ class ScheduledJobController extends Controller
         RemoveScheduledJobJob::dispatch($job);
 
         return redirect()
-            ->route('servers.scheduler', $server)
-            ->with('success', 'Scheduled job deletion started.');
+            ->route('servers.scheduler', $server)->with('success', 'Scheduled job deletion started.');
     }
 
     public function pause(Server $server, ScheduledJob $job): RedirectResponse
@@ -133,8 +130,7 @@ class ScheduledJobController extends Controller
         RemoveScheduledJobJob::dispatch($job);
 
         return redirect()
-            ->route('servers.scheduler', $server)
-            ->with('success', 'Scheduled job pause started.');
+            ->route('servers.scheduler', $server)->with('success', 'Scheduled job pause started.');
     }
 
     public function resume(Server $server, ScheduledJob $job): RedirectResponse
@@ -149,8 +145,7 @@ class ScheduledJobController extends Controller
         SyncScheduledJobJob::dispatch($job);
 
         return redirect()
-            ->route('servers.scheduler', $server)
-            ->with('success', 'Scheduled job resume started.');
+            ->route('servers.scheduler', $server)->with('success', 'Scheduled job resume started.');
     }
 
     private function generateHeartbeatUrl(): string

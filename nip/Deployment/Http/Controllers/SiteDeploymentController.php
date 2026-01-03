@@ -72,8 +72,7 @@ class SiteDeploymentController extends Controller
         $site->update($request->validated());
 
         return redirect()
-            ->back()
-            ->with('success', 'Deployment settings updated successfully.');
+            ->back()->with('success', 'Deployment settings updated successfully.');
     }
 
     public function regenerateToken(Site $site): RedirectResponse
@@ -83,7 +82,6 @@ class SiteDeploymentController extends Controller
         $site->regenerateDeployHookToken();
 
         return redirect()
-            ->back()
-            ->with('success', 'Deploy hook token regenerated.');
+            ->back()->with('success', 'Deploy hook token regenerated.');
     }
 }

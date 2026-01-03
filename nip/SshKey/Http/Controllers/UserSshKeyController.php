@@ -29,8 +29,7 @@ class UserSshKeyController extends Controller
         auth()->user()->sshKeys()->create($request->validated());
 
         return redirect()
-            ->route('settings.ssh-keys')
-            ->with('success', 'SSH key added successfully.');
+            ->route('settings.ssh-keys')->with('success', 'SSH key added successfully.');
     }
 
     public function destroy(UserSshKey $key): RedirectResponse
@@ -40,7 +39,6 @@ class UserSshKeyController extends Controller
         $key->delete();
 
         return redirect()
-            ->route('settings.ssh-keys')
-            ->with('success', 'SSH key deleted successfully.');
+            ->route('settings.ssh-keys')->with('success', 'SSH key deleted successfully.');
     }
 }

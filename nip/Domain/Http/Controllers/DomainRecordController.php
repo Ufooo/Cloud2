@@ -83,8 +83,7 @@ class DomainRecordController extends Controller
 
         AddDomainJob::dispatch($domainRecord);
 
-        return redirect()->route('sites.domains.index', $site)
-            ->with('success', "Domain {$domainRecord->name} has been added and is being configured.");
+        return redirect()->route('sites.domains.index', $site)->with('success', "Domain {$domainRecord->name} has been added and is being configured.");
     }
 
     public function update(UpdateDomainRecordRequest $request, Site $site, DomainRecord $domainRecord): RedirectResponse
@@ -98,8 +97,7 @@ class DomainRecordController extends Controller
             'allow_wildcard' => $data['allow_wildcard'] ?? $domainRecord->allow_wildcard,
         ]);
 
-        return redirect()->route('sites.domains.index', $site)
-            ->with('success', "Domain {$domainRecord->name} has been updated.");
+        return redirect()->route('sites.domains.index', $site)->with('success', "Domain {$domainRecord->name} has been updated.");
     }
 
     public function destroy(Site $site, DomainRecord $domainRecord): RedirectResponse
@@ -107,8 +105,7 @@ class DomainRecordController extends Controller
         Gate::authorize('update', $site->server);
 
         if ($domainRecord->isPrimary()) {
-            return redirect()->route('sites.domains.index', $site)
-                ->with('error', 'Cannot delete the primary domain.');
+            return redirect()->route('sites.domains.index', $site)->with('error', 'Cannot delete the primary domain.');
         }
 
         $domainName = $domainRecord->name;
@@ -116,8 +113,7 @@ class DomainRecordController extends Controller
 
         RemoveDomainJob::dispatch($domainRecord);
 
-        return redirect()->route('sites.domains.index', $site)
-            ->with('success', "Domain {$domainName} is being removed.");
+        return redirect()->route('sites.domains.index', $site)->with('success', "Domain {$domainName} is being removed.");
     }
 
     public function markAsPrimary(Site $site, DomainRecord $domainRecord): RedirectResponse
@@ -125,8 +121,7 @@ class DomainRecordController extends Controller
         Gate::authorize('update', $site->server);
 
         if ($domainRecord->status !== DomainRecordStatus::Enabled) {
-            return redirect()->route('sites.domains.index', $site)
-                ->with('error', 'Only enabled domains can be set as primary.');
+            return redirect()->route('sites.domains.index', $site)->with('error', 'Only enabled domains can be set as primary.');
         }
 
         $site->domainRecords()
@@ -135,8 +130,7 @@ class DomainRecordController extends Controller
 
         $domainRecord->update(['type' => DomainRecordType::Primary]);
 
-        return redirect()->route('sites.domains.index', $site)
-            ->with('success', "Domain {$domainRecord->name} is now the primary domain.");
+        return redirect()->route('sites.domains.index', $site)->with('success', "Domain {$domainRecord->name} is now the primary domain.");
     }
 
     public function enable(Site $site, DomainRecord $domainRecord): RedirectResponse
@@ -144,8 +138,7 @@ class DomainRecordController extends Controller
         Gate::authorize('update', $site->server);
 
         if ($domainRecord->status !== DomainRecordStatus::Disabled) {
-            return redirect()->route('sites.domains.index', $site)
-                ->with('error', 'Only disabled domains can be enabled.');
+            return redirect()->route('sites.domains.index', $site)->with('error', 'Only disabled domains can be enabled.');
         }
 
         $domainName = $domainRecord->name;
@@ -153,8 +146,7 @@ class DomainRecordController extends Controller
 
         EnableDomainJob::dispatch($domainRecord);
 
-        return redirect()->route('sites.domains.index', $site)
-            ->with('success', "Domain {$domainName} is being enabled.");
+        return redirect()->route('sites.domains.index', $site)->with('success', "Domain {$domainName} is being enabled.");
     }
 
     public function disable(Site $site, DomainRecord $domainRecord): RedirectResponse
@@ -162,13 +154,11 @@ class DomainRecordController extends Controller
         Gate::authorize('update', $site->server);
 
         if ($domainRecord->isPrimary()) {
-            return redirect()->route('sites.domains.index', $site)
-                ->with('error', 'Cannot disable the primary domain.');
+            return redirect()->route('sites.domains.index', $site)->with('error', 'Cannot disable the primary domain.');
         }
 
         if ($domainRecord->status !== DomainRecordStatus::Enabled) {
-            return redirect()->route('sites.domains.index', $site)
-                ->with('error', 'Only enabled domains can be disabled.');
+            return redirect()->route('sites.domains.index', $site)->with('error', 'Only enabled domains can be disabled.');
         }
 
         $domainName = $domainRecord->name;
@@ -176,8 +166,7 @@ class DomainRecordController extends Controller
 
         DisableDomainJob::dispatch($domainRecord);
 
-        return redirect()->route('sites.domains.index', $site)
-            ->with('success', "Domain {$domainName} is being disabled.");
+        return redirect()->route('sites.domains.index', $site)->with('success', "Domain {$domainName} is being disabled.");
     }
 
     public function verifyDns(Site $site, DomainRecord $domainRecord): JsonResponse

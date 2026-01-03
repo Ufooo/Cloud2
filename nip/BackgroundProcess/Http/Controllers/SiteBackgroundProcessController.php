@@ -57,8 +57,7 @@ class SiteBackgroundProcessController extends Controller
         SyncBackgroundProcessJob::dispatch($process);
 
         return redirect()
-            ->route('sites.background-processes', $site)
-            ->with('success', 'Background process creation started.');
+            ->route('sites.background-processes', $site)->with('success', 'Background process creation started.');
     }
 
     public function update(UpdateSiteBackgroundProcessRequest $request, Site $site, BackgroundProcess $process): RedirectResponse
@@ -73,8 +72,7 @@ class SiteBackgroundProcessController extends Controller
         SyncBackgroundProcessJob::dispatch($process);
 
         return redirect()
-            ->route('sites.background-processes', $site)
-            ->with('success', 'Background process update started.');
+            ->route('sites.background-processes', $site)->with('success', 'Background process update started.');
     }
 
     public function destroy(Site $site, BackgroundProcess $process): RedirectResponse
@@ -98,8 +96,7 @@ class SiteBackgroundProcessController extends Controller
         RemoveBackgroundProcessJob::dispatch($process);
 
         return redirect()
-            ->route('sites.background-processes', $site)
-            ->with('success', 'Background process deletion started.');
+            ->route('sites.background-processes', $site)->with('success', 'Background process deletion started.');
     }
 
     public function restart(Site $site, BackgroundProcess $process): RedirectResponse
@@ -112,8 +109,7 @@ class SiteBackgroundProcessController extends Controller
         RestartBackgroundProcessJob::dispatch($process);
 
         return redirect()
-            ->route('sites.background-processes', $site)
-            ->with('success', 'Background process restart initiated.');
+            ->route('sites.background-processes', $site)->with('success', 'Background process restart initiated.');
     }
 
     public function start(Site $site, BackgroundProcess $process): RedirectResponse
@@ -126,8 +122,7 @@ class SiteBackgroundProcessController extends Controller
         StartBackgroundProcessJob::dispatch($process);
 
         return redirect()
-            ->route('sites.background-processes', $site)
-            ->with('success', 'Background process start initiated.');
+            ->route('sites.background-processes', $site)->with('success', 'Background process start initiated.');
     }
 
     public function stop(Site $site, BackgroundProcess $process): RedirectResponse
@@ -140,7 +135,6 @@ class SiteBackgroundProcessController extends Controller
         StopBackgroundProcessJob::dispatch($process);
 
         return redirect()
-            ->route('sites.background-processes', $site)
-            ->with('success', 'Background process stop initiated.');
+            ->route('sites.background-processes', $site)->with('success', 'Background process stop initiated.');
     }
 }

@@ -106,8 +106,7 @@ class CertificateController extends Controller
             CertificateType::Clone => 'Certificate is being cloned.',
         };
 
-        return redirect()->route('sites.domains.index', $site)
-            ->with('success', $successMessage);
+        return redirect()->route('sites.domains.index', $site)->with('success', $successMessage);
     }
 
     public function destroy(Site $site, Certificate $certificate): RedirectResponse
@@ -115,16 +114,14 @@ class CertificateController extends Controller
         Gate::authorize('update', $site->server);
 
         if ($certificate->active) {
-            return redirect()->route('sites.domains.index', $site)
-                ->with('error', 'Cannot delete an active certificate. Please deactivate it first.');
+            return redirect()->route('sites.domains.index', $site)->with('error', 'Cannot delete an active certificate. Please deactivate it first.');
         }
 
         $certificate->update(['status' => CertificateStatus::Removing]);
 
         DeleteCertificateJob::dispatch($certificate);
 
-        return redirect()->route('sites.domains.index', $site)
-            ->with('success', 'Certificate is being removed.');
+        return redirect()->route('sites.domains.index', $site)->with('success', 'Certificate is being removed.');
     }
 
     public function activate(Site $site, Certificate $certificate): RedirectResponse
@@ -132,8 +129,7 @@ class CertificateController extends Controller
         Gate::authorize('update', $site->server);
 
         if ($certificate->status !== CertificateStatus::Installed) {
-            return redirect()->route('sites.domains.index', $site)
-                ->with('error', 'Only installed certificates can be activated.');
+            return redirect()->route('sites.domains.index', $site)->with('error', 'Only installed certificates can be activated.');
         }
 
         // Deactivate all other certificates for this site
@@ -142,8 +138,7 @@ class CertificateController extends Controller
         // Dispatch job to enable SSL on the server
         EnableSslJob::dispatch($certificate);
 
-        return redirect()->route('sites.domains.index', $site)
-            ->with('success', 'Certificate is being activated.');
+        return redirect()->route('sites.domains.index', $site)->with('success', 'Certificate is being activated.');
     }
 
     public function deactivate(Site $site, Certificate $certificate): RedirectResponse
@@ -151,15 +146,13 @@ class CertificateController extends Controller
         Gate::authorize('update', $site->server);
 
         if (! $certificate->active) {
-            return redirect()->route('sites.domains.index', $site)
-                ->with('error', 'Certificate is already inactive.');
+            return redirect()->route('sites.domains.index', $site)->with('error', 'Certificate is already inactive.');
         }
 
         // Dispatch job to disable SSL on the server
         DisableSslJob::dispatch($certificate);
 
-        return redirect()->route('sites.domains.index', $site)
-            ->with('success', 'Certificate is being deactivated.');
+        return redirect()->route('sites.domains.index', $site)->with('success', 'Certificate is being deactivated.');
     }
 
     public function renew(Site $site, Certificate $certificate): RedirectResponse
@@ -167,16 +160,14 @@ class CertificateController extends Controller
         Gate::authorize('update', $site->server);
 
         if ($certificate->status !== CertificateStatus::Installed) {
-            return redirect()->route('sites.domains.index', $site)
-                ->with('error', 'Only installed certificates can be renewed.');
+            return redirect()->route('sites.domains.index', $site)->with('error', 'Only installed certificates can be renewed.');
         }
 
         $certificate->update(['status' => CertificateStatus::Renewing]);
 
         RenewCertificateJob::dispatch($certificate);
 
-        return redirect()->route('sites.domains.index', $site)
-            ->with('success', 'Certificate is being renewed.');
+        return redirect()->route('sites.domains.index', $site)->with('success', 'Certificate is being renewed.');
     }
 
     public function verifyDns(Site $site, Certificate $certificate): JsonResponse
@@ -215,16 +206,14 @@ class CertificateController extends Controller
         Gate::authorize('update', $site->server);
 
         if ($certificate->status !== CertificateStatus::PendingVerification) {
-            return redirect()->route('sites.domains.index', $site)
-                ->with('error', 'Certificate is not pending verification.');
+            return redirect()->route('sites.domains.index', $site)->with('error', 'Certificate is not pending verification.');
         }
 
         // Verify all DNS records before proceeding
         $acmeSubdomains = $certificate->acme_subdomains ?? [];
 
         if (empty($acmeSubdomains)) {
-            return redirect()->route('sites.domains.index', $site)
-                ->with('error', 'No ACME subdomains configured for verification.');
+            return redirect()->route('sites.domains.index', $site)->with('error', 'No ACME subdomains configured for verification.');
         }
 
         $cloudflare = new CloudflareService;
@@ -239,15 +228,13 @@ class CertificateController extends Controller
         }
 
         if (! empty($failedDomains)) {
-            return redirect()->route('sites.domains.index', $site)
-                ->with('error', 'DNS verification failed for: '.implode(', ', $failedDomains));
+            return redirect()->route('sites.domains.index', $site)->with('error', 'DNS verification failed for: '.implode(', ', $failedDomains));
         }
 
         $certificate->update(['status' => CertificateStatus::Installing]);
         ObtainCertificateJob::dispatch($certificate);
 
-        return redirect()->route('sites.domains.index', $site)
-            ->with('success', 'DNS verified. Certificate is being installed.');
+        return redirect()->route('sites.domains.index', $site)->with('success', 'DNS verified. Certificate is being installed.');
     }
 
     /**

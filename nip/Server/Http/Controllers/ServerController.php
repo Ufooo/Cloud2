@@ -92,8 +92,7 @@ class ServerController extends Controller
         $this->createSshKeysFromRequest($request, $server, $netiparUser);
 
         return redirect()
-            ->route('servers.show', $server)
-            ->with('success', 'Server created successfully.');
+            ->route('servers.show', $server)->with('success', 'Server created successfully.');
     }
 
     public function destroy(Server $server): RedirectResponse
@@ -103,8 +102,7 @@ class ServerController extends Controller
         $server->delete();
 
         return redirect()
-            ->route('servers.index')
-            ->with('success', 'Server deleted successfully.');
+            ->route('servers.index')->with('success', 'Server deleted successfully.');
     }
 
     public function settings(Server $server): Response
@@ -125,8 +123,7 @@ class ServerController extends Controller
         $server->update($request->validated());
 
         return redirect()
-            ->route('servers.settings', $server)
-            ->with('success', 'Server settings updated successfully.');
+            ->route('servers.settings', $server)->with('success', 'Server settings updated successfully.');
     }
 
     private function prepareServerForResponse(Server $server): void

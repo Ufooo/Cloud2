@@ -51,8 +51,7 @@ class NetworkController extends Controller
         SyncFirewallRuleJob::dispatch($rule);
 
         return redirect()
-            ->route('servers.network', $server)
-            ->with('success', 'Firewall rule created. Installing on server...');
+            ->route('servers.network', $server)->with('success', 'Firewall rule created. Installing on server...');
     }
 
     public function destroy(Server $server, FirewallRule $rule): RedirectResponse
@@ -66,7 +65,6 @@ class NetworkController extends Controller
         RemoveFirewallRuleJob::dispatch($rule);
 
         return redirect()
-            ->route('servers.network', $server)
-            ->with('success', 'Removing firewall rule from server...');
+            ->route('servers.network', $server)->with('success', 'Removing firewall rule from server...');
     }
 }

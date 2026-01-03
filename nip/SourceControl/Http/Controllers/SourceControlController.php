@@ -67,16 +67,14 @@ class SourceControlController extends Controller
 
         if (! $state || $state !== $sessionState) {
             return redirect()
-                ->route('source-control.index')
-                ->with('error', 'Invalid state. Please try again.');
+                ->route('source-control.index')->with('error', 'Invalid state. Please try again.');
         }
 
         $code = $request->query('code');
 
         if (! $code) {
             return redirect()
-                ->route('source-control.index')
-                ->with('error', 'Authorization was cancelled.');
+                ->route('source-control.index')->with('error', 'Authorization was cancelled.');
         }
 
         try {
@@ -96,8 +94,7 @@ class SourceControlController extends Controller
 
             if (! $userInfo) {
                 return redirect()
-                    ->route('source-control.index')
-                    ->with('error', 'Failed to fetch user info from provider.');
+                    ->route('source-control.index')->with('error', 'Failed to fetch user info from provider.');
             }
 
             // Create or update source control record
@@ -118,15 +115,13 @@ class SourceControlController extends Controller
             );
 
             return redirect()
-                ->route('source-control.index')
-                ->with('success', "{$providerEnum->label()} connected successfully!");
+                ->route('source-control.index')->with('success', "{$providerEnum->label()} connected successfully!");
 
         } catch (\Exception $e) {
             report($e);
 
             return redirect()
-                ->route('source-control.index')
-                ->with('error', 'Failed to connect. Please try again.');
+                ->route('source-control.index')->with('error', 'Failed to connect. Please try again.');
         }
     }
 
@@ -138,8 +133,7 @@ class SourceControlController extends Controller
         $sourceControl->delete();
 
         return redirect()
-            ->route('source-control.index')
-            ->with('success', "{$providerLabel} disconnected successfully.");
+            ->route('source-control.index')->with('success', "{$providerLabel} disconnected successfully.");
     }
 
     public function repositories(SourceControl $sourceControl): JsonResponse
