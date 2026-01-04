@@ -7,6 +7,29 @@ systemctl enable nginx.service
 
 openssl dhparam -out /etc/nginx/dhparams.pem 2048
 
+# Create Netipar FastCGI Defaults
+
+cat > /etc/nginx/netipar_fastcgi_defaults << 'EOF'
+# Netipar Cloud - FastCGI Defaults
+# Common FastCGI parameters for PHP applications
+
+# Script path parameters
+fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+fastcgi_param PATH_INFO $fastcgi_path_info;
+
+# Buffer settings for optimal performance
+fastcgi_buffers 16 16k;
+fastcgi_buffer_size 32k;
+
+# Timeouts
+fastcgi_connect_timeout 60;
+fastcgi_send_timeout 180;
+fastcgi_read_timeout 180;
+
+# Intercept errors for custom error pages
+fastcgi_intercept_errors off;
+EOF
+
 # Tweak Some PHP-FPM Settings
 
 sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/php/{{ $phpVersion }}/fpm/php.ini

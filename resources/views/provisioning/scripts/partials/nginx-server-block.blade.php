@@ -45,11 +45,7 @@ server {
         fastcgi_pass unix:{{ $phpSocket }};
         fastcgi_index index.php;
         include fastcgi_params;
-        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
-        fastcgi_param PATH_INFO $fastcgi_path_info;
-
-        fastcgi_buffers 16 16k;
-        fastcgi_buffer_size 32k;
+        include netipar_fastcgi_defaults;
     }
 
     location ~ /\.(?!well-known).* {

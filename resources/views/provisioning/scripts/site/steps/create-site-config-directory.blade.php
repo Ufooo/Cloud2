@@ -19,14 +19,27 @@ fi
 # Create FastCGI Defaults (only once per server)
 #
 
-if [ ! -f /etc/nginx/netipar_fastcgi_defaults ]; then
-    echo "Creating FastCGI defaults..."
-    cat > /etc/nginx/netipar_fastcgi_defaults << 'EOF'
-# Netipar FastCGI Defaults
-fastcgi_buffers 32 32k;
-fastcgi_buffer_size 64k;
+echo "Creating/Updating FastCGI defaults..."
+cat > /etc/nginx/netipar_fastcgi_defaults << 'EOF'
+# Netipar Cloud - FastCGI Defaults
+# Common FastCGI parameters for PHP applications
+
+# Script path parameters
+fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+fastcgi_param PATH_INFO $fastcgi_path_info;
+
+# Buffer settings for optimal performance
+fastcgi_buffers 16 16k;
+fastcgi_buffer_size 32k;
+
+# Timeouts
+fastcgi_connect_timeout 60;
+fastcgi_send_timeout 180;
+fastcgi_read_timeout 180;
+
+# Intercept errors for custom error pages
+fastcgi_intercept_errors off;
 EOF
-fi
 
 #
 # Create Site Nginx Configuration Directory
@@ -70,6 +83,7 @@ resolver_timeout 5s;
 
 # Security Headers
 add_header X-Frame-Options "SAMEORIGIN" always;
+add_header X-XSS-Protection "1; mode=block" always;
 add_header X-Content-Type-Options "nosniff" always;
 add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 add_header Permissions-Policy "camera=(), geolocation=(), magnetometer=(), microphone=(), payment=(), usb=()" always;
