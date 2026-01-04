@@ -116,7 +116,7 @@ class SiteData extends Data
             deployKey: $site->deploy_key,
             detectedPackages: $site->detected_packages,
             packageDetails: $site->detected_packages
-                ? DetectedPackageData::fromPackageValues($site->detected_packages)
+                ? DetectedPackageData::fromPackageValues($site->detected_packages, $site)
                 : null,
             packages: $site->packages,
             can: new SitePermissionsData(

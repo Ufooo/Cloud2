@@ -7,9 +7,9 @@ set -e
 PROGRAM_NAME="{{ $programName }}"
 CONFIG_FILE="/etc/supervisor/conf.d/${PROGRAM_NAME}.conf"
 
-# Stop the program if running
-if supervisorctl status "${PROGRAM_NAME}" 2>/dev/null; then
-    supervisorctl stop "${PROGRAM_NAME}" || true
+# Stop the program group if running
+if supervisorctl status "${PROGRAM_NAME}:*" 2>/dev/null; then
+    supervisorctl stop "${PROGRAM_NAME}:*" || true
 fi
 
 # Remove the configuration file

@@ -93,6 +93,17 @@ enum DetectedPackage: string
         };
     }
 
+    public function disableActionLabel(): ?string
+    {
+        return match ($this) {
+            self::Horizon => 'Stop Horizon',
+            self::Inertia => 'Disable SSR',
+            self::Octane => 'Stop Octane',
+            self::Reverb => 'Stop Reverb',
+            default => null,
+        };
+    }
+
     public function description(): string
     {
         return match ($this) {

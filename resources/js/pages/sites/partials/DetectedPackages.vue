@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import { detectPackages } from '@/actions/Nip/Site/Http/Controllers/SiteController';
+import {
+    detectPackages,
+    disableSSR,
+    enableSSR,
+} from '@/actions/Nip/Site/Http/Controllers/SiteController';
 import { enableLaravelScheduler } from '@/actions/Nip/Scheduler/Http/Controllers/SiteScheduledJobController';
 import { Button } from '@/components/ui/button';
 import {
@@ -30,6 +34,7 @@ const props = defineProps<Props>();
 
 const isDetecting = ref(false);
 const isEnablingScheduler = ref(false);
+const processingPackage = ref<string | null>(null);
 const packageDetails = ref<DetectedPackageData[]>(props.site.packageDetails ?? []);
 const localPackages = ref<Record<string, boolean>>(props.site.packages ?? {});
 
@@ -101,6 +106,35 @@ function handleEnableScheduler() {
         },
     );
 }
+
+function handlePackageAction(pkg: DetectedPackageData) {
+    if (!pkg.hasEnableAction) {
+        return;
+    }
+
+    processingPackage.value = pkg.value;
+
+    const url = pkg.isEnabled
+        ? disableSSR.url(props.site)
+        : enableSSR.url(props.site);
+
+    router.post(
+        url,
+        {},
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                processingPackage.value = null;
+            },
+        },
+    );
+}
+
+function getPackageActionLabel(pkg: DetectedPackageData): string {
+    return pkg.isEnabled
+        ? (pkg.disableActionLabel ?? 'Disable')
+        : (pkg.enableActionLabel ?? 'Enable');
+}
 </script>
 
 <template>
@@ -169,8 +203,14 @@ function handleEnableScheduler() {
                         v-if="pkg.hasEnableAction"
                         variant="outline"
                         size="sm"
+                        :disabled="processingPackage === pkg.value"
+                        @click="handlePackageAction(pkg)"
                     >
-                        {{ pkg.enableActionLabel }}
+                        <Loader2
+                            v-if="processingPackage === pkg.value"
+                            class="mr-2 size-4 animate-spin"
+                        />
+                        {{ getPackageActionLabel(pkg) }}
                     </Button>
                 </div>
 

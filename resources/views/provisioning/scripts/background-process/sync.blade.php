@@ -7,32 +7,38 @@ set -e
 
 PROGRAM_NAME="netipar-{{ $processId }}"
 CONFIG_FILE="/etc/supervisor/conf.d/${PROGRAM_NAME}.conf"
+LOG_DIR="/home/{{ $user }}/.netipar"
+
+# Ensure log directory exists
+mkdir -p "${LOG_DIR}"
+chown {{ $user }}:{{ $user }} "${LOG_DIR}"
 
 # Create supervisor configuration
 cat > "${CONFIG_FILE}" <<'SUPERVISOR_CONFIG'
 [program:{{ 'netipar-'.$processId }}]
 command={{ $command }}
 directory={{ $directory }}
+process_name=%(program_name)s_%(process_num)02d
 user={{ $user }}
 numprocs={{ $processes }}
 autostart=true
 autorestart=true
 startsecs={{ $startsecs }}
 stopwaitsecs={{ $stopwaitsecs }}
-stopsignal={{ $stopsignal }}
-stdout_logfile=/var/log/supervisor/{{ 'netipar-'.$processId }}.log
-stderr_logfile=/var/log/supervisor/{{ 'netipar-'.$processId }}.error.log
+stopsignal=SIG{{ $stopsignal }}
+redirect_stderr=true
+stdout_logfile=/home/{{ $user }}/.netipar/{{ 'netipar-'.$processId }}.log
+stdout_logfile_maxbytes=5MB
+stdout_logfile_backups=3
+stopasgroup=true
+killasgroup=true
 SUPERVISOR_CONFIG
 
 # Reload supervisor configuration
 supervisorctl reread
 supervisorctl update
 
-# Start or restart the program
-if supervisorctl status "${PROGRAM_NAME}" 2>/dev/null | grep -q "RUNNING"; then
-    supervisorctl restart "${PROGRAM_NAME}"
-else
-    supervisorctl start "${PROGRAM_NAME}" || true
-fi
+# Start the program
+supervisorctl start "${PROGRAM_NAME}:*"
 
 echo "Background process ${PROGRAM_NAME} synced successfully"

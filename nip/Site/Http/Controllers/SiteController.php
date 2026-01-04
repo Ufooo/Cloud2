@@ -20,6 +20,7 @@ use Nip\Server\Enums\ServerStatus;
 use Nip\Server\Models\Server;
 use Nip\Site\Data\SiteData;
 use Nip\Site\Enums\DeployStatus;
+use Nip\Site\Enums\DetectedPackage;
 use Nip\Site\Enums\PackageManager;
 use Nip\Site\Enums\SiteStatus;
 use Nip\Site\Enums\SiteType;
@@ -30,6 +31,7 @@ use Nip\Site\Http\Resources\SiteResource;
 use Nip\Site\Jobs\DeleteSiteJob;
 use Nip\Site\Jobs\DeploySiteJob;
 use Nip\Site\Models\Site;
+use Nip\Site\Services\InertiaSSRService;
 use Nip\Site\Services\PackageDetectionService;
 use Nip\Site\Services\SitePhpVersionService;
 use Nip\Site\Services\SiteProvisioningService;
@@ -309,5 +311,39 @@ class SiteController extends Controller
             'packages' => $packages,
             'packageDetails' => $packageDetails,
         ]);
+    }
+
+    public function enableSSR(Site $site, InertiaSSRService $ssrService): RedirectResponse
+    {
+        Gate::authorize('update', $site->server);
+
+        abort_unless($site->status === SiteStatus::Installed, 403, 'Site must be installed to enable SSR.');
+
+        $detectedPackages = $site->detected_packages ?? [];
+        abort_unless(
+            in_array(DetectedPackage::Inertia->value, $detectedPackages, true),
+            403,
+            'Inertia must be detected to enable SSR.'
+        );
+
+        abort_if($ssrService->isEnabled($site), 409, 'SSR is already enabled.');
+
+        $ssrService->enable($site);
+
+        return redirect()
+            ->back()->with('success', 'Inertia SSR is being enabled...');
+    }
+
+    public function disableSSR(Site $site, InertiaSSRService $ssrService): RedirectResponse
+    {
+        Gate::authorize('update', $site->server);
+
+        abort_unless($site->status === SiteStatus::Installed, 403, 'Site must be installed to disable SSR.');
+        abort_unless($ssrService->isEnabled($site), 409, 'SSR is not enabled.');
+
+        $ssrService->disable($site);
+
+        return redirect()
+            ->back()->with('success', 'Inertia SSR is being disabled...');
     }
 }

@@ -23,4 +23,6 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
     Route::delete('/sites/{site}', [SiteController::class, 'destroy'])->name('sites.destroy');
     Route::post('/sites/{site}/deploy', [SiteController::class, 'deploy'])->name('sites.deploy');
     Route::post('/sites/{site}/detect-packages', [SiteController::class, 'detectPackages'])->name('sites.detectPackages');
+    Route::post('/sites/{site}/enable-ssr', [SiteController::class, 'enableSSR'])->name('sites.enableSSR');
+    Route::post('/sites/{site}/disable-ssr', [SiteController::class, 'disableSSR'])->name('sites.disableSSR');
 });
