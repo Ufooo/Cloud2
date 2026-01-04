@@ -50,6 +50,8 @@ if [ -f "/var/log/nginx/{{ $domain }}-error.log" ]; then
     rm -f /var/log/nginx/{{ $domain }}-error.log
 fi
 
+@include('provisioning.scripts.site.partials.cors-config')
+
 #
 # Test and Reload Nginx
 #

@@ -68,11 +68,15 @@ ssl_stapling_verify on;
 resolver 1.1.1.1 8.8.8.8 valid=300s;
 resolver_timeout 5s;
 
-# Security headers
+# Security Headers
 add_header X-Frame-Options "SAMEORIGIN" always;
 add_header X-Content-Type-Options "nosniff" always;
-add_header X-XSS-Protection "1; mode=block" always;
 add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+add_header Permissions-Policy "camera=(), geolocation=(), magnetometer=(), microphone=(), payment=(), usb=()" always;
+add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+
+# CORS - Allow cross-origin requests between site domains
+include netipar-conf/{{ $site->id }}/cors.conf;
 
 # Default index files
 index index.html index.htm index.php;
@@ -82,16 +86,9 @@ charset utf-8;
 
 # NETIPAR CONFIG (DO NOT REMOVE!)
 include netipar-conf/{{ $site->id }}/server/*;
-
-# Common locations
-location = /favicon.ico { access_log off; log_not_found off; }
-location = /favicon.svg { access_log off; log_not_found off; }
-location = /robots.txt  { access_log off; log_not_found off; }
-
-# Deny access to hidden files (except .well-known)
-location ~ /\.(?!well-known).* {
-    deny all;
-}
 EOF
+
+SITE_CONF_DIR="$NGINX_CONF_DIR"
+@include('provisioning.scripts.site.partials.cors-config')
 
 echo "Site configuration directory created at $NGINX_CONF_DIR"

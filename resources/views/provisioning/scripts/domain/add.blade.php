@@ -53,6 +53,8 @@ if [ ! -L "/etc/nginx/sites-enabled/{{ $domain }}" ]; then
     ln -s /etc/nginx/sites-available/{{ $domain }} /etc/nginx/sites-enabled/{{ $domain }}
 fi
 
+@include('provisioning.scripts.site.partials.cors-config')
+
 #
 # Test and Reload Nginx
 #
