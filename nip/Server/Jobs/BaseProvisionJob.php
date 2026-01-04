@@ -117,8 +117,12 @@ abstract class BaseProvisionJob implements ShouldQueue
     protected function createProvisionScript(): void
     {
         $server = $this->getServer();
-        $scriptId = time().'_'.uniqid();
+        // Format: YYYYMMDD_HHMMSS_microseconds (like Forge: 20260103_144248_96052)
+        $scriptId = now()->format('Ymd_His').'_'.substr((string) hrtime(true), -6);
         $filename = "provision-{$scriptId}.sh";
+
+        $originalScript = $this->generateScript();
+        $wrappedScript = $this->wrapScript($originalScript, $scriptId);
 
         $this->script = ProvisionScript::create([
             'server_id' => $server->id,
@@ -126,9 +130,42 @@ abstract class BaseProvisionJob implements ShouldQueue
             'resource_type' => $this->getResourceType(),
             'resource_id' => $this->getResourceId(),
             'run_as_user' => $this->getRunAsUser(),
-            'content' => $this->generateScript(),
+            'content' => $wrappedScript,
             'status' => ProvisionScriptStatus::Executing,
         ]);
+    }
+
+    /**
+     * Wrap the script with logging and audit trail functionality.
+     * Similar to Forge's approach - saves script to file and logs output.
+     */
+    protected function wrapScript(string $script, string $scriptId): string
+    {
+        $runAsUser = $this->getRunAsUser();
+        $netiparDir = $runAsUser ? "/home/{$runAsUser}/.netipar" : '/root/.netipar';
+        $scriptFile = "{$netiparDir}/provision-{$scriptId}.sh";
+        $outputFile = "{$netiparDir}/provision-{$scriptId}.output";
+
+        return <<<BASH
+#!/bin/bash
+
+mkdir -p "{$netiparDir}"
+
+cat > "{$scriptFile}" << 'NETIPAR_SCRIPT_{$scriptId}'
+{$script}
+NETIPAR_SCRIPT_{$scriptId}
+
+chmod +x "{$scriptFile}"
+
+bash "{$scriptFile}" 2>&1 | tee "{$outputFile}"
+NETIPAR_STATUS=\${PIPESTATUS[0]}
+
+# Clean up old provision files (keep last 50)
+cd "{$netiparDir}" && ls -t provision-*.sh 2>/dev/null | tail -n +51 | xargs -r rm -f
+cd "{$netiparDir}" && ls -t provision-*.output 2>/dev/null | tail -n +51 | xargs -r rm -f
+
+exit \$NETIPAR_STATUS
+BASH;
     }
 
     protected function shouldRetry(Exception $e): bool
