@@ -29,6 +29,15 @@ fi
 echo "Certificate files verified"
 
 #
+# Remove legacy ssl.conf (SSL settings are now in site.conf)
+#
+
+if [ -f "$SITE_CONF_DIR/server/ssl.conf" ]; then
+    echo "Removing legacy ssl.conf (SSL settings moved to site.conf)..."
+    rm -f "$SITE_CONF_DIR/server/ssl.conf"
+fi
+
+#
 # Determine nginx version for http2 syntax
 #
 

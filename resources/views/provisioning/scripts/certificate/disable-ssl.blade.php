@@ -64,6 +64,15 @@ fi
 
 echo "SSL configuration disabled for all domains"
 
+#
+# Remove legacy ssl.conf (SSL settings are now in site.conf)
+#
+
+if [ -f "$SITE_CONF_DIR/server/ssl.conf" ]; then
+    echo "Removing legacy ssl.conf (SSL settings moved to site.conf)..."
+    rm -f "$SITE_CONF_DIR/server/ssl.conf"
+fi
+
 # Note: We intentionally keep certificate files at $CERT_PATH
 # This allows quick reactivation without re-obtaining the certificate
 echo "Certificate files preserved at $CERT_PATH for future reactivation"
