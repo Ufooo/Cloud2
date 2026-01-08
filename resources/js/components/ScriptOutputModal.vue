@@ -62,7 +62,7 @@ defineExpose({ open, close });
 
 <template>
     <Dialog v-model:open="isOpen">
-        <DialogContent class="max-w-4xl">
+        <DialogContent class="sm:max-w-6xl">
             <DialogHeader>
                 <DialogTitle class="flex items-center gap-2">
                     <span>{{ script?.displayableName }} Output</span>
@@ -85,7 +85,7 @@ defineExpose({ open, close });
             </DialogHeader>
 
             <div
-                class="h-[400px] overflow-auto rounded-md border bg-zinc-950 p-4"
+                class="h-[500px] overflow-auto rounded-md border bg-zinc-950 p-4"
             >
                 <pre
                     v-if="script?.output"
