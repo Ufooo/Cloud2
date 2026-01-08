@@ -75,7 +75,11 @@ const { getStatusIcon, getStatusClass, isDeploying } = useDeploymentStatus();
                             class="size-5 shrink-0"
                             :class="[
                                 getStatusClass(deployment.status),
-                                { 'animate-spin': isDeploying(deployment.status) },
+                                {
+                                    'animate-spin': isDeploying(
+                                        deployment.status,
+                                    ),
+                                },
                             ]"
                         />
 

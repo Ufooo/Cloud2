@@ -62,7 +62,11 @@ const hasPackages = computed(() => visiblePackages.value.length > 0);
                     ? 'bg-green-50 text-green-700 ring-green-600/20 dark:bg-green-500/10 dark:text-green-400 dark:ring-green-500/20'
                     : 'bg-muted text-muted-foreground ring-border',
             ]"
-            :title="pkg.enabled ? `${pkg.label} (Active)` : `${pkg.label} (Installed)`"
+            :title="
+                pkg.enabled
+                    ? `${pkg.label} (Active)`
+                    : `${pkg.label} (Installed)`
+            "
         >
             {{ pkg.label }}
         </span>

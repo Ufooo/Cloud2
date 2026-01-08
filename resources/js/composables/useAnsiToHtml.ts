@@ -36,9 +36,9 @@ const ANSI_PATTERNS = [
     { prefix: '\\u001b[', prefixLength: 7 },
 ] as const;
 
-export function useAnsiToHtml(
-    output: Ref<string | null | undefined>,
-): { html: ComputedRef<string> } {
+export function useAnsiToHtml(output: Ref<string | null | undefined>): {
+    html: ComputedRef<string>;
+} {
     const html = computed<string>(() => {
         if (!output.value) {
             return '';
@@ -85,12 +85,16 @@ export function convertAnsiToHtml(text: string): string {
 
         // Check for any ANSI escape sequence pattern
         for (const pattern of ANSI_PATTERNS) {
-            if (text.substring(i, i + pattern.prefixLength) === pattern.prefix) {
+            if (
+                text.substring(i, i + pattern.prefixLength) === pattern.prefix
+            ) {
                 const escapeStart = i + pattern.prefixLength;
                 const escapeEnd = text.indexOf('m', escapeStart);
 
                 if (escapeEnd !== -1) {
-                    const codes = text.substring(escapeStart, escapeEnd).split(';');
+                    const codes = text
+                        .substring(escapeStart, escapeEnd)
+                        .split(';');
 
                     // Close previous span if exists
                     if (currentClasses.length > 0) {

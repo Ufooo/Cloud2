@@ -1,10 +1,10 @@
 <script setup lang="ts">
+import { enableLaravelScheduler } from '@/actions/Nip/Scheduler/Http/Controllers/SiteScheduledJobController';
 import {
     detectPackages,
     disableSSR,
     enableSSR,
 } from '@/actions/Nip/Site/Http/Controllers/SiteController';
-import { enableLaravelScheduler } from '@/actions/Nip/Scheduler/Http/Controllers/SiteScheduledJobController';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -35,7 +35,9 @@ const props = defineProps<Props>();
 const isDetecting = ref(false);
 const isEnablingScheduler = ref(false);
 const processingPackage = ref<string | null>(null);
-const packageDetails = ref<DetectedPackageData[]>(props.site.packageDetails ?? []);
+const packageDetails = ref<DetectedPackageData[]>(
+    props.site.packageDetails ?? [],
+);
 const localPackages = ref<Record<string, boolean>>(props.site.packages ?? {});
 
 const hasDetected = computed(() => packageDetails.value.length > 0);
@@ -148,7 +150,10 @@ function getPackageActionLabel(pkg: DetectedPackageData): string {
                     </CardTitle>
                     <CardDescription>
                         <template v-if="hasDetected">
-                            {{ packageDetails.length }} package{{ packageDetails.length === 1 ? '' : 's' }} detected
+                            {{ packageDetails.length }} package{{
+                                packageDetails.length === 1 ? '' : 's'
+                            }}
+                            detected
                         </template>
                         <template v-else>
                             Detect installed Laravel packages
@@ -161,7 +166,10 @@ function getPackageActionLabel(pkg: DetectedPackageData): string {
                     @click="handleDetectPackages"
                     :disabled="isDetecting"
                 >
-                    <Loader2 v-if="isDetecting" class="mr-2 size-4 animate-spin" />
+                    <Loader2
+                        v-if="isDetecting"
+                        class="mr-2 size-4 animate-spin"
+                    />
                     <RefreshCw v-else class="mr-2 size-4" />
                     {{ hasDetected ? 'Refresh' : 'Detect' }}
                 </Button>
@@ -170,11 +178,7 @@ function getPackageActionLabel(pkg: DetectedPackageData): string {
         <CardContent>
             <!-- Loading state -->
             <div v-if="isDetecting" class="space-y-3">
-                <div
-                    v-for="i in 4"
-                    :key="i"
-                    class="flex items-center gap-3"
-                >
+                <div v-for="i in 4" :key="i" class="flex items-center gap-3">
                     <Skeleton class="size-6 rounded-full" />
                     <div class="space-y-1">
                         <Skeleton class="h-4 w-24" />
@@ -221,10 +225,18 @@ function getPackageActionLabel(pkg: DetectedPackageData): string {
                     class="flex items-center justify-between rounded-lg border p-3"
                 >
                     <div class="flex items-center gap-3">
-                        <CheckCircle v-if="feature.isEnabled" class="size-5 text-green-500" />
-                        <Circle v-else class="size-5 text-muted-foreground/50" />
+                        <CheckCircle
+                            v-if="feature.isEnabled"
+                            class="size-5 text-green-500"
+                        />
+                        <Circle
+                            v-else
+                            class="size-5 text-muted-foreground/50"
+                        />
                         <div>
-                            <p class="text-sm font-medium">{{ feature.label }}</p>
+                            <p class="text-sm font-medium">
+                                {{ feature.label }}
+                            </p>
                             <p class="text-xs text-muted-foreground">
                                 {{ feature.description }}
                             </p>
@@ -237,7 +249,10 @@ function getPackageActionLabel(pkg: DetectedPackageData): string {
                         :disabled="feature.isEnabling"
                         @click="feature.onEnable"
                     >
-                        <Loader2 v-if="feature.isEnabling" class="mr-2 size-4 animate-spin" />
+                        <Loader2
+                            v-if="feature.isEnabling"
+                            class="mr-2 size-4 animate-spin"
+                        />
                         {{ feature.enableLabel }}
                     </Button>
                 </div>

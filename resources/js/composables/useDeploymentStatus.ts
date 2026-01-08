@@ -1,7 +1,11 @@
 import { CheckCircle, Clock, Loader2, XCircle } from 'lucide-vue-next';
 import type { Component } from 'vue';
 
-export type DeploymentStatusType = 'finished' | 'failed' | 'deploying' | 'pending';
+export type DeploymentStatusType =
+    | 'finished'
+    | 'failed'
+    | 'deploying'
+    | 'pending';
 
 export function useDeploymentStatus() {
     function getStatusIcon(status: string): Component {

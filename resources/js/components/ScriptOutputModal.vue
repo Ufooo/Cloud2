@@ -9,13 +9,17 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { useAnsiToHtml } from '@/composables/useAnsiToHtml';
 import type { ProvisionScriptData } from '@/types';
 import { ProvisionScriptStatus } from '@/types';
 import { Copy } from 'lucide-vue-next';
-import { computed, ref } from 'vue';
+import { computed, ref, toRef } from 'vue';
 
 const isOpen = ref(false);
 const script = ref<ProvisionScriptData | null>(null);
+
+const outputRef = toRef(() => script.value?.output);
+const { html: outputHtml } = useAnsiToHtml(outputRef);
 
 function open(scriptData: ProvisionScriptData) {
     script.value = scriptData;
@@ -90,8 +94,8 @@ defineExpose({ open, close });
                 <pre
                     v-if="script?.output"
                     class="font-mono text-sm whitespace-pre-wrap text-zinc-100"
-                    >{{ script.output }}</pre
-                >
+                    v-html="outputHtml"
+                />
                 <p v-else class="text-sm text-zinc-500">No output available</p>
             </div>
 

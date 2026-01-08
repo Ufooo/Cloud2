@@ -37,11 +37,15 @@ function triggerDeploy() {
     if (isDeployingInProgress.value) return;
 
     isDeployingInProgress.value = true;
-    router.post(deploy.url(props.site), {}, {
-        onFinish: () => {
-            isDeployingInProgress.value = false;
+    router.post(
+        deploy.url(props.site),
+        {},
+        {
+            onFinish: () => {
+                isDeployingInProgress.value = false;
+            },
         },
-    });
+    );
 }
 
 function getDeployStatusVariant(
@@ -91,10 +95,17 @@ function getDeployStatusVariant(
                             <Button
                                 v-if="site.can?.deploy"
                                 @click="triggerDeploy"
-                                :disabled="site.deployStatus === 'deploying' || isDeployingInProgress"
+                                :disabled="
+                                    site.deployStatus === 'deploying' ||
+                                    isDeployingInProgress
+                                "
                             >
                                 <Rocket class="mr-2 size-4" />
-                                {{ isDeployingInProgress ? 'Starting...' : 'Deploy now' }}
+                                {{
+                                    isDeployingInProgress
+                                        ? 'Starting...'
+                                        : 'Deploy now'
+                                }}
                             </Button>
                         </div>
                     </div>

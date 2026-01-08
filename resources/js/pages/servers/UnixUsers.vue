@@ -132,10 +132,12 @@ const { deleteResource: deleteUser } = useResourceDelete<UnixUser>({
                                 <p class="font-medium">{{ user.username }}</p>
                                 <p
                                     v-if="user.sitesCount > 0"
-                                    class="text-muted-foreground text-sm"
+                                    class="text-sm text-muted-foreground"
                                 >
                                     {{ user.sitesCount }}
-                                    {{ user.sitesCount === 1 ? 'site' : 'sites' }}
+                                    {{
+                                        user.sitesCount === 1 ? 'site' : 'sites'
+                                    }}
                                 </p>
                             </div>
                             <div class="flex items-center gap-2">

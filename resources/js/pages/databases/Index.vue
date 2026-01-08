@@ -41,7 +41,15 @@ import type {
 } from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { Database, Eye, EyeOff, Loader2, Plus, RefreshCw, User } from 'lucide-vue-next';
+import {
+    Database,
+    Eye,
+    EyeOff,
+    Loader2,
+    Plus,
+    RefreshCw,
+    User,
+} from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import DatabaseCardListItem from './partials/DatabaseCardListItem.vue';
 import DatabaseUserCardListItem from './partials/DatabaseUserCardListItem.vue';
@@ -453,7 +461,10 @@ async function handleRefreshSizes() {
                             :disabled="isRefreshingSizes"
                             @click="handleRefreshSizes"
                         >
-                            <Loader2 v-if="isRefreshingSizes" class="mr-2 size-4 animate-spin" />
+                            <Loader2
+                                v-if="isRefreshingSizes"
+                                class="mr-2 size-4 animate-spin"
+                            />
                             <RefreshCw v-else class="mr-2 size-4" />
                             Refresh sizes
                         </Button>

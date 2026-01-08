@@ -33,7 +33,11 @@ useEcho(`sites.${props.site.id}`, '.SiteProvisioningStepChanged', () => {
     <div class="space-y-6">
         <Card>
             <CardContent class="flex items-center gap-4 p-6">
-                <Avatar :name="site.domain" :color="site.avatarColor" size="lg" />
+                <Avatar
+                    :name="site.domain"
+                    :color="site.avatarColor"
+                    size="lg"
+                />
 
                 <div class="flex-1 space-y-1">
                     <div class="flex items-center gap-3">
@@ -97,7 +101,8 @@ useEcho(`sites.${props.site.id}`, '.SiteProvisioningStepChanged', () => {
                                 <div
                                     v-if="
                                         site.provisioningSteps &&
-                                        index < site.provisioningSteps.length - 1
+                                        index <
+                                            site.provisioningSteps.length - 1
                                     "
                                     class="h-12 w-0.5"
                                     :class="{
@@ -126,8 +131,7 @@ useEcho(`sites.${props.site.id}`, '.SiteProvisioningStepChanged', () => {
                                 </h3>
                                 <p
                                     v-if="
-                                        step.description &&
-                                        isActive(step.value)
+                                        step.description && isActive(step.value)
                                     "
                                     class="mt-1 text-sm text-muted-foreground"
                                 >
