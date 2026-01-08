@@ -233,8 +233,9 @@ class Site extends Model
     public function getWebPath(): string
     {
         $webDir = $this->web_directory === '/' ? '' : $this->web_directory;
+        $basePath = $this->zero_downtime ? $this->getCurrentPath() : $this->getFullPath();
 
-        return $this->getFullPath().$webDir;
+        return $basePath.$webDir;
     }
 
     public function getEffectivePhpVersion(): string
