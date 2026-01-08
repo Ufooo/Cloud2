@@ -45,16 +45,35 @@ class DetectedPackageData extends Data
 
         foreach (DetectedPackage::cases() as $package) {
             if (in_array($package->value, $packageValues, true)) {
-                $isEnabled = false;
-
-                if ($site && $package === DetectedPackage::Inertia) {
-                    $isEnabled = $ssrService->isEnabled($site);
-                }
-
+                $isEnabled = self::checkPackageEnabled($package, $site, $ssrService);
                 $details[] = self::fromEnum($package, $isEnabled);
             }
         }
 
         return $details;
+    }
+
+    protected static function checkPackageEnabled(
+        DetectedPackage $package,
+        ?Site $site,
+        ?InertiaSSRService $ssrService
+    ): bool {
+        if (! $site) {
+            return false;
+        }
+
+        return match ($package) {
+            DetectedPackage::Inertia => $ssrService?->isEnabled($site) ?? false,
+            DetectedPackage::Horizon => $site->backgroundProcesses()
+                ->where('command', 'like', '%horizon%')
+                ->exists(),
+            DetectedPackage::Reverb => $site->backgroundProcesses()
+                ->where('command', 'like', '%reverb%')
+                ->exists(),
+            DetectedPackage::Octane => $site->backgroundProcesses()
+                ->where('command', 'like', '%octane%')
+                ->exists(),
+            default => false,
+        };
     }
 }
