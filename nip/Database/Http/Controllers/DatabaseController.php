@@ -85,17 +85,33 @@ class DatabaseController extends Controller
     {
         Gate::authorize('view', $site->server);
 
-        $site->load('server');
+        $site->load(['server', 'database', 'databaseUser']);
 
         $databases = Database::query()
-            ->where('site_id', $site->id)
+            ->where(function ($query) use ($site) {
+                $query->where('site_id', $site->id);
+
+                if ($site->database_id) {
+                    $query->orWhere('id', $site->database_id);
+                }
+            })
             ->with(['server', 'site'])
             ->orderBy('name')
             ->paginate(15);
 
+        $databaseUsers = [];
+        if ($site->databaseUser) {
+            $databaseUsers = DatabaseUserResource::collection(
+                DatabaseUser::where('id', $site->database_user_id)
+                    ->with(['server', 'databases'])
+                    ->withCount('databases')
+                    ->get()
+            );
+        }
+
         return Inertia::render('databases/Index', [
             'databases' => DatabaseResource::collection($databases),
-            'databaseUsers' => [],
+            'databaseUsers' => $databaseUsers,
             'server' => null,
             'site' => SiteData::fromModel($site),
         ]);
