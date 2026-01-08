@@ -25,6 +25,17 @@ class EnableSslJob extends BaseProvisionJob
         $this->certificate->update([
             'active' => true,
         ]);
+
+        // Update domain records with certificate_id for domains in this certificate
+        foreach ($this->certificate->domains as $domain) {
+            $domainRecord = $this->certificate->site->domainRecords()
+                ->where('name', $domain)
+                ->first();
+
+            if ($domainRecord && ! $domainRecord->certificate_id) {
+                $domainRecord->update(['certificate_id' => $this->certificate->id]);
+            }
+        }
     }
 
     protected function handleFailure(\Throwable $exception): void
