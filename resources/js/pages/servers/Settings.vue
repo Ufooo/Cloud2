@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/select';
 import { useClipboard } from '@/composables/useClipboard';
 import { useConfirmation } from '@/composables/useConfirmation';
+import { IDENTITY_COLOR_MAP } from '@/composables/useIdentityColor';
 import ServerLayout from '@/layouts/ServerLayout.vue';
 import { IdentityColor, type Server } from '@/types';
 import { Head, router, useForm } from '@inertiajs/vue3';
@@ -52,17 +53,6 @@ const form = useForm({
     timezone: props.server.timezone,
     avatar_color: props.server.avatarColor,
 });
-
-const colorMap: Record<IdentityColor, string> = {
-    [IdentityColor.Blue]: 'bg-blue-500',
-    [IdentityColor.Green]: 'bg-green-500',
-    [IdentityColor.Orange]: 'bg-orange-500',
-    [IdentityColor.Purple]: 'bg-purple-500',
-    [IdentityColor.Red]: 'bg-red-500',
-    [IdentityColor.Yellow]: 'bg-yellow-500',
-    [IdentityColor.Cyan]: 'bg-cyan-500',
-    [IdentityColor.Gray]: 'bg-gray-500',
-};
 
 function submitForm() {
     form.transform((data) => ({
@@ -222,7 +212,7 @@ async function handleDelete() {
                                     type="button"
                                     class="size-8 rounded-md ring-offset-background transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
                                     :class="[
-                                        colorMap[
+                                        IDENTITY_COLOR_MAP[
                                             color.value as IdentityColor
                                         ] || 'bg-gray-500',
                                         form.avatar_color === color.value

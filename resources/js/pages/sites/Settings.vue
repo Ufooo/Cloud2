@@ -23,8 +23,10 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { useConfirmation } from '@/composables/useConfirmation';
+import { IDENTITY_COLOR_MAP } from '@/composables/useIdentityColor';
 import SiteLayout from '@/layouts/SiteLayout.vue';
 import { IdentityColor, type Site } from '@/types';
+import { isPhpBasedSiteType } from '@/utils/constants';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { Folder, GitBranch, Trash2 } from 'lucide-vue-next';
 import { computed } from 'vue';
@@ -45,21 +47,10 @@ const props = defineProps<Props>();
 
 const { confirmInput } = useConfirmation();
 
-const colorMap: Record<IdentityColor, string> = {
-    [IdentityColor.Blue]: 'bg-blue-500',
-    [IdentityColor.Green]: 'bg-green-500',
-    [IdentityColor.Orange]: 'bg-orange-500',
-    [IdentityColor.Purple]: 'bg-purple-500',
-    [IdentityColor.Red]: 'bg-red-500',
-    [IdentityColor.Yellow]: 'bg-yellow-500',
-    [IdentityColor.Cyan]: 'bg-cyan-500',
-    [IdentityColor.Gray]: 'bg-gray-500',
-};
-
 // General settings form
 const generalForm = useForm({
     type: props.site.type || '',
-    php_version: props.site.phpVersionValue || '',
+    php_version: props.site.phpVersionLabel || '',
     avatar_color: props.site.avatarColor as IdentityColor | null,
 });
 
@@ -117,15 +108,7 @@ async function handleDelete() {
 }
 
 // Check if site type is PHP-based to show PHP version selector
-const phpBasedTypes = [
-    'laravel',
-    'symfony',
-    'statamic',
-    'wordpress',
-    'phpmyadmin',
-    'php',
-];
-const isPhpBased = phpBasedTypes.includes(props.site.type || '');
+const isPhpBased = computed(() => isPhpBasedSiteType(props.site.type));
 </script>
 
 <template>
@@ -220,7 +203,7 @@ const isPhpBased = phpBasedTypes.includes(props.site.type || '');
                                     type="button"
                                     class="size-8 rounded-md ring-offset-background transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
                                     :class="[
-                                        colorMap[
+                                        IDENTITY_COLOR_MAP[
                                             color.value as IdentityColor
                                         ] || 'bg-gray-500',
                                         generalForm.avatar_color === color.value
