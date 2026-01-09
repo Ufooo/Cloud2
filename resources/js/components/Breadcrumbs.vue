@@ -7,12 +7,10 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
+import { dashboard } from '@/routes';
+import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';
 import { Link } from '@inertiajs/vue3';
-
-interface BreadcrumbItemType {
-    title: string;
-    href?: string;
-}
+import { LayoutDashboard } from 'lucide-vue-next';
 
 defineProps<{
     breadcrumbs: BreadcrumbItemType[];
@@ -22,6 +20,14 @@ defineProps<{
 <template>
     <Breadcrumb>
         <BreadcrumbList>
+            <BreadcrumbItem>
+                <BreadcrumbLink as-child>
+                    <Link :href="dashboard.url()">
+                        <LayoutDashboard class="size-4" />
+                    </Link>
+                </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
             <template v-for="(item, index) in breadcrumbs" :key="index">
                 <BreadcrumbItem>
                     <template v-if="index === breadcrumbs.length - 1">

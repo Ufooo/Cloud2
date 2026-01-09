@@ -4,13 +4,14 @@ import AppLogoIcon from '@/components/AppLogoIcon.vue';
 
 <template>
     <div
-        class="flex aspect-square size-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground"
+        class="flex aspect-square size-10 items-center justify-center rounded-xl bg-primary"
     >
-        <AppLogoIcon class="size-5 fill-current text-white dark:text-black" />
+        <AppLogoIcon class="size-5 fill-current text-white" />
     </div>
-    <div class="ml-1 grid flex-1 text-left text-sm">
-        <span class="mb-0.5 truncate leading-tight font-semibold"
-            >Laravel Starter Kit</span
-        >
+    <div class="flex flex-col">
+        <span class="font-semibold text-gray-900">NETipar Cloud</span>
+        <span class="text-xs text-gray-500">
+            Server Management
+        </span>
     </div>
 </template>

@@ -12,11 +12,9 @@ const props = defineProps<{
     data-slot="sidebar-menu-badge"
     data-sidebar="menu-badge"
     :class="cn(
-      'text-sidebar-foreground pointer-events-none absolute right-1 flex h-5 min-w-5 items-center justify-center rounded-md px-1 text-xs font-medium tabular-nums select-none',
-      'peer-hover/menu-button:text-sidebar-accent-foreground peer-data-[active=true]/menu-button:text-sidebar-accent-foreground',
-      'peer-data-[size=sm]/menu-button:top-1',
-      'peer-data-[size=default]/menu-button:top-1.5',
-      'peer-data-[size=lg]/menu-button:top-2.5',
+      'pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 flex h-5 min-w-5 items-center justify-center rounded-md px-1.5 text-xs font-medium tabular-nums select-none',
+      'bg-gray-100 text-gray-600 border border-gray-200',
+      'peer-data-[active=true]/menu-button:bg-emerald-50 peer-data-[active=true]/menu-button:text-emerald-600 peer-data-[active=true]/menu-button:border-emerald-200',
       'group-data-[collapsible=icon]:hidden',
       props.class,
     )"

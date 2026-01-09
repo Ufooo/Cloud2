@@ -15,19 +15,25 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
-import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/vue3';
+import type { AppPageProps, NavItem } from '@/types';
+import { Link, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import {
     Database,
     GitBranch,
+    Layers,
     LayoutGrid,
     PanelTop,
     Server,
     Settings,
 } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
+import NotificationsPanel from '@/components/NotificationsPanel.vue';
 
-const mainNavItems: NavItem[] = [
+const page = usePage<AppPageProps>();
+const counts = computed(() => page.props.counts);
+
+const mainNavItems = computed<NavItem[]>(() => [
     {
         title: 'Dashboard',
         href: dashboard(),
@@ -42,6 +48,7 @@ const mainNavItems: NavItem[] = [
         title: 'Sites',
         href: sitesIndex.url(),
         icon: PanelTop,
+        badge: counts.value.sites,
     },
     {
         title: 'Databases',
@@ -60,7 +67,7 @@ const mainNavItems: NavItem[] = [
             },
         ],
     },
-];
+]);
 </script>
 
 <template>
@@ -68,8 +75,8 @@ const mainNavItems: NavItem[] = [
         <SidebarHeader>
             <SidebarMenu>
                 <SidebarMenuItem>
-                    <SidebarMenuButton size="lg" as-child>
-                        <Link :href="dashboard()">
+                    <SidebarMenuButton as-child>
+                        <Link :href="dashboard()" class="p-2!">
                             <AppLogo />
                         </Link>
                     </SidebarMenuButton>
@@ -78,10 +85,11 @@ const mainNavItems: NavItem[] = [
         </SidebarHeader>
 
         <SidebarContent>
-            <NavMain :items="mainNavItems" />
+            <NavMain :items="mainNavItems" label="Platform" :label-icon="Layers" />
         </SidebarContent>
 
         <SidebarFooter>
+            <NotificationsPanel />
             <NavUser />
         </SidebarFooter>
     </Sidebar>
