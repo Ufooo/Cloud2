@@ -17,6 +17,11 @@ export interface NavItem {
     href: NonNullable<InertiaLinkProps['href']>;
     icon?: LucideIcon;
     isActive?: boolean;
+    badge?: string | number;
+}
+
+export interface SidebarCounts {
+    sites: number;
 }
 
 export type AppPageProps<
@@ -26,6 +31,7 @@ export type AppPageProps<
     quote: { message: string; author: string };
     auth: Auth;
     sidebarOpen: boolean;
+    counts: SidebarCounts;
 };
 
 export interface User {
