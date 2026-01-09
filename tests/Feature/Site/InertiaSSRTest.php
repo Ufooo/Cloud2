@@ -48,7 +48,7 @@ it('creates background process with correct command', function () {
     $service = app(InertiaSSRService::class);
     $process = $service->enable($this->site);
 
-    $expectedCommand = 'php'.$this->site->php_version.' artisan inertia:start-ssr';
+    $expectedCommand = 'php'.$this->site->php_version?->version().' artisan inertia:start-ssr';
 
     expect($process->name)->toBe(InertiaSSRService::SSR_DAEMON_NAME)
         ->and($process->command)->toBe($expectedCommand)
@@ -62,16 +62,13 @@ it('creates background process with correct command', function () {
 it('uses site php version in ssr command', function () {
     Queue::fake();
 
-    $originalVersion = $this->site->php_version;
-    $newVersion = $originalVersion === '8.3' ? '8.4' : '8.3';
-
-    $this->site->update(['php_version' => $newVersion]);
+    $this->site->update(['php_version' => 'php83']);
     $this->site->refresh();
 
     $service = app(InertiaSSRService::class);
     $process = $service->enable($this->site);
 
-    expect($process->command)->toBe("php{$newVersion} artisan inertia:start-ssr");
+    expect($process->command)->toBe('php8.3 artisan inertia:start-ssr');
 });
 
 it('returns existing process when ssr already enabled', function () {
@@ -89,7 +86,7 @@ it('returns existing process when ssr already enabled', function () {
 it('can disable inertia ssr via api', function () {
     Queue::fake();
 
-    $phpVersion = $this->site->php_version;
+    $phpVersion = $this->site->php_version?->version();
 
     $process = BackgroundProcess::factory()
         ->for($this->server)

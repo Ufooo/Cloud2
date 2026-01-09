@@ -35,10 +35,15 @@ const hasServers = computed(() => props.servers.data.length > 0);
     <Head title="Servers" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto p-4">
+        <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto">
             <!-- Header -->
             <div class="flex items-center justify-between">
-                <h1 class="text-2xl font-semibold">Servers</h1>
+                <div>
+                    <h1 class="text-2xl font-semibold">Servers</h1>
+                    <p class="text-gray-500">
+                        Manage your servers and infrastructure
+                    </p>
+                </div>
                 <Button as-child>
                     <Link :href="create.url()">
                         <Plus class="mr-2 size-4" />
@@ -73,10 +78,10 @@ const hasServers = computed(() => props.servers.data.length > 0);
                         :server="server"
                     />
                 </div>
-
-                <!-- Pagination -->
-                <Pagination :meta="servers.meta" />
             </Card>
+
+            <!-- Pagination -->
+            <Pagination :meta="servers.meta" />
         </div>
     </AppLayout>
 </template>

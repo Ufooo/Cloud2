@@ -84,7 +84,7 @@ class DeploySiteJob extends BaseProvisionJob
             'fullPath' => $this->site->getFullPath(),
             'currentPath' => $this->site->getCurrentPath(),
             'branch' => $this->site->branch ?? 'main',
-            'phpVersion' => $this->site->php_version,
+            'phpVersion' => $this->site->php_version?->version(),
             'deployScriptContent' => $deployScriptContent,
             'callbackUrl' => $callbackUrl,
         ])->render();

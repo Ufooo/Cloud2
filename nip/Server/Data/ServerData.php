@@ -36,7 +36,8 @@ class ServerData extends Data
         public ?string $privateIpAddress,
         public string $sshPort,
         public string $phpVersion,
-        public ?string $displayablePhpVersion,
+        #[MapInputName('php_version_string')]
+        public ?string $phpVersionLabel,
         public ?DatabaseType $databaseType,
         public ?string $dbStatus,
         public ?string $ubuntuVersion,

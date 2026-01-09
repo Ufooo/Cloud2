@@ -223,12 +223,12 @@ async function handleCancelProvisioning() {
                         }}</span>
                     </div>
                     <div
-                        v-if="server.displayablePhpVersion"
+                        v-if="server.phpVersionLabel"
                         class="flex justify-between text-sm"
                     >
                         <span class="text-muted-foreground">PHP</span>
                         <span class="font-medium">{{
-                            server.displayablePhpVersion
+                            server.phpVersionLabel
                         }}</span>
                     </div>
                     <div

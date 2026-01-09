@@ -21,7 +21,7 @@ class InertiaSSRService
             return $existingProcess;
         }
 
-        $phpVersion = $site->php_version;
+        $phpVersion = $site->php_version?->version();
         $command = "php{$phpVersion} artisan inertia:start-ssr";
 
         $process = BackgroundProcess::create([

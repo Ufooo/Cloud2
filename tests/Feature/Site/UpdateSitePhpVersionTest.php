@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Bus;
+use Nip\Php\Enums\PhpVersion;
 use Nip\Server\Models\Server;
 use Nip\Site\Enums\SiteStatus;
 use Nip\Site\Jobs\CreateIsolatedPhpFpmPoolJob;
@@ -13,25 +14,25 @@ it('creates job with correct site and version', function () {
     $server = Server::factory()->create();
     $site = Site::factory()->for($server)->create([
         'status' => SiteStatus::Installed,
-        'php_version' => '8.2',
+        'php_version' => 'php82',
     ]);
 
-    $job = new UpdateSitePhpVersionJob($site, '8.3');
+    $job = new UpdateSitePhpVersionJob($site, 'php83');
 
     expect($job->site->id)->toBe($site->id);
-    expect($job->newVersion)->toBe('8.3');
+    expect($job->newVersion)->toBe('php83');
 });
 
 it('does not dispatch job when php version is same as current', function () {
     $server = Server::factory()->create();
     $site = Site::factory()->for($server)->create([
         'status' => SiteStatus::Installed,
-        'php_version' => '8.2',
+        'php_version' => 'php82',
     ]);
 
     // When PHP version is same, the controller should skip dispatching
     $currentPhpVersion = $site->php_version;
-    $newPhpVersion = '8.2';
+    $newPhpVersion = PhpVersion::Php82;
 
     $phpVersionChanging = $newPhpVersion !== null
         && $newPhpVersion !== $currentPhpVersion
@@ -44,12 +45,12 @@ it('does not dispatch job when site is not installed', function () {
     $server = Server::factory()->create();
     $site = Site::factory()->for($server)->create([
         'status' => SiteStatus::Installing,
-        'php_version' => '8.2',
+        'php_version' => 'php82',
     ]);
 
     // When site is not installed, the controller should skip dispatching
     $currentPhpVersion = $site->php_version;
-    $newPhpVersion = '8.3';
+    $newPhpVersion = PhpVersion::Php83;
 
     $phpVersionChanging = $newPhpVersion !== null
         && $newPhpVersion !== $currentPhpVersion
@@ -64,12 +65,12 @@ it('service creates pool when no other site uses new version', function () {
     $server = Server::factory()->create();
     $site = Site::factory()->for($server)->create([
         'status' => SiteStatus::Installed,
-        'php_version' => '8.2',
+        'php_version' => 'php82',
         'user' => 'testuser',
     ]);
 
     $service = new SitePhpVersionService;
-    $service->updatePhpVersion($site, '8.3');
+    $service->updatePhpVersion($site, 'php83');
 
     Bus::assertChained([
         CreateIsolatedPhpFpmPoolJob::class,
@@ -86,19 +87,19 @@ it('service skips pool creation when another site uses same version', function (
     // First site already uses PHP 8.3
     Site::factory()->for($server)->create([
         'status' => SiteStatus::Installed,
-        'php_version' => '8.3',
+        'php_version' => 'php83',
         'user' => 'testuser',
     ]);
 
     // Second site wants to switch to PHP 8.3
     $site = Site::factory()->for($server)->create([
         'status' => SiteStatus::Installed,
-        'php_version' => '8.2',
+        'php_version' => 'php82',
         'user' => 'testuser',
     ]);
 
     $service = new SitePhpVersionService;
-    $service->updatePhpVersion($site, '8.3');
+    $service->updatePhpVersion($site, 'php83');
 
     // Should NOT create pool (already exists), but should delete old pool
     Bus::assertChained([
@@ -115,19 +116,19 @@ it('service skips pool deletion when another site uses old version', function ()
     // Another site still uses PHP 8.2
     Site::factory()->for($server)->create([
         'status' => SiteStatus::Installed,
-        'php_version' => '8.2',
+        'php_version' => 'php82',
         'user' => 'testuser',
     ]);
 
     // This site wants to switch from PHP 8.2 to 8.3
     $site = Site::factory()->for($server)->create([
         'status' => SiteStatus::Installed,
-        'php_version' => '8.2',
+        'php_version' => 'php82',
         'user' => 'testuser',
     ]);
 
     $service = new SitePhpVersionService;
-    $service->updatePhpVersion($site, '8.3');
+    $service->updatePhpVersion($site, 'php83');
 
     // Should create new pool, but NOT delete old pool (still in use)
     Bus::assertChained([
@@ -139,12 +140,12 @@ it('service skips pool deletion when another site uses old version', function ()
 it('generates correct script for php version update with user-based socket', function () {
     $server = Server::factory()->create();
     $site = Site::factory()->for($server)->create([
-        'php_version' => '8.2',
+        'php_version' => 'php82',
         'domain' => 'test.example.com',
         'user' => 'testuser',
     ]);
 
-    $job = new UpdateSitePhpVersionJob($site, '8.3');
+    $job = new UpdateSitePhpVersionJob($site, 'php83');
 
     $reflection = new ReflectionClass($job);
     $method = $reflection->getMethod('generateScript');
@@ -161,10 +162,10 @@ it('generates correct script for php version update with user-based socket', fun
 it('updates site php version on successful job execution', function () {
     $server = Server::factory()->create();
     $site = Site::factory()->for($server)->create([
-        'php_version' => '8.2',
+        'php_version' => 'php82',
     ]);
 
-    $job = new UpdateSitePhpVersionJob($site, '8.3');
+    $job = new UpdateSitePhpVersionJob($site, 'php83');
 
     $reflection = new ReflectionClass($job);
     $method = $reflection->getMethod('handleSuccess');
@@ -177,5 +178,5 @@ it('updates site php version on successful job execution', function () {
 
     $method->invoke($job, $mockResult);
 
-    expect($site->fresh()->php_version)->toBe('8.3');
+    expect($site->fresh()->php_version)->toBe(PhpVersion::Php83);
 });

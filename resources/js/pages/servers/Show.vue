@@ -76,10 +76,10 @@ async function handleDelete() {
                     </p>
                 </div>
 
-                <div v-if="server.displayablePhpVersion" class="space-y-1">
+                <div v-if="server.phpVersionLabel" class="space-y-1">
                     <p class="text-sm font-medium">PHP Version</p>
                     <p class="text-sm text-muted-foreground">
-                        {{ server.displayablePhpVersion }}
+                        {{ server.phpVersionLabel }}
                     </p>
                 </div>
 

@@ -36,7 +36,7 @@ class SiteFactory extends Factory
             'user' => 'netipar',
             'root_directory' => '/',
             'web_directory' => $type->defaultWebDirectory(),
-            'php_version' => $type->isPhpBased() ? '8.2' : null,
+            'php_version' => $type->isPhpBased() ? 'php82' : null,
             'package_manager' => PackageManager::Npm,
             'build_command' => $type->defaultBuildCommand(),
             'repository' => null,
@@ -51,7 +51,7 @@ class SiteFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'type' => SiteType::Laravel,
             'web_directory' => '/public',
-            'php_version' => '8.2',
+            'php_version' => 'php82',
             'build_command' => 'npm run build',
         ]);
     }
@@ -61,7 +61,7 @@ class SiteFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'type' => SiteType::WordPress,
             'web_directory' => '/',
-            'php_version' => '8.2',
+            'php_version' => 'php82',
             'build_command' => null,
         ]);
     }
