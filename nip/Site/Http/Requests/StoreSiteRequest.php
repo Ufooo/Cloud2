@@ -5,13 +5,17 @@ namespace Nip\Site\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
+use Nip\Php\Enums\PhpVersion;
 use Nip\Server\Models\Server;
+use Nip\Shared\Traits\HasSiteValidationMessages;
 use Nip\Site\Enums\PackageManager;
 use Nip\Site\Enums\SiteType;
 use Nip\Site\Enums\WwwRedirectType;
 
 class StoreSiteRequest extends FormRequest
 {
+    use HasSiteValidationMessages;
+
     public function authorize(): bool
     {
         $serverId = $this->input('server_id');
@@ -59,13 +63,7 @@ class StoreSiteRequest extends FormRequest
             ],
             'root_directory' => ['nullable', 'string', 'max:255', 'regex:/^\//'],
             'web_directory' => ['nullable', 'string', 'max:255', 'regex:/^\//'],
-            'php_version' => [
-                'nullable',
-                'string',
-                Rule::exists('php_versions', 'version')
-                    ->where('server_id', $this->input('server_id'))
-                    ->where('status', 'installed'),
-            ],
+            'php_version' => ['nullable', Rule::enum(PhpVersion::class)],
             'package_manager' => ['nullable', Rule::enum(PackageManager::class)],
             'build_command' => ['nullable', 'string', 'max:500'],
             'source_control_id' => ['nullable', 'exists:source_controls,id'],
@@ -81,18 +79,11 @@ class StoreSiteRequest extends FormRequest
      */
     public function messages(): array
     {
-        return [
+        return array_merge($this->siteValidationMessages(), [
             'server_id.required' => 'Please select a server.',
             'server_id.exists' => 'The selected server does not exist.',
             'database_id.exists' => 'The selected database does not exist on this server.',
             'database_user_id.exists' => 'The selected database user does not exist on this server.',
-            'domain.regex' => 'The domain format is invalid.',
-            'domain.unique' => 'This domain is already configured on this server.',
-            'user.exists' => 'The selected user does not exist on this server.',
-            'php_version.exists' => 'The selected PHP version is not installed on this server.',
-            'root_directory.regex' => 'The root directory must start with /.',
-            'web_directory.regex' => 'The web directory must start with /.',
-            'repository.regex' => 'The repository must be a valid git URL (git@ or https://).',
-        ];
+        ]);
     }
 }

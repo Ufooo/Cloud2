@@ -5,9 +5,12 @@ namespace Nip\Site\Jobs;
 use Nip\Server\Jobs\BaseProvisionJob;
 use Nip\Server\Models\Server;
 use Nip\Server\Services\SSH\ExecutionResult;
+use Nip\Shared\Traits\ResolvesPhpVersion;
 
 class DeleteIsolatedPhpFpmPoolJob extends BaseProvisionJob
 {
+    use ResolvesPhpVersion;
+
     public int $timeout = 60;
 
     public function __construct(
@@ -37,13 +40,13 @@ class DeleteIsolatedPhpFpmPoolJob extends BaseProvisionJob
     {
         return view('provisioning.scripts.php.isolated-pool-delete', [
             'user' => $this->user,
-            'phpVersion' => $this->phpVersion,
+            'phpVersion' => $this->resolvePhpVersionString($this->phpVersion),
         ])->render();
     }
 
     protected function handleSuccess(ExecutionResult $result): void
     {
-        // Pool deleted successfully
+        //
     }
 
     /**

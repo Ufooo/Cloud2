@@ -36,6 +36,8 @@ class Server extends Model
 {
     use HasEnumDisplayAttributes, HasFactory, HasSlug, SoftDeletes;
 
+    public const DEFAULT_PHP_VERSION = '8.4';
+
     protected static function booted(): void
     {
         static::deleting(function (Server $server) {
@@ -205,19 +207,14 @@ class Server extends Model
         return Attribute::get(fn () => $this->getEnumLabel('type'));
     }
 
-    protected function displayablePhpVersion(): Attribute
-    {
-        return Attribute::get(fn () => $this->getEnumLabelFrom('php_version', PhpVersion::class));
-    }
-
     protected function phpVersionString(): Attribute
     {
         return Attribute::get(function () {
             if (! $this->php_version) {
-                return '8.4';
+                return self::DEFAULT_PHP_VERSION;
             }
 
-            return PhpVersion::tryFrom($this->php_version)?->version() ?? '8.4';
+            return PhpVersion::tryFrom($this->php_version)?->version() ?? self::DEFAULT_PHP_VERSION;
         });
     }
 

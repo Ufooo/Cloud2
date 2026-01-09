@@ -5,13 +5,17 @@ namespace Nip\Site\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
+use Nip\Php\Enums\PhpVersion;
 use Nip\Server\Enums\IdentityColor;
+use Nip\Shared\Traits\HasSiteValidationMessages;
 use Nip\Site\Enums\PackageManager;
 use Nip\Site\Enums\SiteType;
 use Nip\Site\Models\Site;
 
 class UpdateSiteRequest extends FormRequest
 {
+    use HasSiteValidationMessages;
+
     public function authorize(): bool
     {
         /** @var Site $site */
@@ -47,13 +51,7 @@ class UpdateSiteRequest extends FormRequest
             ],
             'root_directory' => ['nullable', 'string', 'max:255', 'regex:/^\//'],
             'web_directory' => ['nullable', 'string', 'max:255', 'regex:/^\//'],
-            'php_version' => [
-                'nullable',
-                'string',
-                Rule::exists('php_versions', 'version')
-                    ->where('server_id', $site->server_id)
-                    ->where('status', 'installed'),
-            ],
+            'php_version' => ['nullable', Rule::enum(PhpVersion::class)],
             'package_manager' => ['nullable', Rule::enum(PackageManager::class)],
             'build_command' => ['nullable', 'string', 'max:500'],
             'repository' => ['nullable', 'string', 'max:255', 'regex:/^(git@|https:\/\/)/'],
@@ -68,14 +66,6 @@ class UpdateSiteRequest extends FormRequest
      */
     public function messages(): array
     {
-        return [
-            'domain.regex' => 'The domain format is invalid.',
-            'domain.unique' => 'This domain is already configured on this server.',
-            'user.exists' => 'The selected user does not exist on this server.',
-            'php_version.exists' => 'The selected PHP version is not installed on this server.',
-            'root_directory.regex' => 'The root directory must start with /.',
-            'web_directory.regex' => 'The web directory must start with /.',
-            'repository.regex' => 'The repository must be a valid git URL (git@ or https://).',
-        ];
+        return $this->siteValidationMessages();
     }
 }

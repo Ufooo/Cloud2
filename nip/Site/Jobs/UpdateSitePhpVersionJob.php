@@ -6,10 +6,13 @@ use Illuminate\Support\Facades\Log;
 use Nip\Server\Jobs\BaseProvisionJob;
 use Nip\Server\Models\Server;
 use Nip\Server\Services\SSH\ExecutionResult;
+use Nip\Shared\Traits\ResolvesPhpVersion;
 use Nip\Site\Models\Site;
 
 class UpdateSitePhpVersionJob extends BaseProvisionJob
 {
+    use ResolvesPhpVersion;
+
     public int $timeout = 120;
 
     public $queue = 'provisioning';
@@ -39,8 +42,8 @@ class UpdateSitePhpVersionJob extends BaseProvisionJob
         return view('provisioning.scripts.site.steps.update-php-version', [
             'site' => $this->site,
             'domain' => $this->site->domain,
-            'oldVersion' => $this->site->php_version,
-            'newVersion' => $this->newVersion,
+            'oldVersion' => $this->site->php_version?->version(),
+            'newVersion' => $this->resolvePhpVersionString($this->newVersion),
             'user' => $this->site->user,
             'fullPath' => $this->site->getFullPath(),
         ])->render();
