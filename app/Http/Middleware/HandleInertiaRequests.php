@@ -4,7 +4,10 @@ namespace App\Http\Middleware;
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Middleware;
+use Nip\Site\Models\Site;
+use Nip\Support\CacheKeys;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -25,6 +28,9 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'counts' => [
+                'sites' => fn () => Cache::remember(CacheKeys::SITES_COUNT, config('cache.ttl.counts'), fn () => Site::count()),
+            ],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),

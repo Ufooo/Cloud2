@@ -114,4 +114,18 @@ return [
 
     'prefix' => env('CACHE_PREFIX', Str::slug((string) env('APP_NAME', 'laravel')).'-cache-'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Cache TTL Values
+    |--------------------------------------------------------------------------
+    |
+    | Application-specific cache TTL (Time-To-Live) values in seconds.
+    | These values control how long specific cached data remains valid.
+    |
+    */
+
+    'ttl' => [
+        'counts' => env('CACHE_TTL_COUNTS', 300), // 5 minutes
+    ],
+
 ];
