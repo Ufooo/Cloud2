@@ -18,13 +18,24 @@ enum PhpVersion: string
 
     public function label(): string
     {
-        return match ($this) {
-            self::Php84 => 'PHP 8.4',
-            self::Php83 => 'PHP 8.3',
-            self::Php82 => 'PHP 8.2',
-            self::Php81 => 'PHP 8.1',
-            self::Php74 => 'PHP 7.4',
-        };
+        return 'PHP '.$this->version();
+    }
+
+    /**
+     * Create enum from version string (e.g., '8.2', '8.3').
+     *
+     * Uses convention: '8.4' -> 'php84' (remove dot, prepend 'php')
+     */
+    public static function fromVersion(?string $version): ?self
+    {
+        if ($version === null) {
+            return null;
+        }
+
+        // Convert version string to enum value: '8.4' -> 'php84'
+        $enumValue = 'php'.str_replace('.', '', $version);
+
+        return self::tryFrom($enumValue);
     }
 
     /**
