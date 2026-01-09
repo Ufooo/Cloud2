@@ -47,21 +47,6 @@ function triggerDeploy() {
         },
     );
 }
-
-function getDeployStatusVariant(
-    status: string | null,
-): 'default' | 'secondary' | 'destructive' | 'outline' {
-    switch (status) {
-        case 'deployed':
-            return 'default';
-        case 'deploying':
-            return 'secondary';
-        case 'failed':
-            return 'destructive';
-        default:
-            return 'outline';
-    }
-}
 </script>
 
 <template>
@@ -85,11 +70,7 @@ function getDeployStatusVariant(
                             </CardDescription>
                         </div>
                         <div class="flex items-center gap-2">
-                            <Badge
-                                :variant="
-                                    getDeployStatusVariant(site.deployStatus)
-                                "
-                            >
+                            <Badge :variant="site.deployStatusBadgeVariant">
                                 {{ site.displayableDeployStatus }}
                             </Badge>
                             <Button
@@ -155,7 +136,7 @@ function getDeployStatusVariant(
                                 >PHP Version</span
                             >
                             <span class="text-sm font-medium">{{
-                                site.phpVersion ?? 'N/A'
+                                site.phpVersionValue ? `PHP ${site.phpVersionValue}` : 'N/A'
                             }}</span>
                         </div>
                         <div class="flex items-center justify-between">

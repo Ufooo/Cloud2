@@ -101,10 +101,15 @@ function selectTypeAndNavigate(type: string) {
     <Head title="Sites" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto p-4">
+        <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto">
             <!-- Header -->
             <div class="flex items-center justify-between">
-                <h1 class="text-2xl font-semibold">Sites</h1>
+                <div>
+                    <h1 class="text-2xl font-semibold">Sites</h1>
+                    <p class="text-gray-500">
+                        Manage your websites and deployments
+                    </p>
+                </div>
                 <Button @click="openTypeSelectDialog">
                     <Plus class="mr-2 size-4" />
                     New site
@@ -127,7 +132,7 @@ function selectTypeAndNavigate(type: string) {
             </EmptyState>
 
             <!-- Site List -->
-            <Card v-else class="overflow-hidden py-0">
+            <Card v-else class="overflow-hidden bg-white py-0">
                 <div class="divide-y">
                     <SiteCardListItem
                         v-for="site in sites"
@@ -136,10 +141,10 @@ function selectTypeAndNavigate(type: string) {
                         :show-server="!currentServer"
                     />
                 </div>
-
-                <!-- Pagination -->
-                <Pagination :meta="props.sites.meta" />
             </Card>
+
+            <!-- Pagination -->
+            <Pagination :meta="props.sites.meta" />
         </div>
 
         <!-- Site Type Selection Dialog -->
