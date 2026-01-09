@@ -14,10 +14,11 @@ use Nip\Deployment\Enums\DeploymentStatus;
 use Nip\Deployment\Models\Deployment;
 use Nip\Domain\Enums\DomainRecordStatus;
 use Nip\Domain\Enums\DomainRecordType;
-use Nip\Php\Enums\PhpVersion;
 use Nip\Server\Enums\IdentityColor;
 use Nip\Server\Enums\ServerStatus;
 use Nip\Server\Models\Server;
+use Nip\Site\Data\PhpVersionOptionData;
+use Nip\Site\Data\ServerSiteCreationData;
 use Nip\Site\Data\SiteData;
 use Nip\Site\Enums\DeployStatus;
 use Nip\Site\Enums\DetectedPackage;
@@ -43,7 +44,7 @@ class SiteController extends Controller
     public function index(): Response
     {
         $sites = Site::query()
-            ->with('server')
+            ->with(['server', 'sourceControl'])
             ->orderBy('domain')
             ->paginate(15);
 
@@ -78,30 +79,9 @@ class SiteController extends Controller
             ->with(['databases' => fn ($q) => $q->where('status', DatabaseStatus::Installed)->with('users')->orderBy('name')])
             ->with(['databaseUsers' => fn ($q) => $q->where('status', DatabaseUserStatus::Installed)->orderBy('username')])
             ->orderBy('name')
-            ->get()
-            ->map(fn (Server $s) => [
-                'id' => $s->id,
-                'slug' => $s->slug,
-                'name' => $s->name,
-                'phpVersions' => $s->phpVersions->map(fn ($pv) => [
-                    'value' => $pv->version,
-                    'label' => PhpVersion::tryFrom($pv->version)?->label() ?? $pv->version,
-                    'isDefault' => $pv->is_site_default,
-                ])->values()->all(),
-                'unixUsers' => $s->unixUsers->map(fn ($u) => [
-                    'value' => $u->username,
-                    'label' => $u->username,
-                ])->values()->all(),
-                'databases' => $s->databases->map(fn ($db) => [
-                    'value' => $db->id,
-                    'label' => $db->name,
-                    'userIds' => $db->users->pluck('id')->all(),
-                ])->values()->all(),
-                'databaseUsers' => $s->databaseUsers->map(fn ($dbu) => [
-                    'value' => $dbu->id,
-                    'label' => $dbu->username,
-                ])->values()->all(),
-            ]);
+            ->get();
+
+        $serverOptions = ServerSiteCreationData::fromCollection($servers);
 
         $sourceControls = SourceControl::query()
             ->where('user_id', auth()->id())
@@ -121,7 +101,7 @@ class SiteController extends Controller
                 'buildCommand' => $siteType->defaultBuildCommand(),
                 'isPhpBased' => $siteType->isPhpBased(),
             ],
-            'servers' => $servers,
+            'servers' => $serverOptions,
             'sourceControls' => $sourceControls,
             'packageManagers' => PackageManager::options(),
             'wwwRedirectTypes' => WwwRedirectType::options(),
@@ -197,15 +177,10 @@ class SiteController extends Controller
 
         $site->load(['server.phpVersions' => fn ($q) => $q->where('status', 'installed')->orderBy('version', 'desc')]);
 
-        $phpVersions = $site->server->phpVersions->map(fn ($pv) => [
-            'value' => $pv->version,
-            'label' => PhpVersion::tryFrom($pv->version)?->label() ?? $pv->version,
-        ])->values()->all();
-
         return Inertia::render('sites/Settings', [
             'site' => SiteData::fromModel($site),
             'siteTypes' => SiteType::options(),
-            'phpVersions' => $phpVersions,
+            'phpVersions' => PhpVersionOptionData::toSelectOptions($site->server->phpVersions),
             'colors' => IdentityColor::options(),
         ]);
     }
