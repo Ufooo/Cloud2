@@ -12,7 +12,7 @@ class SitePhpVersionService
 {
     public function updatePhpVersion(Site $site, string $newVersion): void
     {
-        $oldVersion = $site->php_version;
+        $oldVersion = $site->php_version?->value;
         $jobs = [];
 
         // Create new PHP-FPM pool if no other sites use this user with the new version
@@ -23,7 +23,7 @@ class SitePhpVersionService
         $jobs[] = new UpdateSitePhpVersionJob($site, $newVersion);
 
         // Delete old PHP-FPM pool if no other sites use this user with the old version
-        if (! $this->hasOtherSiteWithPhpVersion($site, $oldVersion)) {
+        if ($oldVersion && ! $this->hasOtherSiteWithPhpVersion($site, $oldVersion)) {
             $jobs[] = new DeleteIsolatedPhpFpmPoolJob($site->server, $site->user, $oldVersion);
         }
 
@@ -33,10 +33,8 @@ class SitePhpVersionService
     protected function hasOtherSiteWithPhpVersion(Site $site, string $phpVersion): bool
     {
         return Site::query()
-            ->where('server_id', $site->server_id)
-            ->where('user', $site->user)
+            ->forSameUserOnServer($site)
             ->where('php_version', $phpVersion)
-            ->whereNot('id', $site->id)
             ->exists();
     }
 }

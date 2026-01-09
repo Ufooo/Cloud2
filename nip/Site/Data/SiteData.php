@@ -35,7 +35,7 @@ class SiteData extends Data
         public string $fullPath,
         public string $webPath,
         public string $url,
-        public ?string $phpVersionValue,
+        public ?string $phpVersionLabel,
         public ?string $packageManager,
         public ?string $buildCommand,
         public ?string $repository,
@@ -80,7 +80,7 @@ class SiteData extends Data
             displayableStatus: $site->status?->label(),
             statusBadgeVariant: $site->status?->badgeVariant(),
             provisioningStep: $site->provisioning_step?->value,
-            provisioningSteps: $site->status === SiteStatus::Installing ? $site->getProvisioningSteps() : null,
+            provisioningSteps: self::getProvisioningStepsData($site),
             deployStatus: $site->deploy_status?->value,
             displayableDeployStatus: $site->deploy_status?->label(),
             deployStatusBadgeVariant: $site->deploy_status?->badgeVariant(),
@@ -90,7 +90,7 @@ class SiteData extends Data
             fullPath: $site->getFullPath(),
             webPath: $site->getWebPath(),
             url: $site->getUrl(),
-            phpVersionValue: $site->php_version,
+            phpVersionLabel: $site->php_version?->version(),
             packageManager: $site->package_manager?->value,
             buildCommand: $site->build_command,
             repository: $site->repository,
@@ -111,11 +111,29 @@ class SiteData extends Data
             healthcheckEndpoint: $site->healthcheck_endpoint,
             deployKey: $site->deploy_key,
             detectedPackages: $site->detected_packages,
-            packageDetails: $site->detected_packages
-                ? DetectedPackageData::fromPackageValues($site->detected_packages, $site)
-                : null,
+            packageDetails: self::getPackageDetailsData($site),
             packages: $site->packages,
             can: $site->getPermissions(),
         );
+    }
+
+    /**
+     * @return array<SiteProvisioningStepData>|null
+     */
+    private static function getProvisioningStepsData(Site $site): ?array
+    {
+        return $site->status === SiteStatus::Installing
+            ? $site->getProvisioningSteps()
+            : null;
+    }
+
+    /**
+     * @return array<DetectedPackageData>|null
+     */
+    private static function getPackageDetailsData(Site $site): ?array
+    {
+        return $site->detected_packages
+            ? DetectedPackageData::fromPackageValues($site->detected_packages, $site)
+            : null;
     }
 }

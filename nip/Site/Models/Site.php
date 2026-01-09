@@ -3,6 +3,7 @@
 namespace Nip\Site\Models;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -17,6 +18,7 @@ use Nip\Database\Models\DatabaseUser;
 use Nip\Domain\Enums\DomainRecordType;
 use Nip\Domain\Models\Certificate;
 use Nip\Domain\Models\DomainRecord;
+use Nip\Php\Enums\PhpVersion;
 use Nip\Redirect\Models\RedirectRule;
 use Nip\Scheduler\Models\ScheduledJob;
 use Nip\Security\Models\SecurityRule;
@@ -109,6 +111,7 @@ class Site extends Model
             'deploy_status' => DeployStatus::class,
             'www_redirect_type' => WwwRedirectType::class,
             'allow_wildcard' => 'boolean',
+            'php_version' => PhpVersion::class,
             'package_manager' => PackageManager::class,
             'avatar_color' => IdentityColor::class,
             'packages' => 'array',
@@ -252,7 +255,7 @@ class Site extends Model
 
     public function getPhpSocketPath(): ?string
     {
-        $phpVersion = $this->php_version;
+        $phpVersion = $this->php_version?->version();
 
         if (! $phpVersion) {
             return null;
@@ -390,5 +393,18 @@ class Site extends Model
             ),
             $steps
         );
+    }
+
+    /**
+     * Scope to query sites with the same user on the same server, excluding the given site.
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeForSameUserOnServer(Builder $query, self $site): Builder
+    {
+        return $query
+            ->where('server_id', $site->server_id)
+            ->where('user', $site->user)
+            ->whereNot('id', $site->id);
     }
 }

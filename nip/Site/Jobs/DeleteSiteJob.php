@@ -33,9 +33,7 @@ class DeleteSiteJob extends BaseProvisionJob
     {
         // Check if any other sites on this server use the same user
         $otherSitesWithSameUser = Site::query()
-            ->where('server_id', $this->site->server_id)
-            ->where('user', $this->site->user)
-            ->whereNot('id', $this->site->id)
+            ->forSameUserOnServer($this->site)
             ->exists();
 
         // Get scheduled jobs for this site (to remove cron entries)
@@ -56,7 +54,7 @@ class DeleteSiteJob extends BaseProvisionJob
             'user' => $this->site->user,
             'domain' => $this->site->domain,
             'fullPath' => $this->site->getFullPath(),
-            'phpVersion' => $this->site->php_version,
+            'phpVersion' => $this->site->php_version?->version(),
             'shouldDeletePool' => ! $otherSitesWithSameUser,
             'installedPhpVersions' => $this->site->server->phpVersions->pluck('version')->toArray(),
             'domainRecords' => $this->site->domainRecords->pluck('name')->toArray(),
