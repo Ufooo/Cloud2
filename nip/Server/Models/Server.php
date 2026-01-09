@@ -2,13 +2,21 @@
 
 namespace Nip\Server\Models;
 
+use App\Models\Concerns\HasEnumDisplayAttributes;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Nip\BackgroundProcess\Models\BackgroundProcess;
+use Nip\Database\Models\Database;
+use Nip\Database\Models\DatabaseUser;
 use Nip\Network\Models\FirewallRule;
 use Nip\Php\Enums\PhpVersion;
+use Nip\Php\Models\PhpSetting;
+use Nip\Php\Models\PhpVersion as PhpVersionModel;
+use Nip\Scheduler\Models\ScheduledJob;
 use Nip\Server\Data\ProvisioningStepData;
 use Nip\Server\Database\Factories\ServerFactory;
 use Nip\Server\Enums\DatabaseType;
@@ -18,13 +26,15 @@ use Nip\Server\Enums\ServerProvider;
 use Nip\Server\Enums\ServerStatus;
 use Nip\Server\Enums\ServerType;
 use Nip\Server\Enums\Timezone;
+use Nip\Site\Models\Site;
+use Nip\SshKey\Models\SshKey;
 use Nip\UnixUser\Models\UnixUser;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 
 class Server extends Model
 {
-    use HasFactory, HasSlug, SoftDeletes;
+    use HasEnumDisplayAttributes, HasFactory, HasSlug, SoftDeletes;
 
     protected static function booted(): void
     {
@@ -72,8 +82,6 @@ class Server extends Model
         'notes',
         'avatar_color',
         'services',
-        'displayable_provider',
-        'displayable_database_type',
         'cloud_provider_url',
         'is_ready',
         'last_connected_at',
@@ -129,85 +137,77 @@ class Server extends Model
     }
 
     /**
-     * @return HasMany<\Nip\SshKey\Models\SshKey, $this>
+     * @return HasMany<SshKey, $this>
      */
     public function sshKeys(): HasMany
     {
-        return $this->hasMany(\Nip\SshKey\Models\SshKey::class);
+        return $this->hasMany(SshKey::class);
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne<\Nip\Php\Models\PhpSetting, $this>
+     * @return HasOne<PhpSetting, $this>
      */
-    public function phpSetting(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function phpSetting(): HasOne
     {
-        return $this->hasOne(\Nip\Php\Models\PhpSetting::class);
+        return $this->hasOne(PhpSetting::class);
     }
 
     /**
-     * @return HasMany<\Nip\Php\Models\PhpVersion, $this>
+     * @return HasMany<PhpVersionModel, $this>
      */
     public function phpVersions(): HasMany
     {
-        return $this->hasMany(\Nip\Php\Models\PhpVersion::class);
+        return $this->hasMany(PhpVersionModel::class);
     }
 
     /**
-     * @return HasMany<\Nip\BackgroundProcess\Models\BackgroundProcess, $this>
+     * @return HasMany<BackgroundProcess, $this>
      */
     public function backgroundProcesses(): HasMany
     {
-        return $this->hasMany(\Nip\BackgroundProcess\Models\BackgroundProcess::class);
+        return $this->hasMany(BackgroundProcess::class);
     }
 
     /**
-     * @return HasMany<\Nip\Scheduler\Models\ScheduledJob, $this>
+     * @return HasMany<ScheduledJob, $this>
      */
     public function scheduledJobs(): HasMany
     {
-        return $this->hasMany(\Nip\Scheduler\Models\ScheduledJob::class);
+        return $this->hasMany(ScheduledJob::class);
     }
 
     /**
-     * @return HasMany<\Nip\Site\Models\Site, $this>
+     * @return HasMany<Site, $this>
      */
     public function sites(): HasMany
     {
-        return $this->hasMany(\Nip\Site\Models\Site::class);
+        return $this->hasMany(Site::class);
     }
 
     /**
-     * @return HasMany<\Nip\Database\Models\Database, $this>
+     * @return HasMany<Database, $this>
      */
     public function databases(): HasMany
     {
-        return $this->hasMany(\Nip\Database\Models\Database::class);
+        return $this->hasMany(Database::class);
     }
 
     /**
-     * @return HasMany<\Nip\Database\Models\DatabaseUser, $this>
+     * @return HasMany<DatabaseUser, $this>
      */
     public function databaseUsers(): HasMany
     {
-        return $this->hasMany(\Nip\Database\Models\DatabaseUser::class);
+        return $this->hasMany(DatabaseUser::class);
     }
 
     protected function displayableType(): Attribute
     {
-        return Attribute::get(fn () => $this->type?->label());
+        return Attribute::get(fn () => $this->getEnumLabel('type'));
     }
 
     protected function displayablePhpVersion(): Attribute
     {
-        return Attribute::get(function () {
-            if (! $this->php_version) {
-                return null;
-            }
-
-            $phpVersion = PhpVersion::tryFrom($this->php_version);
-
-            return $phpVersion?->label();
-        });
+        return Attribute::get(fn () => $this->getEnumLabelFrom('php_version', PhpVersion::class));
     }
 
     protected function phpVersionString(): Attribute
@@ -223,12 +223,12 @@ class Server extends Model
 
     protected function displayableProvider(): Attribute
     {
-        return Attribute::get(fn () => $this->provider?->label());
+        return Attribute::get(fn () => $this->getEnumLabel('provider'));
     }
 
     protected function displayableDatabaseType(): Attribute
     {
-        return Attribute::get(fn () => $this->database_type?->label());
+        return Attribute::get(fn () => $this->getEnumLabel('database_type'));
     }
 
     protected function provisioningCommand(): Attribute

@@ -48,8 +48,6 @@ class ServerFactory extends Factory
                 'mysql' => fake()->boolean(),
                 'redis' => fake()->boolean(),
             ],
-            'displayable_provider' => fake()->company(),
-            'displayable_database_type' => 'MySQL 8.0',
             'cloud_provider_url' => fake()->url(),
             'is_ready' => fake()->boolean(70),
             'last_connected_at' => fake()->optional()->dateTimeBetween('-7 days', 'now'),
