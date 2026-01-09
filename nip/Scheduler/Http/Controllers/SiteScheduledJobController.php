@@ -10,6 +10,7 @@ use Inertia\Response;
 use Nip\Scheduler\Enums\CronFrequency;
 use Nip\Scheduler\Enums\GracePeriod;
 use Nip\Scheduler\Enums\JobStatus;
+use Nip\Scheduler\Http\Requests\DeleteSiteScheduledJobRequest;
 use Nip\Scheduler\Http\Requests\StoreSiteScheduledJobRequest;
 use Nip\Scheduler\Http\Requests\UpdateSiteScheduledJobRequest;
 use Nip\Scheduler\Http\Resources\ScheduledJobResource;
@@ -91,28 +92,9 @@ class SiteScheduledJobController extends Controller
             ->route('sites.scheduler', $site)->with('success', 'Scheduled job update started.');
     }
 
-    public function destroy(Site $site, ScheduledJob $job): RedirectResponse
+    public function destroy(DeleteSiteScheduledJobRequest $request, Site $site, ScheduledJob $job): RedirectResponse
     {
-        Gate::authorize('update', $site->server);
-
-        abort_unless($job->site_id === $site->id, 403);
-        abort_if(
-            $job->status === JobStatus::Installing,
-            403,
-            'Cannot delete a job while installation is in progress.'
-        );
-        abort_if(
-            $job->status === JobStatus::Deleting,
-            403,
-            'Job deletion is already in progress.'
-        );
-
-        // If deleting Laravel Scheduler, update packages
-        if ($job->name === 'Laravel Scheduler') {
-            $packages = $site->packages ?? [];
-            unset($packages['scheduler']);
-            $site->update(['packages' => $packages]);
-        }
+        $this->updateLaravelSchedulerPackage($site, $job, enabled: false);
 
         $job->update(['status' => JobStatus::Deleting]);
 
@@ -136,7 +118,7 @@ class SiteScheduledJobController extends Controller
                 ->route('sites.scheduler', $site)->with('info', 'Laravel Scheduler is already configured.');
         }
 
-        $phpVersion = $site->getEffectivePhpVersion();
+        $phpVersion = $site->php_version;
         $artisanPath = $site->getCurrentPath().'/artisan';
 
         $job = $site->scheduledJobs()->create([
@@ -154,9 +136,6 @@ class SiteScheduledJobController extends Controller
 
         return redirect()
             ->route('sites.scheduler', $site)->with('success', 'Laravel Scheduler is being enabled.');
-
-        return redirect()
-            ->back();
     }
 
     public function pause(Site $site, ScheduledJob $job): RedirectResponse
@@ -166,12 +145,7 @@ class SiteScheduledJobController extends Controller
         abort_unless($job->site_id === $site->id, 403);
         abort_unless($job->status === JobStatus::Installed, 403, 'Job must be installed to pause.');
 
-        // If pausing Laravel Scheduler, update packages
-        if ($job->name === 'Laravel Scheduler') {
-            $packages = $site->packages ?? [];
-            unset($packages['scheduler']);
-            $site->update(['packages' => $packages]);
-        }
+        $this->updateLaravelSchedulerPackage($site, $job, enabled: false);
 
         $job->update(['status' => JobStatus::Paused]);
 
@@ -188,20 +162,35 @@ class SiteScheduledJobController extends Controller
         abort_unless($job->site_id === $site->id, 403);
         abort_unless($job->status === JobStatus::Paused, 403, 'Job must be paused to resume.');
 
-        // If resuming Laravel Scheduler, update packages
-        if ($job->name === 'Laravel Scheduler') {
-            $packages = $site->packages ?? [];
-            $packages['scheduler'] = true;
-            $site->update(['packages' => $packages]);
-        }
+        $this->updateLaravelSchedulerPackage($site, $job, enabled: true);
 
         $job->update(['status' => JobStatus::Installing]);
 
         SyncScheduledJobJob::dispatch($job);
+
+        return redirect()
+            ->route('sites.scheduler', $site)->with('success', 'Scheduled job resume started.');
     }
 
     private function generateHeartbeatUrl(): string
     {
         return url('/heartbeat/'.bin2hex(random_bytes(16)));
+    }
+
+    private function updateLaravelSchedulerPackage(Site $site, ScheduledJob $job, bool $enabled): void
+    {
+        if ($job->name !== 'Laravel Scheduler') {
+            return;
+        }
+
+        $packages = $site->packages ?? [];
+
+        if ($enabled) {
+            $packages['scheduler'] = true;
+        } else {
+            unset($packages['scheduler']);
+        }
+
+        $site->update(['packages' => $packages]);
     }
 }
