@@ -25,7 +25,7 @@ import ServerProvisioning from '@/pages/servers/partials/ServerProvisioning.vue'
 import ServerStatusBadge from '@/pages/servers/partials/ServerStatusBadge.vue';
 import type { BreadcrumbItem, ProvisionScriptData, Server } from '@/types';
 import { ServerProvider, ServerStatus } from '@/types';
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import {
     Activity,
     Clock,
@@ -60,6 +60,7 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => [
     },
 ]);
 
+const page = usePage();
 const { copyIpAddress } = useServerActions(() => props.server);
 
 const providerLogos: Record<ServerProvider, Component> = {
@@ -141,7 +142,7 @@ const navItems = computed<NavItem[]>(() => [
 ]);
 
 function isActive(item: NavItem): boolean {
-    return window.location.pathname === item.href;
+    return page.url === item.href;
 }
 
 const scriptOutputModal = ref<InstanceType<typeof ScriptOutputModal> | null>(
@@ -213,11 +214,11 @@ function handleScriptClick(script: ProvisionScriptData) {
                             </button>
 
                             <div
-                                v-if="server.displayablePhpVersion"
+                                v-if="server.phpVersionLabel"
                                 class="flex items-center gap-1.5"
                             >
                                 <Code class="size-3.5" />
-                                <span>{{ server.displayablePhpVersion }}</span>
+                                <span>PHP {{ server.phpVersionLabel }}</span>
                             </div>
                         </div>
                     </div>

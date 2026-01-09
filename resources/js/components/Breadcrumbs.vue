@@ -8,12 +8,12 @@ import {
     BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { dashboard } from '@/routes';
-import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';
+import type { BreadcrumbItem as BreadcrumbItemData } from '@/types';
 import { Link } from '@inertiajs/vue3';
 import { LayoutDashboard } from 'lucide-vue-next';
 
 defineProps<{
-    breadcrumbs: BreadcrumbItemType[];
+    breadcrumbs: BreadcrumbItemData[];
 }>();
 </script>
 

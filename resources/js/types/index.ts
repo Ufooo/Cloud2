@@ -44,8 +44,6 @@ export interface User {
     updated_at: string;
 }
 
-export type BreadcrumbItemType = BreadcrumbItem;
-
 export interface Deployment {
     id: string;
     status: string;
@@ -75,6 +73,7 @@ export {
     ServerProvider,
     ServerStatus,
     ServerType,
+    SiteStatus,
     type CertificateData,
     type DomainRecordData,
     type ProvisionScriptData,
@@ -83,5 +82,6 @@ export {
     type ServerPermissionsData,
     type ServerProviderOptionData,
     type ServerTypeOptionData,
+    type SiteData,
     type SiteData as Site,
 } from './generated';

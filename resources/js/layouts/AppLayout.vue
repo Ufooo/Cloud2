@@ -5,11 +5,11 @@ import FlashMessages from '@/components/FlashMessages.vue';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog.vue';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Sonner } from '@/components/ui/sonner';
-import type { BreadcrumbItemType } from '@/types';
+import type { BreadcrumbItem } from '@/types';
 import { usePage } from '@inertiajs/vue3';
 
 interface Props {
-    breadcrumbs?: BreadcrumbItemType[];
+    breadcrumbs?: BreadcrumbItem[];
 }
 
 withDefaults(defineProps<Props>(), {

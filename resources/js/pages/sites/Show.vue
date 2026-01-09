@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/card';
 import SiteLayout from '@/layouts/SiteLayout.vue';
 import type { Site } from '@/types';
+import { SiteStatus } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
 import {
     ExternalLink,
@@ -30,8 +31,12 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const isInstalling = computed(() => props.site.status === 'installing');
+const isInstalling = computed(() => props.site.status === SiteStatus.Installing);
 const isDeployingInProgress = ref(false);
+
+const phpVersionDisplay = computed(() =>
+    props.site.phpVersionLabel ? `PHP ${props.site.phpVersionLabel}` : 'N/A'
+);
 
 function triggerDeploy() {
     if (isDeployingInProgress.value) return;
@@ -136,7 +141,7 @@ function triggerDeploy() {
                                 >PHP Version</span
                             >
                             <span class="text-sm font-medium">{{
-                                site.phpVersionValue ? `PHP ${site.phpVersionValue}` : 'N/A'
+                                phpVersionDisplay
                             }}</span>
                         </div>
                         <div class="flex items-center justify-between">

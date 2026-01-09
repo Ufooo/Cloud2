@@ -5,9 +5,9 @@ import PhpVersionBadge from '@/components/PhpVersionBadge.vue';
 import RepositoryBadge from '@/components/RepositoryBadge.vue';
 import { Button } from '@/components/ui/button';
 import SiteStatusBadge from '@/pages/sites/partials/SiteStatusBadge.vue';
-import type { Site } from '@/types';
+import { SiteStatus, type Site } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { Clock, ExternalLink, MoreHorizontal, Server, User } from 'lucide-vue-next';
+import { Clock, MoreHorizontal, Server, User } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface Props {
@@ -19,7 +19,7 @@ const props = withDefaults(defineProps<Props>(), {
     showServer: true,
 });
 
-const isInstalled = computed(() => props.site.status === 'installed');
+const isInstalled = computed(() => props.site.status === SiteStatus.Installed);
 </script>
 
 <template>
@@ -32,10 +32,7 @@ const isInstalled = computed(() => props.site.status === 'installed');
 
         <!-- Main Info -->
         <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2 mb-1">
-                <h4 class="font-semibold text-foreground truncate">{{ site.domain }}</h4>
-                <ExternalLink class="w-3.5 h-3.5 text-muted-foreground cursor-pointer hover:text-primary flex-shrink-0" />
-            </div>
+            <h4 class="font-semibold text-foreground truncate mb-1">{{ site.domain }}</h4>
             <div class="flex items-center gap-4 text-sm">
                 <span v-if="site.serverName && showServer" class="text-muted-foreground">
                     <Server class="w-3.5 h-3.5 inline mr-1" />
@@ -45,7 +42,7 @@ const isInstalled = computed(() => props.site.status === 'installed');
                     <User class="w-3.5 h-3.5 inline mr-1" />
                     {{ site.user }}
                 </span>
-                <PhpVersionBadge v-if="site.phpVersionValue" :version="site.phpVersionValue" />
+                <PhpVersionBadge v-if="site.phpVersionLabel" :version="site.phpVersionLabel" />
             </div>
         </div>
 
@@ -70,7 +67,7 @@ const isInstalled = computed(() => props.site.status === 'installed');
             <SiteStatusBadge v-else :status="site.status" />
         </div>
 
-        <!-- Actions -->
+        <!-- Actions - TODO: Implement actions menu -->
         <Button variant="ghost" size="icon" class="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted flex-shrink-0" @click.prevent>
             <MoreHorizontal class="w-4 h-4" />
         </Button>
