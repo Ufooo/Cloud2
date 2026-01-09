@@ -2,7 +2,6 @@
 
 namespace Nip\Site\Data;
 
-use Nip\Php\Enums\PhpVersion;
 use Nip\Server\Enums\IdentityColor;
 use Nip\Site\Enums\SiteStatus;
 use Nip\Site\Models\Site;
@@ -36,13 +35,13 @@ class SiteData extends Data
         public string $fullPath,
         public string $webPath,
         public string $url,
-        public ?string $phpVersion,
         public ?string $phpVersionValue,
         public ?string $packageManager,
         public ?string $buildCommand,
         public ?string $repository,
         public ?string $branch,
         public ?string $displayableRepository,
+        public ?string $sourceControlProvider,
         public ?IdentityColor $avatarColor,
         public ?string $notes,
         public ?string $lastDeployedAt,
@@ -68,9 +67,6 @@ class SiteData extends Data
 
     public static function fromModel(Site $site): self
     {
-        $canUpdate = request()->user()?->can('update', $site->server);
-        $isInstalled = $site->status === SiteStatus::Installed;
-
         return new self(
             id: $site->id,
             slug: $site->slug,
@@ -94,13 +90,13 @@ class SiteData extends Data
             fullPath: $site->getFullPath(),
             webPath: $site->getWebPath(),
             url: $site->getUrl(),
-            phpVersion: $site->php_version ? PhpVersion::tryFrom($site->php_version)?->label() : null,
             phpVersionValue: $site->php_version,
             packageManager: $site->package_manager?->value,
             buildCommand: $site->build_command,
             repository: $site->repository,
             branch: $site->branch,
             displayableRepository: $site->getDisplayableRepository(),
+            sourceControlProvider: $site->relationLoaded('sourceControl') ? $site->sourceControl?->provider?->value : null,
             avatarColor: $site->avatar_color,
             notes: $site->notes,
             lastDeployedAt: $site->last_deployed_at?->toISOString(),
@@ -119,11 +115,7 @@ class SiteData extends Data
                 ? DetectedPackageData::fromPackageValues($site->detected_packages, $site)
                 : null,
             packages: $site->packages,
-            can: new SitePermissionsData(
-                update: $canUpdate && $isInstalled,
-                delete: $canUpdate && $site->status !== SiteStatus::Installing,
-                deploy: $canUpdate && $isInstalled && (bool) $site->repository,
-            ),
+            can: $site->getPermissions(),
         );
     }
 }

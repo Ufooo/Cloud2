@@ -20,7 +20,7 @@ class CreateNginxServerBlockJob extends BaseSiteProvisionJob
             'fullPath' => $this->site->getFullPath(),
             'rootPath' => $this->site->getRootPath(),
             'phpSocket' => $this->site->getPhpSocketPath(),
-            'phpVersion' => $this->site->getEffectivePhpVersion(),
+            'phpVersion' => $this->site->php_version,
             'siteType' => $this->site->type,
             'allowWildcard' => $this->site->allow_wildcard,
             'wwwRedirectType' => $this->site->www_redirect_type,

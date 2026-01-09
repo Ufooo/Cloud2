@@ -12,7 +12,7 @@ class SitePhpVersionService
 {
     public function updatePhpVersion(Site $site, string $newVersion): void
     {
-        $oldVersion = $site->getEffectivePhpVersion();
+        $oldVersion = $site->php_version;
         $jobs = [];
 
         // Create new PHP-FPM pool if no other sites use this user with the new version

@@ -2,6 +2,7 @@
 
 namespace Nip\Site\Jobs;
 
+use Illuminate\Support\Facades\Log;
 use Nip\Server\Jobs\BaseProvisionJob;
 use Nip\Server\Models\Server;
 use Nip\Server\Services\SSH\ExecutionResult;
@@ -55,7 +56,7 @@ class DeleteSiteJob extends BaseProvisionJob
             'user' => $this->site->user,
             'domain' => $this->site->domain,
             'fullPath' => $this->site->getFullPath(),
-            'phpVersion' => $this->site->getEffectivePhpVersion(),
+            'phpVersion' => $this->site->php_version,
             'shouldDeletePool' => ! $otherSitesWithSameUser,
             'installedPhpVersions' => $this->site->server->phpVersions->pluck('version')->toArray(),
             'domainRecords' => $this->site->domainRecords->pluck('name')->toArray(),
@@ -71,7 +72,12 @@ class DeleteSiteJob extends BaseProvisionJob
 
     protected function handleFailure(\Throwable $exception): void
     {
-        // Keep the site in deleting status for manual intervention
+        Log::error('Failed to delete site', [
+            'site_id' => $this->site->id,
+            'site_domain' => $this->site->domain,
+            'server_id' => $this->site->server_id,
+            'error' => $exception->getMessage(),
+        ]);
     }
 
     /**

@@ -24,7 +24,7 @@ class InstallComposerDependenciesJob extends BaseSiteProvisionJob
             'user' => $this->site->user,
             'packageManager' => $this->site->package_manager,
             'hasRepository' => ! empty($this->site->repository),
-            'composerPhpVersion' => $this->site->getEffectivePhpVersion(),
+            'composerPhpVersion' => $this->site->php_version,
             'composerBinary' => '/usr/local/bin/composer',
         ])->render();
     }

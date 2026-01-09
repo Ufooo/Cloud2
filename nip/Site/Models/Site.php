@@ -2,16 +2,27 @@
 
 namespace Nip\Site\Models;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Gate;
+use Nip\BackgroundProcess\Models\BackgroundProcess;
 use Nip\Composer\Models\ComposerCredential;
-use Nip\Php\Enums\PhpVersion;
+use Nip\Database\Models\Database;
+use Nip\Database\Models\DatabaseUser;
+use Nip\Domain\Enums\DomainRecordType;
+use Nip\Domain\Models\Certificate;
+use Nip\Domain\Models\DomainRecord;
+use Nip\Redirect\Models\RedirectRule;
+use Nip\Scheduler\Models\ScheduledJob;
+use Nip\Security\Models\SecurityRule;
 use Nip\Server\Enums\IdentityColor;
 use Nip\Server\Models\Server;
+use Nip\Site\Data\SitePermissionsData;
 use Nip\Site\Data\SiteProvisioningStepData;
 use Nip\Site\Database\Factories\SiteFactory;
 use Nip\Site\Enums\DeployStatus;
@@ -22,6 +33,7 @@ use Nip\Site\Enums\SiteType;
 use Nip\Site\Enums\WwwRedirectType;
 use Nip\SourceControl\Models\SourceControl;
 use Nip\SourceControl\Services\GitHubService;
+use Nip\UnixUser\Models\UnixUser;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 
@@ -126,85 +138,85 @@ class Site extends Model
     }
 
     /**
-     * @return BelongsTo<\Nip\UnixUser\Models\UnixUser, $this>
+     * @return BelongsTo<UnixUser, $this>
      */
     public function unixUser(): BelongsTo
     {
-        return $this->belongsTo(\Nip\UnixUser\Models\UnixUser::class, 'user', 'username')
+        return $this->belongsTo(UnixUser::class, 'user', 'username')
             ->where('server_id', $this->server_id);
     }
 
     /**
-     * @return HasMany<\Nip\Domain\Models\DomainRecord, $this>
+     * @return HasMany<DomainRecord, $this>
      */
     public function domainRecords(): HasMany
     {
-        return $this->hasMany(\Nip\Domain\Models\DomainRecord::class);
+        return $this->hasMany(DomainRecord::class);
     }
 
     /**
-     * @return HasOne<\Nip\Domain\Models\DomainRecord, $this>
+     * @return HasOne<DomainRecord, $this>
      */
     public function primaryDomain(): HasOne
     {
-        return $this->hasOne(\Nip\Domain\Models\DomainRecord::class)
-            ->where('type', \Nip\Domain\Enums\DomainRecordType::Primary);
+        return $this->hasOne(DomainRecord::class)
+            ->where('type', DomainRecordType::Primary);
     }
 
     /**
-     * @return HasMany<\Nip\Domain\Models\Certificate, $this>
+     * @return HasMany<Certificate, $this>
      */
     public function certificates(): HasMany
     {
-        return $this->hasMany(\Nip\Domain\Models\Certificate::class);
+        return $this->hasMany(Certificate::class);
     }
 
     /**
-     * @return BelongsTo<\Nip\Database\Models\Database, $this>
+     * @return BelongsTo<Database, $this>
      */
     public function database(): BelongsTo
     {
-        return $this->belongsTo(\Nip\Database\Models\Database::class);
+        return $this->belongsTo(Database::class);
     }
 
     /**
-     * @return BelongsTo<\Nip\Database\Models\DatabaseUser, $this>
+     * @return BelongsTo<DatabaseUser, $this>
      */
     public function databaseUser(): BelongsTo
     {
-        return $this->belongsTo(\Nip\Database\Models\DatabaseUser::class);
+        return $this->belongsTo(DatabaseUser::class);
     }
 
     /**
-     * @return HasMany<\Nip\Scheduler\Models\ScheduledJob, $this>
+     * @return HasMany<ScheduledJob, $this>
      */
     public function scheduledJobs(): HasMany
     {
-        return $this->hasMany(\Nip\Scheduler\Models\ScheduledJob::class);
+        return $this->hasMany(ScheduledJob::class);
     }
 
     /**
-     * @return HasMany<\Nip\BackgroundProcess\Models\BackgroundProcess, $this>
+     * @return HasMany<BackgroundProcess, $this>
      */
     public function backgroundProcesses(): HasMany
     {
-        return $this->hasMany(\Nip\BackgroundProcess\Models\BackgroundProcess::class);
+        return $this->hasMany(BackgroundProcess::class);
     }
 
     /**
-     * @return HasMany<\Nip\Security\Models\SecurityRule, $this>
+     * @return HasMany<SecurityRule, $this>
      */
     public function securityRules(): HasMany
     {
-        return $this->hasMany(\Nip\Security\Models\SecurityRule::class);
+        return $this->hasMany(SecurityRule::class);
     }
 
     /**
-     * @return HasMany<\Nip\Redirect\Models\RedirectRule, $this>
+     * @return HasMany<RedirectRule, $this>
      */
     public function redirectRules(): HasMany
     {
-        return $this->hasMany(\Nip\Redirect\Models\RedirectRule::class);
+        return $this->hasMany(RedirectRule::class);
     }
 
     /**
@@ -238,22 +250,13 @@ class Site extends Model
         return $basePath.$webDir;
     }
 
-    public function getEffectivePhpVersion(): string
+    public function getPhpSocketPath(): ?string
     {
-        $version = $this->php_version ?? $this->server->php_version;
+        $phpVersion = $this->php_version;
 
-        // If already in numeric format (8.4), return as-is
-        if (preg_match('/^\d+\.\d+$/', $version)) {
-            return $version;
+        if (! $phpVersion) {
+            return null;
         }
-
-        // Convert enum value (php84) to numeric version (8.4)
-        return PhpVersion::tryFrom($version)?->version() ?? '8.4';
-    }
-
-    public function getPhpSocketPath(): string
-    {
-        $phpVersion = $this->getEffectivePhpVersion();
 
         return "/var/run/php/php{$phpVersion}-fpm-{$this->user}.sock";
     }
@@ -320,6 +323,30 @@ class Site extends Model
     protected function provisioningSteps(): Attribute
     {
         return Attribute::get(fn () => $this->getProvisioningSteps());
+    }
+
+    public function canBeUpdated(?User $user = null): bool
+    {
+        return Gate::forUser($user ?? request()->user())->allows('update', $this);
+    }
+
+    public function canBeDeleted(?User $user = null): bool
+    {
+        return Gate::forUser($user ?? request()->user())->allows('delete', $this);
+    }
+
+    public function canBeDeployed(?User $user = null): bool
+    {
+        return Gate::forUser($user ?? request()->user())->allows('deploy', $this);
+    }
+
+    public function getPermissions(?User $user = null): SitePermissionsData
+    {
+        return new SitePermissionsData(
+            update: $this->canBeUpdated($user),
+            delete: $this->canBeDeleted($user),
+            deploy: $this->canBeDeployed($user),
+        );
     }
 
     /**

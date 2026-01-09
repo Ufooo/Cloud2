@@ -2,6 +2,7 @@
 
 namespace Nip\Site\Jobs;
 
+use Illuminate\Support\Facades\Log;
 use Nip\Server\Jobs\BaseProvisionJob;
 use Nip\Server\Models\Server;
 use Nip\Server\Services\SSH\ExecutionResult;
@@ -11,12 +12,12 @@ class UpdateSitePhpVersionJob extends BaseProvisionJob
 {
     public int $timeout = 120;
 
+    public $queue = 'provisioning';
+
     public function __construct(
         public Site $site,
         public string $newVersion
-    ) {
-        $this->onQueue('provisioning');
-    }
+    ) {}
 
     protected function getResourceType(): string
     {
@@ -38,7 +39,7 @@ class UpdateSitePhpVersionJob extends BaseProvisionJob
         return view('provisioning.scripts.site.steps.update-php-version', [
             'site' => $this->site,
             'domain' => $this->site->domain,
-            'oldVersion' => $this->site->getEffectivePhpVersion(),
+            'oldVersion' => $this->site->php_version,
             'newVersion' => $this->newVersion,
             'user' => $this->site->user,
             'fullPath' => $this->site->getFullPath(),
@@ -54,7 +55,13 @@ class UpdateSitePhpVersionJob extends BaseProvisionJob
 
     protected function handleFailure(\Throwable $exception): void
     {
-        // Log the failure, version remains unchanged
+        Log::error('Failed to update PHP version for site', [
+            'site_id' => $this->site->id,
+            'site_domain' => $this->site->domain,
+            'old_version' => $this->site->php_version,
+            'new_version' => $this->newVersion,
+            'error' => $exception->getMessage(),
+        ]);
     }
 
     /**
