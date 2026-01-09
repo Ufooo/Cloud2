@@ -35,7 +35,6 @@ class CertificateController extends Controller
 
         // Handle domains based on type
         if ($type === CertificateType::LetsEncrypt) {
-            $certificateData['domains'] = [$data['domain']];
             $certificateData['verification_method'] = $data['verification_method'];
             $certificateData['key_algorithm'] = $data['key_algorithm'];
             $certificateData['isrg_root_chain'] = $data['isrg_root_chain'] ?? false;
@@ -47,6 +46,11 @@ class CertificateController extends Controller
                 $certificateData['status'] = CertificateStatus::PendingVerification;
                 $certificateData['acme_subdomains'] = $acmeSubdomains;
                 $certificateData['verification_records'] = $this->generateVerificationRecordsFromSubdomains($acmeSubdomains);
+                // Use all domains from acme_subdomains (includes www if redirect is set)
+                $certificateData['domains'] = array_keys($acmeSubdomains);
+            } else {
+                // HTTP-01 only verifies the main domain
+                $certificateData['domains'] = [$data['domain']];
             }
         } else {
             // For other types, single domain (plus SANs for CSR)

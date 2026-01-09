@@ -38,7 +38,7 @@ echo "Configuring ACME client..."
 cat > "$LE_DIR/config" << 'CONFIGEOF'
 CA="https://acme-v02.api.letsencrypt.org/directory"
 WELLKNOWN="{{ $wellknown }}"
-ACCOUNTDIR="~/letsencrypt_accounts"
+ACCOUNTDIR="/root/letsencrypt_accounts"
 @if($keyAlgorithm === 'ecdsa')
 KEY_ALGO="secp384r1"
 @else
@@ -46,6 +46,16 @@ KEY_ALGO="rsa"
 KEYSIZE="4096"
 @endif
 CONFIGEOF
+
+#
+# Register account with Let's Encrypt (if not already registered)
+#
+
+if [ ! -d ~/letsencrypt_accounts ]; then
+    echo "Registering account with Let's Encrypt..."
+    cd "$LE_DIR"
+    ./dehydrated --register --accept-terms
+fi
 
 #
 # Create domains.txt
