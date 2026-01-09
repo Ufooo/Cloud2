@@ -14,4 +14,7 @@ Route::get('dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+// Design Concepts
+Route::get('/design-concepts', fn () => Inertia::render('design-concepts/SitesDesignV8'))->name('design-concepts');
+
 require __DIR__.'/settings.php';
