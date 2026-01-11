@@ -4,6 +4,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Script Element for Initial Page Data
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, the initial page data will be stored in a script element
+    | instead of a data-page attribute on the root element. This is slightly
+    | faster and easier to inspect in your browser's dev tools.
+    |
+    */
+
+    'use_script_element_for_initial_page' => true,
+
+    /*
+    |--------------------------------------------------------------------------
     | Server Side Rendering
     |--------------------------------------------------------------------------
     |

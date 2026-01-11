@@ -11,6 +11,11 @@ createServer(
         createInertiaApp({
             page,
             render: renderToString,
+            defaults: {
+                future: {
+                    useScriptElementForInitialPage: true,
+                },
+            },
             title: (title) => (title ? `${title} - ${appName}` : appName),
             resolve: (name) =>
                 resolvePageComponent(
