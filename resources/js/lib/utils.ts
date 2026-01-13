@@ -12,8 +12,8 @@ export function urlIsActive(
 ) {
     const url = toUrl(urlToCheck);
 
-    // Root paths need exact match
-    if (url === '/' || url === '/dashboard') {
+    // Root path needs exact match
+    if (url === '/') {
         return url === currentUrl;
     }
 
