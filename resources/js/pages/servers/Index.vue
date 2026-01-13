@@ -35,7 +35,7 @@ const hasServers = computed(() => props.servers.data.length > 0);
     <Head title="Servers" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto">
+        <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto p-6">
             <!-- Header -->
             <div class="flex items-center justify-between">
                 <div>
