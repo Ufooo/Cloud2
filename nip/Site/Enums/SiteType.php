@@ -12,6 +12,7 @@ enum SiteType: string
     case Statamic = 'statamic';
     case WordPress = 'wordpress';
     case PhpMyAdmin = 'phpmyadmin';
+    case Satis = 'satis';
     case Php = 'php';
     case NextJs = 'nextjs';
     case NuxtJs = 'nuxtjs';
@@ -26,6 +27,7 @@ enum SiteType: string
             self::Statamic => 'Statamic',
             self::WordPress => 'WordPress',
             self::PhpMyAdmin => 'phpMyAdmin',
+            self::Satis => 'Satis',
             self::Php => 'PHP',
             self::NextJs => 'Next.js',
             self::NuxtJs => 'Nuxt.js',
@@ -39,7 +41,7 @@ enum SiteType: string
         return match ($this) {
             self::Laravel, self::Statamic => '/public',
             self::Symfony => '/public',
-            self::WordPress, self::PhpMyAdmin, self::Php, self::Html, self::Other => '/',
+            self::WordPress, self::PhpMyAdmin, self::Satis, self::Php, self::Html, self::Other => '/',
             self::NextJs, self::NuxtJs => '/',
         };
     }
@@ -57,7 +59,7 @@ enum SiteType: string
     public function isPhpBased(): bool
     {
         return match ($this) {
-            self::Laravel, self::Symfony, self::Statamic, self::WordPress, self::PhpMyAdmin, self::Php => true,
+            self::Laravel, self::Symfony, self::Statamic, self::WordPress, self::PhpMyAdmin, self::Satis, self::Php => true,
             default => false,
         };
     }

@@ -3,6 +3,7 @@ import { show } from '@/actions/Nip/Site/Http/Controllers/SiteController';
 import Avatar from '@/components/shared/Avatar.vue';
 import PhpVersionBadge from '@/components/PhpVersionBadge.vue';
 import RepositoryBadge from '@/components/RepositoryBadge.vue';
+import SiteTypeBadge from '@/components/SiteTypeBadge.vue';
 import { Button } from '@/components/ui/button';
 import SiteStatusBadge from '@/pages/sites/partials/SiteStatusBadge.vue';
 import { SiteStatus, type Site } from '@/types';
@@ -46,11 +47,19 @@ const isInstalled = computed(() => props.site.status === SiteStatus.Installed);
             </div>
         </div>
 
-        <!-- Repository Info -->
+        <!-- Site Type Badge (only if no repository) -->
+        <SiteTypeBadge
+            v-if="isInstalled && !site.repository"
+            :type="site.type"
+            :displayable-type="site.displayableType"
+            :version="site.detectedVersion"
+        />
+
+        <!-- Repository Info (if has repository) -->
         <RepositoryBadge
-            v-if="site.displayableRepository && isInstalled"
+            v-if="site.repository && isInstalled"
             :provider="site.sourceControlProvider"
-            :repository="site.repository!"
+            :repository="site.repository"
             :branch="site.branch"
         />
 

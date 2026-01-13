@@ -6,6 +6,7 @@ import NuxtJsIcon from './NuxtJsIcon.vue';
 import OtherIcon from './OtherIcon.vue';
 import PhpIcon from './PhpIcon.vue';
 import PhpMyAdminIcon from './PhpMyAdminIcon.vue';
+import SatisIcon from './SatisIcon.vue';
 import StatamicIcon from './StatamicIcon.vue';
 import SymfonyIcon from './SymfonyIcon.vue';
 import WordpressIcon from './WordpressIcon.vue';
@@ -23,6 +24,7 @@ defineProps<Props>();
     <StatamicIcon v-else-if="type === 'statamic'" />
     <WordpressIcon v-else-if="type === 'wordpress'" />
     <PhpMyAdminIcon v-else-if="type === 'phpmyadmin'" />
+    <SatisIcon v-else-if="type === 'satis'" />
     <PhpIcon v-else-if="type === 'php'" />
     <NextJsIcon v-else-if="type === 'nextjs'" />
     <NuxtJsIcon v-else-if="type === 'nuxtjs'" />

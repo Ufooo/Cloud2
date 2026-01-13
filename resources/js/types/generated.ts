@@ -263,6 +263,7 @@ zeroDowntime: boolean;
 healthcheckEndpoint: string | null;
 deployKey: string | null;
 detectedPackages: Array<string> | null;
+detectedVersion: string | null;
 packageDetails: Array<DetectedPackageData> | null;
 packages: { [key: string]: boolean } | null;
 can: SitePermissionsData;
@@ -280,7 +281,7 @@ label: string;
 description: string;
 };
 export enum SiteStatus { Pending = 'pending', Installing = 'installing', Installed = 'installed', Failed = 'failed', Deleting = 'deleting' };
-export enum SiteType { Laravel = 'laravel', Symfony = 'symfony', Statamic = 'statamic', WordPress = 'wordpress', PhpMyAdmin = 'phpmyadmin', Php = 'php', NextJs = 'nextjs', NuxtJs = 'nuxtjs', Html = 'html', Other = 'other' };
+export enum SiteType { Laravel = 'laravel', Symfony = 'symfony', Statamic = 'statamic', WordPress = 'wordpress', PhpMyAdmin = 'phpmyadmin', Satis = 'satis', Php = 'php', NextJs = 'nextjs', NuxtJs = 'nuxtjs', Html = 'html', Other = 'other' };
 export enum SourceControlProvider { GitHub = 'github', GitLab = 'gitlab', Bitbucket = 'bitbucket' };
 export type SshKeyData = {
 id: number;

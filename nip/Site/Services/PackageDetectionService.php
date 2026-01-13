@@ -6,6 +6,7 @@ use Exception;
 use Nip\Server\Services\SSH\SSHService;
 use Nip\Site\Enums\DetectedPackage;
 use Nip\Site\Enums\SitePackage;
+use Nip\Site\Enums\SiteType;
 use Nip\Site\Models\Site;
 
 class PackageDetectionService
@@ -116,6 +117,54 @@ class PackageDetectionService
         }
 
         return $sitePackages;
+    }
+
+    /**
+     * Detect WordPress version from the remote server.
+     *
+     * @return array<string>
+     */
+    public function detectWordPressVersion(Site $site): array
+    {
+        if ($site->type !== SiteType::WordPress) {
+            return [];
+        }
+
+        $basePath = $site->zero_downtime ? $site->getCurrentPath() : $site->getFullPath();
+        $versionFile = "{$basePath}/wp-includes/version.php";
+
+        try {
+            $this->ssh->connect($site->server, $site->user);
+            $content = $this->ssh->getFileContent($versionFile);
+            $this->ssh->disconnect();
+
+            if (! $content) {
+                return [];
+            }
+
+            $version = $this->parseWordPressVersion($content);
+            $packages = $version ? ["version:{$version}"] : [];
+
+            $site->update([
+                'detected_packages' => $packages,
+            ]);
+
+            return $packages;
+        } catch (Exception) {
+            return [];
+        }
+    }
+
+    /**
+     * Parse WordPress version from version.php content.
+     */
+    protected function parseWordPressVersion(string $content): ?string
+    {
+        if (preg_match('/\$wp_version\s*=\s*[\'"]([^\'"]+)[\'"]/', $content, $matches)) {
+            return $matches[1];
+        }
+
+        return null;
     }
 
     /**

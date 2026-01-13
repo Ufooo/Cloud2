@@ -58,6 +58,7 @@ class SiteData extends Data
         public ?string $deployKey,
         /** @var string[]|null */
         public ?array $detectedPackages,
+        public ?string $detectedVersion,
         /** @var DetectedPackageData[]|null */
         public ?array $packageDetails,
         /** @var array<string, bool>|null */
@@ -111,6 +112,7 @@ class SiteData extends Data
             healthcheckEndpoint: $site->healthcheck_endpoint,
             deployKey: $site->deploy_key,
             detectedPackages: $site->detected_packages,
+            detectedVersion: self::extractVersionFromPackages($site->detected_packages),
             packageDetails: self::getPackageDetailsData($site),
             packages: $site->packages,
             can: $site->getPermissions(),
@@ -135,5 +137,26 @@ class SiteData extends Data
         return $site->detected_packages
             ? DetectedPackageData::fromPackageValues($site->detected_packages, $site)
             : null;
+    }
+
+    /**
+     * Extract version from detected_packages array.
+     * Looks for entries like 'version:6.8.3' and returns '6.8.3'.
+     *
+     * @param  array<string>|null  $packages
+     */
+    private static function extractVersionFromPackages(?array $packages): ?string
+    {
+        if (! $packages) {
+            return null;
+        }
+
+        foreach ($packages as $package) {
+            if (str_starts_with($package, 'version:')) {
+                return substr($package, 8);
+            }
+        }
+
+        return null;
     }
 }
