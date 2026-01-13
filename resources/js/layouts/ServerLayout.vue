@@ -229,6 +229,7 @@ function handleScriptClick(script: ProvisionScriptData) {
                             <li v-for="item in navItems" :key="item.href">
                                 <Link
                                     :href="item.href"
+                                    prefetch
                                     class="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors"
                                     :class="[
                                         isActive(item)

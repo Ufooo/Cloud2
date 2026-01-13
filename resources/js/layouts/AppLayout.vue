@@ -23,7 +23,7 @@ const isOpen = usePage().props.sidebarOpen as boolean;
     <SidebarProvider :default-open="isOpen" class="min-h-screen bg-background">
         <AppSidebar />
         <SidebarInset
-            class="flex-1 overflow-x-hidden rounded-2xl border border-border bg-card p-6"
+            class="flex-1 overflow-x-hidden rounded-2xl border border-border bg-card"
         >
             <AppSidebarHeader :breadcrumbs="breadcrumbs" />
             <div class="flex-1">

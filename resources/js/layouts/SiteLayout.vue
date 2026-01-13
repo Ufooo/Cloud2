@@ -1,15 +1,21 @@
 <script setup lang="ts">
 import { index as composerIndex } from '@/actions/Nip/Composer/Http/Controllers/ComposerController';
 import { indexForSite as databasesIndex } from '@/actions/Nip/Database/Http/Controllers/DatabaseController';
-import { index as sitesIndex } from '@/actions/Nip/Site/Http/Controllers/SiteController';
+import {
+    deploy,
+    index as sitesIndex,
+} from '@/actions/Nip/Site/Http/Controllers/SiteController';
 import FailedScriptsAlert from '@/components/FailedScriptsAlert.vue';
 import SiteTypeIcon from '@/components/icons/SiteTypeIcon.vue';
 import ScriptOutputModal from '@/components/ScriptOutputModal.vue';
 import Avatar from '@/components/shared/Avatar.vue';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/AppLayout.vue';
 import PackageBadges from '@/pages/sites/partials/PackageBadges.vue';
 import SiteStatusBadge from '@/pages/sites/partials/SiteStatusBadge.vue';
 import type { BreadcrumbItem, ProvisionScriptData, Site } from '@/types';
+import { SiteStatus } from '@/types';
 import { Link, router } from '@inertiajs/vue3';
 import { useEcho } from '@laravel/echo-vue';
 import {
@@ -18,13 +24,16 @@ import {
     Clock,
     Database,
     ExternalLink,
+    GitBranch,
     Globe,
     LayoutDashboard,
     Lock,
     Package,
     Rocket,
+    Server,
     Settings,
     Share2,
+    User,
 } from 'lucide-vue-next';
 import type { FunctionalComponent } from 'vue';
 import { computed, ref } from 'vue';
@@ -134,102 +143,240 @@ const scriptOutputModal = ref<InstanceType<typeof ScriptOutputModal> | null>(
 function handleScriptClick(script: ProvisionScriptData) {
     scriptOutputModal.value?.open(script);
 }
+
+// Deploy functionality
+const isInstalled = computed(
+    () => props.site.status === SiteStatus.Installed,
+);
+const isDeployingInProgress = ref(false);
+
+function triggerDeploy() {
+    if (isDeployingInProgress.value || !props.site.can?.deploy) return;
+
+    isDeployingInProgress.value = true;
+    router.post(
+        deploy.url(props.site),
+        {},
+        {
+            onFinish: () => {
+                isDeployingInProgress.value = false;
+            },
+        },
+    );
+}
 </script>
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 overflow-hidden">
-            <!-- Left Sidebar -->
-            <aside
-                v-if="showSidebar"
-                class="flex w-64 shrink-0 flex-col border-r bg-muted/30"
-            >
-                <!-- Site Header -->
-                <div class="border-b p-4">
-                    <div class="flex items-center gap-3">
-                        <Avatar
-                            :name="site.domain"
-                            :color="site.avatarColor ?? undefined"
-                        />
-
-                        <div class="min-w-0 flex-1">
-                            <div class="flex items-center gap-2">
-                                <h1
-                                    class="truncate text-sm font-semibold"
-                                    :title="site.domain"
+        <div class="flex h-full flex-1 flex-col overflow-hidden">
+            <!-- Full Width Header -->
+            <header class="shrink-0 bg-gradient-to-b from-muted/40 to-background">
+                <div class="flex items-center justify-between px-8 py-5">
+                    <!-- Left: Avatar + Essential Info -->
+                    <div class="flex items-center gap-4">
+                        <!-- Avatar with status -->
+                        <div class="relative">
+                            <Avatar
+                                :name="site.domain"
+                                :color="site.avatarColor ?? undefined"
+                                size="lg"
+                            />
+                            <div
+                                v-if="isInstalled"
+                                class="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-background"
+                            >
+                                <svg
+                                    class="h-2 w-2 text-white"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
                                 >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="3"
+                                        d="M5 13l4 4L19 7"
+                                    />
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Domain + Type + PHP -->
+                        <div>
+                            <div class="flex items-center gap-3">
+                                <h1 class="text-lg font-bold tracking-tight">
                                     {{ site.domain }}
                                 </h1>
+                                <SiteStatusBadge :status="site.status" />
                             </div>
-                            <SiteStatusBadge
-                                :status="site.status"
-                                class="mt-1"
-                            />
+                            <div
+                                class="mt-0.5 flex items-center gap-2 text-sm text-muted-foreground"
+                            >
+                                <div class="flex items-center gap-1">
+                                    <SiteTypeIcon
+                                        :type="site.type"
+                                        class="size-3.5"
+                                    />
+                                    <span>{{ site.displayableType }}</span>
+                                </div>
+                                <span
+                                    v-if="site.phpVersionLabel"
+                                    class="text-border"
+                                    >•</span
+                                >
+                                <span
+                                    v-if="site.phpVersionLabel"
+                                    class="font-medium text-emerald-600 dark:text-emerald-400"
+                                >
+                                    PHP {{ site.phpVersionLabel }}
+                                </span>
+                                <span v-if="site.url" class="text-border"
+                                    >•</span
+                                >
+                                <a
+                                    v-if="site.url"
+                                    :href="site.url"
+                                    target="_blank"
+                                    class="inline-flex items-center gap-1 transition-colors hover:text-foreground"
+                                >
+                                    <ExternalLink class="size-3" />
+                                    {{ site.url }}
+                                </a>
+                            </div>
+                            <PackageBadges :site="site" class="mt-2" />
                         </div>
                     </div>
 
-                    <div class="mt-3 space-y-1 text-xs text-muted-foreground">
-                        <div class="flex items-center gap-1.5">
-                            <SiteTypeIcon :type="site.type" class="size-3.5" />
-                            <span>{{ site.displayableType }}</span>
-                        </div>
-
-                        <a
-                            v-if="site.url"
-                            :href="site.url"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="flex items-center gap-1.5 hover:text-foreground"
-                            :title="`Open ${site.url}`"
-                        >
-                            <ExternalLink class="size-3.5" />
-                            <span class="truncate hover:underline">{{
-                                site.url
-                            }}</span>
-                        </a>
-
-                        <div
-                            v-if="site.serverName"
-                            class="flex items-center gap-1.5"
-                        >
-                            <Globe class="size-3.5" />
-                            <span>{{ site.serverName }}</span>
-                        </div>
-                    </div>
-
-                    <PackageBadges :site="site" />
+                    <!-- Right: Deploy Button -->
+                    <Button
+                        v-if="site.can?.deploy && isInstalled"
+                        class="shadow-sm"
+                        :disabled="
+                            site.deployStatus === 'deploying' ||
+                            isDeployingInProgress
+                        "
+                        @click="triggerDeploy"
+                    >
+                        <Rocket class="mr-2 size-4" />
+                        {{
+                            isDeployingInProgress
+                                ? 'Starting...'
+                                : 'Deploy Now'
+                        }}
+                    </Button>
                 </div>
 
-                <!-- Navigation -->
-                <nav class="flex-1 overflow-y-auto p-2">
-                    <ul class="space-y-1">
-                        <li v-for="item in navItems" :key="item.href">
-                            <Link
-                                :href="item.href"
-                                class="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors"
-                                :class="[
-                                    isActive(item)
-                                        ? 'bg-primary text-primary-foreground'
-                                        : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-                                ]"
-                            >
-                                <component :is="item.icon" class="size-4" />
-                                {{ item.title }}
-                            </Link>
-                        </li>
-                    </ul>
-                </nav>
-            </aside>
+                <!-- Connected Info Boxes Row -->
+                <div v-if="showSidebar" class="flex border-y bg-transparent">
+                    <!-- Server Box -->
+                    <div class="flex-1 border-r px-6 py-3">
+                        <div
+                            class="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground"
+                        >
+                            <Server class="size-3.5" />
+                            Server
+                        </div>
+                        <div class="mt-1 text-sm font-medium">
+                            {{ site.serverName ?? 'N/A' }}
+                        </div>
+                    </div>
 
-            <!-- Main Content -->
-            <main class="flex-1 overflow-auto p-4">
-                <FailedScriptsAlert
-                    :site="site"
-                    class="mb-4"
-                    @script-click="handleScriptClick"
-                />
-                <slot />
-            </main>
+                    <!-- Repository Box -->
+                    <div v-if="site.repository" class="flex-1 border-r px-6 py-3">
+                        <div
+                            class="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground"
+                        >
+                            <GitBranch class="size-3.5" />
+                            Repository
+                        </div>
+                        <div
+                            class="mt-1 flex items-center gap-2 text-sm font-medium"
+                        >
+                            {{ site.displayableRepository }}
+                            <Badge
+                                v-if="site.branch"
+                                variant="secondary"
+                                class="px-1.5 py-0 font-mono text-[10px]"
+                            >
+                                {{ site.branch }}
+                            </Badge>
+                        </div>
+                    </div>
+
+                    <!-- Last Deploy Box -->
+                    <div class="flex-1 border-r px-6 py-3">
+                        <div
+                            class="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground"
+                        >
+                            <Clock class="size-3.5" />
+                            Last Deploy
+                        </div>
+                        <div class="mt-1 flex items-center gap-2 text-sm font-medium">
+                            <span>{{ site.lastDeployedAtHuman ?? 'Never' }}</span>
+                            <Badge
+                                v-if="site.deployStatus"
+                                :variant="site.deployStatusBadgeVariant ?? 'secondary'"
+                            >
+                                {{ site.displayableDeployStatus }}
+                            </Badge>
+                        </div>
+                    </div>
+
+                    <!-- Unix User Box -->
+                    <div class="flex-1 px-6 py-3">
+                        <div
+                            class="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground"
+                        >
+                            <User class="size-3.5" />
+                            Unix User
+                        </div>
+                        <div class="mt-1">
+                            <code class="font-mono text-sm">{{
+                                site.user
+                            }}</code>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Sidebar + Content below header -->
+            <div class="flex flex-1 overflow-hidden">
+                <!-- Left Sidebar -->
+                <aside
+                    v-if="showSidebar"
+                    class="flex w-64 shrink-0 flex-col bg-muted/30"
+                >
+                    <nav class="flex-1 overflow-y-auto p-2 pt-3">
+                        <ul class="space-y-0.5">
+                            <li v-for="item in navItems" :key="item.href">
+                                <Link
+                                    :href="item.href"
+                                    prefetch
+                                    class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors"
+                                    :class="[
+                                        isActive(item)
+                                            ? 'bg-primary font-medium text-primary-foreground'
+                                            : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                                    ]"
+                                >
+                                    <component :is="item.icon" class="size-4" />
+                                    {{ item.title }}
+                                </Link>
+                            </li>
+                        </ul>
+                    </nav>
+                </aside>
+
+                <!-- Content -->
+                <main class="flex-1 overflow-auto p-6">
+                    <FailedScriptsAlert
+                        :site="site"
+                        class="mb-4"
+                        @script-click="handleScriptClick"
+                    />
+                    <slot />
+                </main>
+            </div>
         </div>
 
         <ScriptOutputModal ref="scriptOutputModal" />
