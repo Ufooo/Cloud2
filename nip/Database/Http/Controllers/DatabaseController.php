@@ -40,15 +40,15 @@ class DatabaseController extends Controller
             ->orderBy('name')
             ->paginate(15);
 
-        $databaseUsers = DatabaseUser::query()
-            ->with('server')
-            ->withCount('databases')
-            ->orderBy('username')
-            ->paginate(15);
-
         return Inertia::render('databases/Index', [
             'databases' => DatabaseResource::collection($databases),
-            'databaseUsers' => DatabaseUserResource::collection($databaseUsers),
+            'databaseUsers' => Inertia::defer(fn () => DatabaseUserResource::collection(
+                DatabaseUser::query()
+                    ->with('server')
+                    ->withCount('databases')
+                    ->orderBy('username')
+                    ->paginate(15)
+            )),
             'server' => null,
             'site' => null,
         ]);
@@ -66,16 +66,16 @@ class DatabaseController extends Controller
             ->orderBy('name')
             ->paginate(15);
 
-        $databaseUsers = DatabaseUser::query()
-            ->where('server_id', $server->id)
-            ->with(['server', 'databases'])
-            ->withCount('databases')
-            ->orderBy('username')
-            ->paginate(15);
-
         return Inertia::render('databases/Index', [
             'databases' => DatabaseResource::collection($databases),
-            'databaseUsers' => DatabaseUserResource::collection($databaseUsers),
+            'databaseUsers' => Inertia::defer(fn () => DatabaseUserResource::collection(
+                DatabaseUser::query()
+                    ->where('server_id', $server->id)
+                    ->with(['server', 'databases'])
+                    ->withCount('databases')
+                    ->orderBy('username')
+                    ->paginate(15)
+            )),
             'server' => ServerData::from($server),
             'site' => null,
         ]);

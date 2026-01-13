@@ -4,30 +4,14 @@ import {
     destroyUser,
     index,
     refreshSizes,
-    store,
-    storeUser,
-    updateUser,
 } from '@/actions/Nip/Database/Http/Controllers/DatabaseController';
 import FailedScriptsAlert from '@/components/FailedScriptsAlert.vue';
 import ScriptOutputModal from '@/components/ScriptOutputModal.vue';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog.vue';
 import EmptyState from '@/components/shared/EmptyState.vue';
 import Pagination from '@/components/shared/Pagination.vue';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { useConfirmation } from '@/composables/useConfirmation';
 import { useResourceStatusUpdates } from '@/composables/useResourceStatusUpdates';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -40,19 +24,14 @@ import type {
     Site,
 } from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
-import { Head, router, useForm } from '@inertiajs/vue3';
-import {
-    Database,
-    Eye,
-    EyeOff,
-    Loader2,
-    Plus,
-    RefreshCw,
-    User,
-} from 'lucide-vue-next';
+import { Deferred, Head, router } from '@inertiajs/vue3';
+import { Database, Loader2, Plus, RefreshCw, User } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
+import CreateDatabaseDialog from './partials/CreateDatabaseDialog.vue';
+import CreateDatabaseUserDialog from './partials/CreateDatabaseUserDialog.vue';
 import DatabaseCardListItem from './partials/DatabaseCardListItem.vue';
 import DatabaseUserCardListItem from './partials/DatabaseUserCardListItem.vue';
+import EditDatabaseUserDialog from './partials/EditDatabaseUserDialog.vue';
 
 type BadgeVariant =
     | 'default'
@@ -122,8 +101,6 @@ const databaseUsers = computed(() => {
     return props.databaseUsers.data;
 });
 
-// Subscribe to WebSocket updates for site or server context
-// For global view (no server/site), data only updates on navigation
 if (props.site) {
     useResourceStatusUpdates({
         channelType: 'site',
@@ -151,50 +128,17 @@ const pageTitle = computed(() => {
     return 'Databases';
 });
 
-const breadcrumbs = computed<BreadcrumbItem[]>(() => {
-    return [
-        {
-            title: 'Databases',
-            href: index.url(),
-        },
-    ];
-});
+const breadcrumbs = computed<BreadcrumbItem[]>(() => [
+    { title: 'Databases', href: index.url() },
+]);
 
-// Database form
+// Dialog states
 const showDatabaseDialog = ref(false);
-const showDbPassword = ref(false);
-const databaseForm = useForm({
-    name: '',
-    user: '',
-    password: '',
-});
+const showUserDialog = ref(false);
+const showEditUserDialog = ref(false);
+const editingUser = ref<DatabaseUserItem | null>(null);
 
-function generatePassword(): string {
-    const chars =
-        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
-    return Array.from({ length: 24 }, () =>
-        chars.charAt(Math.floor(Math.random() * chars.length)),
-    ).join('');
-}
-
-function openDatabaseDialog() {
-    databaseForm.reset();
-    showDbPassword.value = false;
-    showDatabaseDialog.value = true;
-}
-
-function submitDatabase() {
-    if (!props.server) return;
-
-    databaseForm.post(store.url(props.server), {
-        preserveScroll: true,
-        onSuccess: () => {
-            showDatabaseDialog.value = false;
-            databaseForm.reset();
-        },
-    });
-}
-
+// Actions
 async function deleteDatabase(database: DatabaseItem) {
     const serverSlug = props.server?.slug ?? database.serverSlug;
     if (!serverSlug) return;
@@ -212,73 +156,6 @@ async function deleteDatabase(database: DatabaseItem) {
     });
 }
 
-// Database user form
-const showUserDialog = ref(false);
-const showUserPassword = ref(false);
-const databaseSearch = ref('');
-const userForm = useForm({
-    username: '',
-    password: '',
-    databases: [] as string[],
-    readonly: false,
-});
-
-const installedDatabases = computed(() =>
-    databases.value.filter((db) => db.status === 'installed'),
-);
-
-const filteredDatabases = computed(() => {
-    if (!databaseSearch.value) {
-        return installedDatabases.value;
-    }
-    return installedDatabases.value.filter((db) =>
-        db.name.toLowerCase().includes(databaseSearch.value.toLowerCase()),
-    );
-});
-
-function openUserDialog() {
-    userForm.reset();
-    userForm.databases = [];
-    showUserPassword.value = false;
-    databaseSearch.value = '';
-    showUserDialog.value = true;
-}
-
-function generateUserPassword() {
-    userForm.password = generatePassword();
-    showUserPassword.value = true;
-}
-
-function toggleDatabase(databaseId: string) {
-    const index = userForm.databases.indexOf(databaseId);
-    if (index === -1) {
-        userForm.databases.push(databaseId);
-    } else {
-        userForm.databases.splice(index, 1);
-    }
-}
-
-function selectAllDatabases() {
-    userForm.databases = installedDatabases.value.map((db) => db.id);
-}
-
-function submitUser() {
-    if (!props.server) return;
-
-    userForm
-        .transform((data) => ({
-            ...data,
-            readonly: Boolean(data.readonly),
-        }))
-        .post(storeUser.url(props.server), {
-            preserveScroll: true,
-            onSuccess: () => {
-                showUserDialog.value = false;
-                userForm.reset();
-            },
-        });
-}
-
 async function deleteUser(user: DatabaseUserItem) {
     const serverSlug = props.server?.slug ?? user.serverSlug;
     if (!serverSlug) return;
@@ -293,82 +170,13 @@ async function deleteUser(user: DatabaseUserItem) {
 
     router.delete(
         destroyUser.url({ server: serverSlug, databaseUser: user.id }),
-        {
-            preserveScroll: true,
-        },
+        { preserveScroll: true },
     );
 }
-
-// Edit user form
-const showEditUserDialog = ref(false);
-const showEditUserPassword = ref(false);
-const editDatabaseSearch = ref('');
-const editingUser = ref<DatabaseUserItem | null>(null);
-const editUserForm = useForm({
-    password: '',
-    databases: [] as string[],
-    readonly: false,
-});
-
-const filteredEditDatabases = computed(() => {
-    if (!editDatabaseSearch.value) {
-        return installedDatabases.value;
-    }
-    return installedDatabases.value.filter((db) =>
-        db.name.toLowerCase().includes(editDatabaseSearch.value.toLowerCase()),
-    );
-});
 
 function openEditUserDialog(user: DatabaseUserItem) {
     editingUser.value = user;
-    editUserForm.reset();
-    editUserForm.databases = user.databaseIds || [];
-    editUserForm.readonly = user.readonly || false;
-    showEditUserPassword.value = false;
-    editDatabaseSearch.value = '';
     showEditUserDialog.value = true;
-}
-
-function generateEditUserPassword() {
-    editUserForm.password = generatePassword();
-    showEditUserPassword.value = true;
-}
-
-function toggleEditDatabase(databaseId: string) {
-    const index = editUserForm.databases.indexOf(databaseId);
-    if (index === -1) {
-        editUserForm.databases.push(databaseId);
-    } else {
-        editUserForm.databases.splice(index, 1);
-    }
-}
-
-function selectAllEditDatabases() {
-    editUserForm.databases = installedDatabases.value.map((db) => db.id);
-}
-
-function submitEditUser() {
-    if (!props.server || !editingUser.value) return;
-
-    editUserForm
-        .transform((data) => ({
-            ...data,
-            readonly: Boolean(data.readonly),
-        }))
-        .put(
-            updateUser.url({
-                server: props.server.slug,
-                databaseUser: editingUser.value.id,
-            }),
-            {
-                preserveScroll: true,
-                onSuccess: () => {
-                    showEditUserDialog.value = false;
-                    editUserForm.reset();
-                    editingUser.value = null;
-                },
-            },
-        );
 }
 
 // Script output modal
@@ -468,7 +276,7 @@ async function handleRefreshSizes() {
                             <RefreshCw v-else class="mr-2 size-4" />
                             Refresh sizes
                         </Button>
-                        <Button size="sm" @click="openDatabaseDialog">
+                        <Button size="sm" @click="showDatabaseDialog = true">
                             <Plus class="mr-2 size-4" />
                             New database
                         </Button>
@@ -503,508 +311,79 @@ async function handleRefreshSizes() {
                         <User class="size-5" />
                         Database Users
                     </CardTitle>
-                    <Button size="sm" @click="openUserDialog">
-                        <Plus class="mr-2 size-4" />
-                        New user
-                    </Button>
+                    <Deferred data="databaseUsers">
+                        <template #fallback>
+                            <div />
+                        </template>
+                        <Button size="sm" @click="showUserDialog = true">
+                            <Plus class="mr-2 size-4" />
+                            New user
+                        </Button>
+                    </Deferred>
                 </CardHeader>
                 <CardContent class="p-0">
-                    <EmptyState
-                        v-if="!hasDatabaseUsers"
-                        :icon="User"
-                        title="No database users yet"
-                        description="Create your first database user on this server."
-                        class="py-8"
-                    />
-                    <div v-else class="divide-y">
-                        <DatabaseUserCardListItem
-                            v-for="user in databaseUsers"
-                            :key="user.id"
-                            :user="user"
-                            :show-server="false"
-                            @edit="openEditUserDialog"
-                            @delete="deleteUser"
+                    <Deferred data="databaseUsers">
+                        <template #fallback>
+                            <div class="space-y-3 p-4">
+                                <div
+                                    v-for="i in 3"
+                                    :key="i"
+                                    class="flex items-center gap-4"
+                                >
+                                    <div
+                                        class="h-10 w-10 animate-pulse rounded-full bg-muted"
+                                    />
+                                    <div class="flex-1 space-y-2">
+                                        <div
+                                            class="h-4 w-32 animate-pulse rounded bg-muted"
+                                        />
+                                        <div
+                                            class="h-3 w-24 animate-pulse rounded bg-muted"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <EmptyState
+                            v-if="!hasDatabaseUsers"
+                            :icon="User"
+                            title="No database users yet"
+                            description="Create your first database user on this server."
+                            class="py-8"
                         />
-                    </div>
+                        <div v-else class="divide-y">
+                            <DatabaseUserCardListItem
+                                v-for="user in databaseUsers"
+                                :key="user.id"
+                                :user="user"
+                                :show-server="false"
+                                @edit="openEditUserDialog"
+                                @delete="deleteUser"
+                            />
+                        </div>
+                    </Deferred>
                 </CardContent>
             </Card>
         </div>
 
-        <!-- Create Database Dialog -->
-        <Dialog v-model:open="showDatabaseDialog">
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Add database</DialogTitle>
-                    <DialogDescription>
-                        Create a new database for your
-                        <strong>{{ server.name }}</strong> server. You can
-                        optionally create a new database user if needed.
-                    </DialogDescription>
-                </DialogHeader>
+        <!-- Dialogs -->
+        <CreateDatabaseDialog v-model:open="showDatabaseDialog" :server="server" />
 
-                <form @submit.prevent="submitDatabase">
-                    <div class="space-y-4">
-                        <div class="space-y-2">
-                            <Label for="db-name">Name</Label>
-                            <Input
-                                id="db-name"
-                                v-model="databaseForm.name"
-                                placeholder="my_database"
-                                :class="{
-                                    'border-destructive':
-                                        databaseForm.errors.name,
-                                }"
-                            />
-                            <p
-                                v-if="databaseForm.errors.name"
-                                class="text-sm text-destructive"
-                            >
-                                {{ databaseForm.errors.name }}
-                            </p>
-                        </div>
+        <CreateDatabaseUserDialog
+            v-model:open="showUserDialog"
+            :server="server"
+            :databases="databases"
+        />
 
-                        <div class="space-y-2">
-                            <div class="flex items-center gap-2">
-                                <Label for="db-user">User</Label>
-                                <Badge
-                                    variant="outline"
-                                    class="text-xs font-normal"
-                                    >Optional</Badge
-                                >
-                            </div>
-                            <Input
-                                id="db-user"
-                                v-model="databaseForm.user"
-                                placeholder="db_user"
-                                :class="{
-                                    'border-destructive':
-                                        databaseForm.errors.user,
-                                }"
-                            />
-                            <p
-                                v-if="databaseForm.errors.user"
-                                class="text-sm text-destructive"
-                            >
-                                {{ databaseForm.errors.user }}
-                            </p>
-                        </div>
+        <EditDatabaseUserDialog
+            v-model:open="showEditUserDialog"
+            :server="server"
+            :databases="databases"
+            :user="editingUser"
+        />
 
-                        <div class="space-y-2">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-2">
-                                    <Label for="db-password">Password</Label>
-                                    <Badge
-                                        variant="outline"
-                                        class="text-xs font-normal"
-                                        >Optional</Badge
-                                    >
-                                </div>
-                                <Button
-                                    type="button"
-                                    variant="link"
-                                    size="sm"
-                                    class="h-auto p-0 text-primary"
-                                    @click="
-                                        databaseForm.password =
-                                            generatePassword();
-                                        showDbPassword = true;
-                                    "
-                                >
-                                    Generate password
-                                </Button>
-                            </div>
-                            <div class="relative">
-                                <Input
-                                    id="db-password"
-                                    v-model="databaseForm.password"
-                                    :type="showDbPassword ? 'text' : 'password'"
-                                    placeholder="••••••••"
-                                    class="pr-10"
-                                    :class="{
-                                        'border-destructive':
-                                            databaseForm.errors.password,
-                                    }"
-                                />
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    class="absolute top-1/2 right-1 size-8 -translate-y-1/2"
-                                    @click="showDbPassword = !showDbPassword"
-                                >
-                                    <Eye
-                                        v-if="!showDbPassword"
-                                        class="size-4"
-                                    />
-                                    <EyeOff v-else class="size-4" />
-                                </Button>
-                            </div>
-                            <p
-                                v-if="databaseForm.errors.password"
-                                class="text-sm text-destructive"
-                            >
-                                {{ databaseForm.errors.password }}
-                            </p>
-                        </div>
-                    </div>
-
-                    <DialogFooter class="mt-6">
-                        <Button
-                            type="submit"
-                            class="w-full"
-                            :disabled="databaseForm.processing"
-                        >
-                            {{
-                                databaseForm.processing
-                                    ? 'Creating...'
-                                    : 'Create database'
-                            }}
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
-
-        <!-- Create User Dialog -->
-        <Dialog v-model:open="showUserDialog">
-            <DialogContent class="max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle>New database user</DialogTitle>
-                    <DialogDescription>
-                        Create a new database user for the server
-                        <strong>{{ server.name }}</strong
-                        >.
-                    </DialogDescription>
-                </DialogHeader>
-
-                <form @submit.prevent="submitUser">
-                    <div class="space-y-4">
-                        <div class="space-y-2">
-                            <Label for="username">Name</Label>
-                            <Input
-                                id="username"
-                                v-model="userForm.username"
-                                placeholder="db_user"
-                                :class="{
-                                    'border-destructive':
-                                        userForm.errors.username,
-                                }"
-                            />
-                            <p
-                                v-if="userForm.errors.username"
-                                class="text-sm text-destructive"
-                            >
-                                {{ userForm.errors.username }}
-                            </p>
-                        </div>
-
-                        <div class="space-y-2">
-                            <div class="flex items-center justify-between">
-                                <Label for="user-password">Password</Label>
-                                <Button
-                                    type="button"
-                                    variant="link"
-                                    size="sm"
-                                    class="h-auto p-0 text-primary"
-                                    @click="generateUserPassword"
-                                >
-                                    Generate password
-                                </Button>
-                            </div>
-                            <div class="relative">
-                                <Input
-                                    id="user-password"
-                                    v-model="userForm.password"
-                                    :type="
-                                        showUserPassword ? 'text' : 'password'
-                                    "
-                                    placeholder="••••••••"
-                                    class="pr-10"
-                                    :class="{
-                                        'border-destructive':
-                                            userForm.errors.password,
-                                    }"
-                                />
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    class="absolute top-1/2 right-1 size-8 -translate-y-1/2"
-                                    @click="
-                                        showUserPassword = !showUserPassword
-                                    "
-                                >
-                                    <Eye
-                                        v-if="!showUserPassword"
-                                        class="size-4"
-                                    />
-                                    <EyeOff v-else class="size-4" />
-                                </Button>
-                            </div>
-                            <p
-                                v-if="userForm.errors.password"
-                                class="text-sm text-destructive"
-                            >
-                                {{ userForm.errors.password }}
-                            </p>
-                        </div>
-
-                        <div class="space-y-2">
-                            <Label>Grant access to</Label>
-                            <Input
-                                v-model="databaseSearch"
-                                placeholder="Search"
-                                class="mb-2"
-                            />
-                            <div
-                                class="max-h-48 space-y-1 overflow-y-auto rounded-md border p-2"
-                            >
-                                <div
-                                    v-for="db in filteredDatabases"
-                                    :key="db.id"
-                                    class="flex items-center gap-2 rounded px-2 py-1.5 hover:bg-accent"
-                                >
-                                    <Checkbox
-                                        :id="`db-${db.id}`"
-                                        :model-value="
-                                            userForm.databases.includes(db.id)
-                                        "
-                                        @update:model-value="
-                                            toggleDatabase(db.id)
-                                        "
-                                    />
-                                    <label
-                                        :for="`db-${db.id}`"
-                                        class="flex-1 cursor-pointer text-sm"
-                                    >
-                                        {{ db.name }}
-                                    </label>
-                                </div>
-                                <p
-                                    v-if="filteredDatabases.length === 0"
-                                    class="py-2 text-center text-sm text-muted-foreground"
-                                >
-                                    No databases found
-                                </p>
-                            </div>
-                            <Button
-                                type="button"
-                                variant="link"
-                                size="sm"
-                                class="h-auto p-0 text-primary"
-                                @click="selectAllDatabases"
-                            >
-                                Select all databases
-                            </Button>
-                        </div>
-
-                        <div class="space-y-2">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <Label for="readonly"
-                                        >Read-only access?</Label
-                                    >
-                                    <p class="text-sm text-muted-foreground">
-                                        If enabled, this user will only be able
-                                        to read data from the selected
-                                        databases.
-                                    </p>
-                                </div>
-                                <Switch
-                                    id="readonly"
-                                    v-model="userForm.readonly"
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    <DialogFooter class="mt-6">
-                        <Button
-                            type="submit"
-                            class="w-full"
-                            :disabled="userForm.processing"
-                        >
-                            {{
-                                userForm.processing
-                                    ? 'Creating...'
-                                    : 'Add database user'
-                            }}
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
-
-        <!-- Edit User Dialog -->
-        <Dialog v-model:open="showEditUserDialog">
-            <DialogContent class="max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle>Edit database user</DialogTitle>
-                    <DialogDescription>
-                        Update the database user
-                        <strong>{{ editingUser?.username }}</strong> on server
-                        <strong>{{ server.name }}</strong
-                        >.
-                    </DialogDescription>
-                </DialogHeader>
-
-                <form @submit.prevent="submitEditUser">
-                    <div class="space-y-4">
-                        <div class="space-y-2">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-2">
-                                    <Label for="edit-user-password"
-                                        >Password</Label
-                                    >
-                                    <Badge
-                                        variant="outline"
-                                        class="text-xs font-normal"
-                                        >Optional</Badge
-                                    >
-                                </div>
-                                <Button
-                                    type="button"
-                                    variant="link"
-                                    size="sm"
-                                    class="h-auto p-0 text-primary"
-                                    @click="generateEditUserPassword"
-                                >
-                                    Generate password
-                                </Button>
-                            </div>
-                            <div class="relative">
-                                <Input
-                                    id="edit-user-password"
-                                    v-model="editUserForm.password"
-                                    :type="
-                                        showEditUserPassword
-                                            ? 'text'
-                                            : 'password'
-                                    "
-                                    placeholder="Leave empty to keep current"
-                                    class="pr-10"
-                                    :class="{
-                                        'border-destructive':
-                                            editUserForm.errors.password,
-                                    }"
-                                />
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    class="absolute top-1/2 right-1 size-8 -translate-y-1/2"
-                                    @click="
-                                        showEditUserPassword =
-                                            !showEditUserPassword
-                                    "
-                                >
-                                    <Eye
-                                        v-if="!showEditUserPassword"
-                                        class="size-4"
-                                    />
-                                    <EyeOff v-else class="size-4" />
-                                </Button>
-                            </div>
-                            <p
-                                v-if="editUserForm.errors.password"
-                                class="text-sm text-destructive"
-                            >
-                                {{ editUserForm.errors.password }}
-                            </p>
-                        </div>
-
-                        <div class="space-y-2">
-                            <Label>Grant access to</Label>
-                            <Input
-                                v-model="editDatabaseSearch"
-                                placeholder="Search"
-                                class="mb-2"
-                            />
-                            <div
-                                class="max-h-48 space-y-1 overflow-y-auto rounded-md border p-2"
-                            >
-                                <div
-                                    v-for="db in filteredEditDatabases"
-                                    :key="db.id"
-                                    class="flex items-center gap-2 rounded px-2 py-1.5 hover:bg-accent"
-                                >
-                                    <Checkbox
-                                        :id="`edit-db-${db.id}`"
-                                        :model-value="
-                                            editUserForm.databases.includes(
-                                                db.id,
-                                            )
-                                        "
-                                        @update:model-value="
-                                            toggleEditDatabase(db.id)
-                                        "
-                                    />
-                                    <label
-                                        :for="`edit-db-${db.id}`"
-                                        class="flex-1 cursor-pointer text-sm"
-                                    >
-                                        {{ db.name }}
-                                    </label>
-                                </div>
-                                <p
-                                    v-if="filteredEditDatabases.length === 0"
-                                    class="py-2 text-center text-sm text-muted-foreground"
-                                >
-                                    No databases found
-                                </p>
-                            </div>
-                            <Button
-                                type="button"
-                                variant="link"
-                                size="sm"
-                                class="h-auto p-0 text-primary"
-                                @click="selectAllEditDatabases"
-                            >
-                                Select all databases
-                            </Button>
-                        </div>
-
-                        <div class="space-y-2">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <Label for="edit-readonly"
-                                        >Read-only access?</Label
-                                    >
-                                    <p class="text-sm text-muted-foreground">
-                                        If enabled, this user will only be able
-                                        to read data from the selected
-                                        databases.
-                                    </p>
-                                </div>
-                                <Switch
-                                    id="edit-readonly"
-                                    v-model="editUserForm.readonly"
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    <DialogFooter class="mt-6">
-                        <Button
-                            type="submit"
-                            class="w-full"
-                            :disabled="editUserForm.processing"
-                        >
-                            {{
-                                editUserForm.processing
-                                    ? 'Saving...'
-                                    : 'Save changes'
-                            }}
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
-
-        <!-- Script Output Modal -->
         <ScriptOutputModal ref="scriptOutputModal" />
-
-        <!-- Confirmation Dialog -->
         <ConfirmationDialog />
     </ServerLayout>
 
@@ -1063,29 +442,50 @@ async function handleRefreshSizes() {
                     </CardTitle>
                 </CardHeader>
                 <CardContent class="p-0">
-                    <EmptyState
-                        v-if="!hasDatabaseUsers"
-                        :icon="User"
-                        title="No database users yet"
-                        description="Create your first database user on a server."
-                        class="py-8"
-                    />
-                    <div v-else class="divide-y">
-                        <DatabaseUserCardListItem
-                            v-for="user in databaseUsers"
-                            :key="user.id"
-                            :user="user"
-                            @delete="deleteUser"
+                    <Deferred data="databaseUsers">
+                        <template #fallback>
+                            <div class="space-y-3 p-4">
+                                <div
+                                    v-for="i in 3"
+                                    :key="i"
+                                    class="flex items-center gap-4"
+                                >
+                                    <div
+                                        class="h-10 w-10 animate-pulse rounded-full bg-muted"
+                                    />
+                                    <div class="flex-1 space-y-2">
+                                        <div
+                                            class="h-4 w-32 animate-pulse rounded bg-muted"
+                                        />
+                                        <div
+                                            class="h-3 w-24 animate-pulse rounded bg-muted"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <EmptyState
+                            v-if="!hasDatabaseUsers"
+                            :icon="User"
+                            title="No database users yet"
+                            description="Create your first database user on a server."
+                            class="py-8"
                         />
-                    </div>
+                        <div v-else class="divide-y">
+                            <DatabaseUserCardListItem
+                                v-for="user in databaseUsers"
+                                :key="user.id"
+                                :user="user"
+                                @delete="deleteUser"
+                            />
+                        </div>
+                    </Deferred>
                 </CardContent>
             </Card>
         </div>
 
-        <!-- Script Output Modal -->
         <ScriptOutputModal ref="scriptOutputModal" />
-
-        <!-- Confirmation Dialog -->
         <ConfirmationDialog />
     </AppLayout>
 </template>

@@ -23,7 +23,10 @@ it('can view global databases index', function () {
         ->assertInertia(fn ($page) => $page
             ->component('databases/Index')
             ->has('databases')
-            ->has('databaseUsers')
+            ->missing('databaseUsers')
+            ->loadDeferredProps(fn ($reload) => $reload
+                ->has('databaseUsers')
+            )
         );
 });
 
@@ -34,8 +37,11 @@ it('can view server databases index', function () {
         ->assertInertia(fn ($page) => $page
             ->component('databases/Index')
             ->has('databases')
-            ->has('databaseUsers')
             ->has('server')
+            ->missing('databaseUsers')
+            ->loadDeferredProps(fn ($reload) => $reload
+                ->has('databaseUsers')
+            )
         );
 });
 
