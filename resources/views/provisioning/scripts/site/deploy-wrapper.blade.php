@@ -8,6 +8,7 @@ $activateReleasePlaceholder = $site->type->supportsZeroDowntime()
     : '';
 
 $restartFpmPlaceholder = view('provisioning.scripts.deploy.placeholders.restart-fpm')->render();
+$restartQueuesPlaceholder = view('provisioning.scripts.deploy.placeholders.restart-queues')->render();
 
 $processedDeployScript = $deployScriptContent;
 
@@ -22,6 +23,12 @@ if ($site->type->supportsZeroDowntime()) {
 $processedDeployScript = str_replace(
     '$RESTART_FPM()',
     trim($restartFpmPlaceholder),
+    $processedDeployScript
+);
+
+$processedDeployScript = str_replace(
+    '$RESTART_QUEUES()',
+    trim($restartQueuesPlaceholder),
     $processedDeployScript
 );
 @endphp
