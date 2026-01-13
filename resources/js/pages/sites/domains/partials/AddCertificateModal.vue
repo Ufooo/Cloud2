@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { store } from '@/actions/Nip/Domain/Http/Controllers/CertificateController';
-import { verifyDns } from '@/actions/Nip/Domain/Http/Controllers/DomainRecordController';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -10,28 +9,14 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
 import type { CertificateData, DomainRecordData, Site } from '@/types';
 import { useForm } from '@inertiajs/vue3';
-import {
-    ArrowLeft,
-    Copy,
-    FileKey,
-    Lock,
-    RefreshCcw,
-    Shield,
-} from 'lucide-vue-next';
-import { computed, onUnmounted, ref, watch } from 'vue';
+import { ArrowLeft, FileKey, Lock, RefreshCcw, Shield } from 'lucide-vue-next';
+import { computed, ref, watch } from 'vue';
+import CloneCertificateForm from './CloneCertificateForm.vue';
+import CsrForm from './CsrForm.vue';
+import ExistingCertificateForm from './ExistingCertificateForm.vue';
+import LetsEncryptForm from './LetsEncryptForm.vue';
 
 interface CertificateTypeOption {
     value: string;
@@ -59,25 +44,20 @@ const selectedType = ref('letsencrypt');
 
 const form = useForm({
     type: 'letsencrypt',
-    // All types use domain
     domain: '',
-    // Let's Encrypt specific
     verification_method: 'http' as 'http' | 'dns',
     key_algorithm: 'ecdsa' as 'ecdsa' | 'rsa',
     isrg_root_chain: false,
-    acme_subdomains: {} as Record<string, string>, // Pre-generated subdomains for DNS-01 (key -> subdomain)
-    // Existing
+    acme_subdomains: {} as Record<string, string>,
     certificate: '',
     private_key: '',
     auto_activate: true,
-    // CSR
     sans: '',
     csr_country: '',
     csr_state: '',
     csr_city: '',
     csr_organization: '',
     csr_department: '',
-    // Clone
     source_certificate_id: '',
 });
 
@@ -88,110 +68,42 @@ const typeIcons = {
     clone: RefreshCcw,
 };
 
-interface VerificationRecord {
-    requiresVerification: boolean;
-    verified: boolean;
-    type: string;
-    name: string;
-    value: string;
-    ttl: number;
-}
-
-// Live verification records with polling
-const liveVerificationRecords = ref<VerificationRecord[]>([]);
-const pollingIntervalId = ref<ReturnType<typeof setInterval> | null>(null);
-const allRecordsVerified = ref(false);
-
-const availableDomains = computed(() => {
-    return props.domainRecords
-        .filter((d) => d.status === 'enabled' && !d.hasActiveCertificate)
-        .map((d) => ({
-            ...d,
-            // Show wildcard format if allowWildcard is enabled
-            displayName: d.allowWildcard ? `*.${d.name}` : d.name,
-        }));
-});
-
-// Find the selected domain record
-const selectedDomainRecord = computed(() => {
-    return availableDomains.value.find((d) => d.name === form.domain);
-});
-
-const isWildcardDomain = computed(() => {
-    return selectedDomainRecord.value?.allowWildcard === true;
-});
-
-// Check if DNS verification is selected
-const isDnsVerification = computed(() => {
-    return form.verification_method === 'dns';
-});
-
-// Get verification records - use live records if polling has fetched them, otherwise from domain record
-const verificationRecords = computed(() => {
-    if (!isDnsVerification.value || !selectedDomainRecord.value) return [];
-    // Prefer live records from polling if available
-    if (liveVerificationRecords.value.length > 0) {
-        return liveVerificationRecords.value;
-    }
-    return selectedDomainRecord.value.verificationRecords ?? [];
-});
-
-const cloneableCertificates = computed(() => {
-    return props.certificates.filter((c) => c.status === 'installed');
-});
-
 const formTitle = computed(() => {
-    switch (selectedType.value) {
-        case 'letsencrypt':
-            return "Let's Encrypt certificate";
-        case 'existing':
-            return 'Install existing certificate';
-        case 'csr':
-            return 'Create signing request';
-        case 'clone':
-            return 'Clone certificate';
-        default:
-            return 'Add certificate';
-    }
+    const titles: Record<string, string> = {
+        letsencrypt: "Let's Encrypt certificate",
+        existing: 'Install existing certificate',
+        csr: 'Create signing request',
+        clone: 'Clone certificate',
+    };
+    return titles[selectedType.value] ?? 'Add certificate';
 });
 
 const formDescription = computed(() => {
-    switch (selectedType.value) {
-        case 'letsencrypt':
-            return "Configure and obtain a free SSL certificate from Let's Encrypt.";
-        case 'existing':
-            return 'Provide your existing SSL certificate and private key.';
-        case 'csr':
-            return 'Generate a certificate signing request for an external certificate authority.';
-        case 'clone':
-            return 'Pick a certificate from another site to clone.';
-        default:
-            return '';
-    }
+    const descriptions: Record<string, string> = {
+        letsencrypt:
+            "Configure and obtain a free SSL certificate from Let's Encrypt.",
+        existing: 'Provide your existing SSL certificate and private key.',
+        csr: 'Generate a certificate signing request for an external certificate authority.',
+        clone: 'Pick a certificate from another site to clone.',
+    };
+    return descriptions[selectedType.value] ?? '';
 });
 
 const submitLabel = computed(() => {
-    if (form.processing) {
-        return 'Processing...';
-    }
-    switch (selectedType.value) {
-        case 'letsencrypt':
-            return 'Obtain certificate';
-        case 'existing':
-            return 'Install certificate';
-        case 'csr':
-            return 'Create signing request';
-        case 'clone':
-            return 'Clone certificate';
-        default:
-            return 'Submit';
-    }
+    if (form.processing) return 'Processing...';
+
+    const labels: Record<string, string> = {
+        letsencrypt: 'Obtain certificate',
+        existing: 'Install certificate',
+        csr: 'Create signing request',
+        clone: 'Clone certificate',
+    };
+    return labels[selectedType.value] ?? 'Submit';
 });
 
 const canSubmit = computed(() => {
-    if (form.processing) {
-        return false;
-    }
+    if (form.processing) return false;
+
     switch (selectedType.value) {
         case 'letsencrypt':
             return !!form.domain;
@@ -218,122 +130,15 @@ watch(
     (isOpen) => {
         if (isOpen) {
             resetForm();
-        } else {
-            // Stop polling when modal closes
-            stopPolling();
         }
     },
 );
-
-// Auto-set DNS verification for wildcard domains and copy stored subdomains
-watch(isWildcardDomain, (isWildcard) => {
-    if (isWildcard) {
-        form.verification_method = 'dns';
-    }
-});
-
-// Copy stored acme_subdomains when domain is selected and reset live records
-watch(
-    () => form.domain,
-    () => {
-        if (selectedDomainRecord.value?.acmeSubdomains) {
-            form.acme_subdomains = {
-                ...selectedDomainRecord.value.acmeSubdomains,
-            };
-        } else {
-            form.acme_subdomains = {};
-        }
-        // Reset live records when domain changes
-        liveVerificationRecords.value = [];
-        allRecordsVerified.value = false;
-    },
-);
-
-// Start/stop polling when DNS verification is selected
-watch([isDnsVerification, () => form.domain], ([isDns, domain]) => {
-    if (isDns && domain && selectedDomainRecord.value) {
-        startPolling();
-    } else {
-        stopPolling();
-        liveVerificationRecords.value = [];
-    }
-});
-
-// Cleanup on component unmount
-onUnmounted(() => {
-    stopPolling();
-});
-
-async function copyToClipboard(text: string) {
-    await navigator.clipboard.writeText(text);
-}
-
-async function checkDnsVerification() {
-    if (!selectedDomainRecord.value || !isDnsVerification.value) {
-        return;
-    }
-
-    try {
-        const response = await fetch(
-            verifyDns.url({
-                site: props.site.slug,
-                domainRecord: selectedDomainRecord.value.id,
-            }),
-            {
-                credentials: 'include',
-                headers: {
-                    Accept: 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-            },
-        );
-
-        if (!response.ok) {
-            console.error('DNS verification check failed:', response.status);
-            return;
-        }
-
-        const data = await response.json();
-
-        liveVerificationRecords.value = data.records;
-        allRecordsVerified.value = data.allVerified;
-
-        // Stop polling if all records are verified
-        if (data.allVerified) {
-            stopPolling();
-        }
-    } catch (error) {
-        console.error('Failed to check DNS verification:', error);
-    }
-}
-
-function startPolling() {
-    if (pollingIntervalId.value) {
-        return;
-    }
-
-    // Check immediately
-    checkDnsVerification();
-
-    // Then poll every 5 seconds
-    pollingIntervalId.value = setInterval(checkDnsVerification, 5000);
-}
-
-function stopPolling() {
-    if (pollingIntervalId.value) {
-        clearInterval(pollingIntervalId.value);
-        pollingIntervalId.value = null;
-    }
-}
 
 function resetForm() {
     step.value = 'type';
     selectedType.value = 'letsencrypt';
     form.reset();
     form.clearErrors();
-    stopPolling();
-    liveVerificationRecords.value = [];
-    allRecordsVerified.value = false;
 }
 
 function selectType(type: string) {
@@ -428,650 +233,33 @@ function close() {
                     </DialogDescription>
                 </DialogHeader>
 
-                <form @submit.prevent="submit" class="space-y-4 py-4">
-                    <!-- Let's Encrypt Form -->
-                    <template v-if="selectedType === 'letsencrypt'">
-                        <!-- Domain Select -->
-                        <div class="space-y-2">
-                            <Label for="le-domain">Custom domain</Label>
-                            <Select v-model="form.domain">
-                                <SelectTrigger id="le-domain">
-                                    <SelectValue placeholder="Select domain">
-                                        {{
-                                            selectedDomainRecord?.displayName ??
-                                            'Select domain'
-                                        }}
-                                    </SelectValue>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem
-                                        v-for="domain in availableDomains"
-                                        :key="domain.id"
-                                        :value="domain.name"
-                                    >
-                                        {{ domain.displayName }}
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <p
-                                v-if="availableDomains.length === 0"
-                                class="text-xs text-muted-foreground"
-                            >
-                                No enabled domains available.
-                            </p>
-                            <p
-                                v-if="form.errors.domain"
-                                class="text-sm text-destructive"
-                            >
-                                {{ form.errors.domain }}
-                            </p>
-                        </div>
+                <form class="space-y-4 py-4" @submit.prevent="submit">
+                    <LetsEncryptForm
+                        v-if="selectedType === 'letsencrypt'"
+                        :site="site"
+                        :domain-records="domainRecords"
+                        :form="form"
+                    />
 
-                        <!-- Verification Method (only show for non-wildcard domains) -->
-                        <div v-if="!isWildcardDomain" class="space-y-3">
-                            <Label>Verification method</Label>
-                            <div class="space-y-2">
-                                <button
-                                    type="button"
-                                    class="flex w-full items-start gap-3 rounded-md border p-3 text-left transition-colors"
-                                    :class="
-                                        form.verification_method === 'http'
-                                            ? 'border-primary bg-primary/5'
-                                            : 'border-border hover:bg-muted/50'
-                                    "
-                                    @click="form.verification_method = 'http'"
-                                >
-                                    <div
-                                        class="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border"
-                                        :class="
-                                            form.verification_method === 'http'
-                                                ? 'border-primary'
-                                                : 'border-muted-foreground'
-                                        "
-                                    >
-                                        <div
-                                            v-if="
-                                                form.verification_method ===
-                                                'http'
-                                            "
-                                            class="size-2 rounded-full bg-primary"
-                                        />
-                                    </div>
-                                    <div class="flex-1">
-                                        <div class="flex items-center gap-2">
-                                            <span class="font-medium"
-                                                >HTTP-01</span
-                                            >
-                                            <span
-                                                class="rounded border border-green-600 px-1.5 py-0.5 text-xs font-normal text-green-600 dark:border-green-500 dark:text-green-500"
-                                            >
-                                                Recommended
-                                            </span>
-                                        </div>
-                                        <p
-                                            class="text-sm text-muted-foreground"
-                                        >
-                                            Verify domain ownership via HTTP
-                                            request.
-                                        </p>
-                                    </div>
-                                </button>
-                                <button
-                                    type="button"
-                                    class="flex w-full items-start gap-3 rounded-md border p-3 text-left transition-colors"
-                                    :class="
-                                        form.verification_method === 'dns'
-                                            ? 'border-primary bg-primary/5'
-                                            : 'border-border hover:bg-muted/50'
-                                    "
-                                    @click="form.verification_method = 'dns'"
-                                >
-                                    <div
-                                        class="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border"
-                                        :class="
-                                            form.verification_method === 'dns'
-                                                ? 'border-primary'
-                                                : 'border-muted-foreground'
-                                        "
-                                    >
-                                        <div
-                                            v-if="
-                                                form.verification_method ===
-                                                'dns'
-                                            "
-                                            class="size-2 rounded-full bg-primary"
-                                        />
-                                    </div>
-                                    <div class="flex-1">
-                                        <span class="font-medium">DNS-01</span>
-                                        <p
-                                            class="text-sm text-muted-foreground"
-                                        >
-                                            Verify domain ownership via DNS
-                                            record.
-                                        </p>
-                                    </div>
-                                </button>
-                            </div>
-                            <p
-                                v-if="form.errors.verification_method"
-                                class="text-sm text-destructive"
-                            >
-                                {{ form.errors.verification_method }}
-                            </p>
-                        </div>
+                    <ExistingCertificateForm
+                        v-else-if="selectedType === 'existing'"
+                        :domain-records="domainRecords"
+                        :form="form"
+                    />
 
-                        <!-- Verification Records Preview (for DNS-01 verification) -->
-                        <div
-                            v-if="
-                                isDnsVerification &&
-                                verificationRecords.length > 0
-                            "
-                            class="space-y-3"
-                        >
-                            <div>
-                                <Label class="mb-2 block"
-                                    >Verification records</Label
-                                >
-                                <p class="mb-3 text-sm text-muted-foreground">
-                                    The following DNS records must be added to
-                                    your DNS provider before you can obtain a
-                                    Let's Encrypt certificate.
-                                </p>
-                            </div>
+                    <CsrForm
+                        v-else-if="selectedType === 'csr'"
+                        :domain-records="domainRecords"
+                        :countries="countries"
+                        :form="form"
+                    />
 
-                            <!-- Verification record cards -->
-                            <div
-                                v-for="record in verificationRecords"
-                                :key="record.name"
-                                class="rounded-md border"
-                            >
-                                <div
-                                    class="flex items-center justify-between border-b px-4 py-2.5"
-                                >
-                                    <span class="text-sm text-muted-foreground"
-                                        >Type</span
-                                    >
-                                    <div class="flex items-center gap-3">
-                                        <span class="font-mono text-sm">{{
-                                            record.type
-                                        }}</span>
-                                        <span
-                                            v-if="record.verified"
-                                            class="flex items-center gap-1 text-xs text-green-600 dark:text-green-500"
-                                        >
-                                            <span
-                                                class="size-1.5 rounded-full bg-green-500"
-                                            />
-                                            Verified
-                                        </span>
-                                        <span
-                                            v-else
-                                            class="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-500"
-                                        >
-                                            <span
-                                                class="size-1.5 animate-pulse rounded-full bg-amber-500"
-                                            />
-                                            Verifying
-                                        </span>
-                                    </div>
-                                </div>
-                                <div
-                                    class="flex items-center justify-between border-b px-4 py-2.5"
-                                >
-                                    <span class="text-sm text-muted-foreground"
-                                        >Name</span
-                                    >
-                                    <div class="flex items-center gap-2">
-                                        <code class="font-mono text-sm">{{
-                                            record.name
-                                        }}</code>
-                                        <button
-                                            type="button"
-                                            class="text-muted-foreground hover:text-foreground"
-                                            @click="
-                                                copyToClipboard(record.name)
-                                            "
-                                        >
-                                            <Copy class="size-4" />
-                                        </button>
-                                    </div>
-                                </div>
-                                <div
-                                    class="flex items-center justify-between border-b px-4 py-2.5"
-                                >
-                                    <span class="text-sm text-muted-foreground"
-                                        >Value</span
-                                    >
-                                    <div class="flex items-center gap-2">
-                                        <code class="font-mono text-sm">{{
-                                            record.value
-                                        }}</code>
-                                        <button
-                                            type="button"
-                                            class="text-muted-foreground hover:text-foreground"
-                                            @click="
-                                                copyToClipboard(record.value)
-                                            "
-                                        >
-                                            <Copy class="size-4" />
-                                        </button>
-                                    </div>
-                                </div>
-                                <div
-                                    class="flex items-center justify-between px-4 py-2.5"
-                                >
-                                    <span class="text-sm text-muted-foreground"
-                                        >TTL</span
-                                    >
-                                    <span class="font-mono text-sm"
-                                        >{{ record.ttl }} seconds</span
-                                    >
-                                </div>
-                            </div>
-
-                            <!-- Cloudflare Warning -->
-                            <div
-                                class="rounded-md border border-amber-500/50 bg-amber-500/10 p-3"
-                            >
-                                <p
-                                    class="text-sm text-amber-700 dark:text-amber-400"
-                                >
-                                    <strong>Using Cloudflare?</strong> Make sure
-                                    the CNAME records have the proxy (orange
-                                    cloud) turned off for DNS-01 verification to
-                                    work.
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Public Key Algorithm -->
-                        <div class="space-y-3">
-                            <Label>Public key algorithm</Label>
-                            <div class="space-y-2">
-                                <button
-                                    type="button"
-                                    class="flex w-full items-start gap-3 rounded-md border p-3 text-left transition-colors"
-                                    :class="
-                                        form.key_algorithm === 'ecdsa'
-                                            ? 'border-primary bg-primary/5'
-                                            : 'border-border hover:bg-muted/50'
-                                    "
-                                    @click="form.key_algorithm = 'ecdsa'"
-                                >
-                                    <div
-                                        class="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border"
-                                        :class="
-                                            form.key_algorithm === 'ecdsa'
-                                                ? 'border-primary'
-                                                : 'border-muted-foreground'
-                                        "
-                                    >
-                                        <div
-                                            v-if="
-                                                form.key_algorithm === 'ecdsa'
-                                            "
-                                            class="size-2 rounded-full bg-primary"
-                                        />
-                                    </div>
-                                    <div class="flex-1">
-                                        <div class="flex items-center gap-2">
-                                            <span class="font-medium"
-                                                >ECDSA secp384r1</span
-                                            >
-                                            <span
-                                                class="rounded border border-green-600 px-1.5 py-0.5 text-xs font-normal text-green-600 dark:border-green-500 dark:text-green-500"
-                                            >
-                                                Recommended
-                                            </span>
-                                        </div>
-                                        <p
-                                            class="text-sm text-muted-foreground"
-                                        >
-                                            Modern algorithm with smaller keys
-                                            and faster performance.
-                                        </p>
-                                    </div>
-                                </button>
-                                <button
-                                    type="button"
-                                    class="flex w-full items-start gap-3 rounded-md border p-3 text-left transition-colors"
-                                    :class="
-                                        form.key_algorithm === 'rsa'
-                                            ? 'border-primary bg-primary/5'
-                                            : 'border-border hover:bg-muted/50'
-                                    "
-                                    @click="form.key_algorithm = 'rsa'"
-                                >
-                                    <div
-                                        class="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border"
-                                        :class="
-                                            form.key_algorithm === 'rsa'
-                                                ? 'border-primary'
-                                                : 'border-muted-foreground'
-                                        "
-                                    >
-                                        <div
-                                            v-if="form.key_algorithm === 'rsa'"
-                                            class="size-2 rounded-full bg-primary"
-                                        />
-                                    </div>
-                                    <div class="flex-1">
-                                        <span class="font-medium">RSA</span>
-                                        <p
-                                            class="text-sm text-muted-foreground"
-                                        >
-                                            Traditional algorithm with maximum
-                                            compatibility.
-                                        </p>
-                                    </div>
-                                </button>
-                            </div>
-                            <p
-                                v-if="form.errors.key_algorithm"
-                                class="text-sm text-destructive"
-                            >
-                                {{ form.errors.key_algorithm }}
-                            </p>
-                        </div>
-
-                        <!-- ISRG Root X1 Chain -->
-                        <div class="flex items-center justify-between">
-                            <div class="space-y-0.5">
-                                <Label for="isrg-root-chain"
-                                    >Enable "ISRG Root X1" chain</Label
-                                >
-                                <p class="text-xs text-muted-foreground">
-                                    Use the modern ISRG Root X1 certificate
-                                    chain for broader compatibility.
-                                </p>
-                            </div>
-                            <Switch
-                                id="isrg-root-chain"
-                                v-model="form.isrg_root_chain"
-                            />
-                        </div>
-                    </template>
-
-                    <!-- Existing Certificate Form -->
-                    <template v-if="selectedType === 'existing'">
-                        <div class="space-y-2">
-                            <Label for="existing-domain">Custom domain</Label>
-                            <Select v-model="form.domain">
-                                <SelectTrigger id="existing-domain">
-                                    <SelectValue placeholder="Select domain" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem
-                                        v-for="domain in availableDomains"
-                                        :key="domain.id"
-                                        :value="domain.name"
-                                    >
-                                        {{ domain.name }}
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <p
-                                v-if="form.errors.domain"
-                                class="text-sm text-destructive"
-                            >
-                                {{ form.errors.domain }}
-                            </p>
-                        </div>
-
-                        <div class="space-y-2">
-                            <Label for="certificate">Certificate</Label>
-                            <Textarea
-                                id="certificate"
-                                v-model="form.certificate"
-                                placeholder="-----BEGIN CERTIFICATE-----"
-                                rows="5"
-                                class="font-mono text-xs"
-                            />
-                            <p class="text-xs text-muted-foreground">
-                                Paste your full certificate chain here. This
-                                usually includes your primary certificate
-                                followed by any intermediate certificates.
-                            </p>
-                            <p
-                                v-if="form.errors.certificate"
-                                class="text-sm text-destructive"
-                            >
-                                {{ form.errors.certificate }}
-                            </p>
-                        </div>
-
-                        <div class="space-y-2">
-                            <Label for="private-key">Private key</Label>
-                            <Textarea
-                                id="private-key"
-                                v-model="form.private_key"
-                                placeholder="-----BEGIN PRIVATE KEY-----"
-                                rows="5"
-                                class="font-mono text-xs"
-                            />
-                            <p class="text-xs text-muted-foreground">
-                                Your private key should be unencrypted.
-                            </p>
-                            <p
-                                v-if="form.errors.private_key"
-                                class="text-sm text-destructive"
-                            >
-                                {{ form.errors.private_key }}
-                            </p>
-                        </div>
-
-                        <div class="flex items-center justify-between">
-                            <div class="space-y-0.5">
-                                <Label for="auto-activate"
-                                    >Automatically enable certificate after
-                                    installation</Label
-                                >
-                            </div>
-                            <Switch
-                                id="auto-activate"
-                                v-model="form.auto_activate"
-                            />
-                        </div>
-                    </template>
-
-                    <!-- CSR Form -->
-                    <template v-if="selectedType === 'csr'">
-                        <div class="space-y-2">
-                            <Label for="csr-domain">Custom domain</Label>
-                            <Select v-model="form.domain">
-                                <SelectTrigger id="csr-domain">
-                                    <SelectValue placeholder="Select domain" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem
-                                        v-for="domain in availableDomains"
-                                        :key="domain.id"
-                                        :value="domain.name"
-                                    >
-                                        {{ domain.name }}
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <p class="text-xs text-muted-foreground">
-                                Select the domain to create the certificate for.
-                            </p>
-                            <p
-                                v-if="form.errors.domain"
-                                class="text-sm text-destructive"
-                            >
-                                {{ form.errors.domain }}
-                            </p>
-                        </div>
-
-                        <div class="space-y-2">
-                            <Label for="sans"
-                                >Subject Alternative Names (SANs)</Label
-                            >
-                            <Textarea
-                                id="sans"
-                                v-model="form.sans"
-                                placeholder="www.example.com&#10;api.example.com"
-                                rows="3"
-                            />
-                            <p class="text-xs text-muted-foreground">
-                                Enter additional domain names, one per line.
-                            </p>
-                        </div>
-
-                        <div class="space-y-2">
-                            <Label for="csr-country">Country</Label>
-                            <Select v-model="form.csr_country">
-                                <SelectTrigger id="csr-country">
-                                    <SelectValue placeholder="Select country" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem
-                                        v-for="country in countries"
-                                        :key="country.code"
-                                        :value="country.code"
-                                    >
-                                        {{ country.name }}
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <p
-                                v-if="form.errors.csr_country"
-                                class="text-sm text-destructive"
-                            >
-                                {{ form.errors.csr_country }}
-                            </p>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="space-y-2">
-                                <Label for="csr-state">State</Label>
-                                <Input
-                                    id="csr-state"
-                                    v-model="form.csr_state"
-                                    placeholder="California"
-                                />
-                                <p
-                                    v-if="form.errors.csr_state"
-                                    class="text-sm text-destructive"
-                                >
-                                    {{ form.errors.csr_state }}
-                                </p>
-                            </div>
-
-                            <div class="space-y-2">
-                                <Label for="csr-city">City</Label>
-                                <Input
-                                    id="csr-city"
-                                    v-model="form.csr_city"
-                                    placeholder="San Francisco"
-                                />
-                                <p
-                                    v-if="form.errors.csr_city"
-                                    class="text-sm text-destructive"
-                                >
-                                    {{ form.errors.csr_city }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="space-y-2">
-                            <Label for="csr-organization">Organization</Label>
-                            <Input
-                                id="csr-organization"
-                                v-model="form.csr_organization"
-                                placeholder="My Company Inc."
-                            />
-                            <p
-                                v-if="form.errors.csr_organization"
-                                class="text-sm text-destructive"
-                            >
-                                {{ form.errors.csr_organization }}
-                            </p>
-                        </div>
-
-                        <div class="space-y-2">
-                            <Label for="csr-department">Department</Label>
-                            <Input
-                                id="csr-department"
-                                v-model="form.csr_department"
-                                placeholder="IT Department"
-                            />
-                            <p
-                                v-if="form.errors.csr_department"
-                                class="text-sm text-destructive"
-                            >
-                                {{ form.errors.csr_department }}
-                            </p>
-                        </div>
-                    </template>
-
-                    <!-- Clone Form -->
-                    <template v-if="selectedType === 'clone'">
-                        <div class="space-y-2">
-                            <Label for="clone-domain">Custom domain</Label>
-                            <Select v-model="form.domain">
-                                <SelectTrigger id="clone-domain">
-                                    <SelectValue placeholder="Select domain" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem
-                                        v-for="domain in availableDomains"
-                                        :key="domain.id"
-                                        :value="domain.name"
-                                    >
-                                        {{ domain.name }}
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <p class="text-xs text-muted-foreground">
-                                Select the domain to create the certificate for.
-                            </p>
-                            <p
-                                v-if="form.errors.domain"
-                                class="text-sm text-destructive"
-                            >
-                                {{ form.errors.domain }}
-                            </p>
-                        </div>
-
-                        <div class="space-y-2">
-                            <Label for="source-certificate">Certificate</Label>
-                            <Select v-model="form.source_certificate_id">
-                                <SelectTrigger id="source-certificate">
-                                    <SelectValue
-                                        placeholder="Select a certificate"
-                                    />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem
-                                        v-for="cert in cloneableCertificates"
-                                        :key="cert.id"
-                                        :value="cert.id"
-                                    >
-                                        {{ cert.displayableType }} -
-                                        {{
-                                            Object.values(cert.domains).join(
-                                                ', ',
-                                            )
-                                        }}
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <p
-                                v-if="cloneableCertificates.length === 0"
-                                class="text-sm text-muted-foreground"
-                            >
-                                No certificates available to clone.
-                            </p>
-                            <p
-                                v-if="form.errors.source_certificate_id"
-                                class="text-sm text-destructive"
-                            >
-                                {{ form.errors.source_certificate_id }}
-                            </p>
-                        </div>
-                    </template>
+                    <CloneCertificateForm
+                        v-else-if="selectedType === 'clone'"
+                        :domain-records="domainRecords"
+                        :certificates="certificates"
+                        :form="form"
+                    />
 
                     <DialogFooter class="pt-4">
                         <Button type="button" variant="outline" @click="close">
