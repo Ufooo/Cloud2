@@ -43,10 +43,22 @@ class SiteController extends Controller
 {
     public function index(): Response
     {
+        $search = request('search');
+
         $sites = Site::query()
             ->with(['server', 'sourceControl'])
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('domain', 'like', "%{$search}%")
+                        ->orWhere('user', 'like', "%{$search}%")
+                        ->orWhere('repository', 'like', "%{$search}%")
+                        ->orWhereHas('server', fn ($sq) => $sq->where('name', 'like', "%{$search}%"))
+                        ->orWhereHas('domainRecords', fn ($dq) => $dq->where('name', 'like', "%{$search}%"));
+                });
+            })
             ->orderBy('domain')
-            ->paginate(15);
+            ->paginate(15)
+            ->withQueryString();
 
         $servers = Server::query()
             ->where('status', ServerStatus::Connected)
@@ -63,6 +75,9 @@ class SiteController extends Controller
             'servers' => $servers,
             'currentServer' => null,
             'siteTypes' => SiteType::options(),
+            'filters' => [
+                'search' => $search,
+            ],
         ]);
     }
 

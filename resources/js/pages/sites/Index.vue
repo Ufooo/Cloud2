@@ -20,7 +20,8 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem, Server, Site } from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
 import { Head, router } from '@inertiajs/vue3';
-import { Globe, Plus } from 'lucide-vue-next';
+import { Input } from '@/components/ui/input';
+import { Globe, Plus, Search } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import SiteCardListItem from './partials/SiteCardListItem.vue';
 
@@ -34,11 +35,23 @@ interface Props {
     servers: { id: number; slug: string; name: string }[];
     currentServer: Server | null;
     siteTypes: SiteTypeOption[];
+    filters: {
+        search: string | null;
+    };
 }
 
 const props = defineProps<Props>();
 
 const sites = computed(() => props.sites.data);
+const searchQuery = ref(props.filters.search ?? '');
+
+function handleSearch() {
+    router.get(
+        index.url(),
+        { search: searchQuery.value || undefined },
+        { preserveState: true, preserveScroll: true },
+    );
+}
 
 // Subscribe to WebSocket updates when filtered by server
 // For global view (no currentServer), data only updates on navigation
@@ -86,6 +99,7 @@ const siteTypeGroups = computed(() => {
 });
 
 const hasSites = computed(() => sites.value.length > 0);
+const isSearching = computed(() => !!props.filters.search);
 
 function openTypeSelectDialog() {
     showTypeSelectDialog.value = true;
@@ -101,7 +115,7 @@ function selectTypeAndNavigate(type: string) {
     <Head title="Sites" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto">
+        <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto p-6">
             <!-- Header -->
             <div class="flex items-center justify-between">
                 <div>
@@ -110,15 +124,27 @@ function selectTypeAndNavigate(type: string) {
                         Manage your websites and deployments
                     </p>
                 </div>
-                <Button @click="openTypeSelectDialog">
-                    <Plus class="mr-2 size-4" />
-                    New site
-                </Button>
+                <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <Search class="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            v-model="searchQuery"
+                            type="text"
+                            placeholder="Search sites..."
+                            class="w-64 pl-9"
+                            @keydown.enter="handleSearch"
+                        />
+                    </div>
+                    <Button @click="openTypeSelectDialog">
+                        <Plus class="mr-2 size-4" />
+                        New site
+                    </Button>
+                </div>
             </div>
 
             <!-- Empty State -->
             <EmptyState
-                v-if="!hasSites"
+                v-if="!hasSites && !isSearching"
                 :icon="Globe"
                 title="No sites yet"
                 description="Create your first site to get started with deploying your applications."
@@ -130,6 +156,14 @@ function selectTypeAndNavigate(type: string) {
                     </Button>
                 </template>
             </EmptyState>
+
+            <!-- No Search Results -->
+            <EmptyState
+                v-else-if="!hasSites && isSearching"
+                :icon="Search"
+                title="No sites found"
+                :description="`No sites match '${filters.search}'`"
+            />
 
             <!-- Site List -->
             <Card v-else class="overflow-hidden bg-white py-0">
