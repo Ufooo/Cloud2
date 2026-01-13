@@ -191,6 +191,9 @@ gitPublicKey: string | null;
 lastConnectedAt: any | null;
 createdAt: any;
 updatedAt: any;
+sitesCount?: number;
+backgroundProcessesCount?: number;
+scheduledJobsCount?: number;
 can: ServerPermissionsData;
 };
 export type ServerPermissionsData = {

@@ -40,6 +40,7 @@ class ServerController extends Controller
     public function index(): Response
     {
         $servers = Server::query()
+            ->withCount(['sites', 'backgroundProcesses', 'scheduledJobs'])
             ->orderBy('created_at', 'desc')
             ->paginate(15);
 

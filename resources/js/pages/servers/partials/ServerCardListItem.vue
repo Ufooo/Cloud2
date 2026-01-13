@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { show } from '@/actions/Nip/Server/Http/Controllers/ServerController';
 import Avatar from '@/components/shared/Avatar.vue';
+import DatabaseVersionBadge from '@/components/DatabaseVersionBadge.vue';
 import PhpVersionBadge from '@/components/PhpVersionBadge.vue';
 import { Button } from '@/components/ui/button';
 import ServerStatusBadge from './ServerStatusBadge.vue';
 import { ServerStatus, type Server } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { Database, Globe, MoreHorizontal, Network } from 'lucide-vue-next';
+import { Globe, MoreHorizontal, Network } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface Props {
@@ -16,6 +17,23 @@ interface Props {
 const props = defineProps<Props>();
 
 const isConnected = computed(() => props.server.status === ServerStatus.Connected);
+
+const statsItems = computed(() => {
+    const items: string[] = [];
+    const s = props.server;
+
+    if (s.sitesCount !== undefined && s.sitesCount > 0) {
+        items.push(`${s.sitesCount} site${s.sitesCount !== 1 ? 's' : ''}`);
+    }
+    if (s.backgroundProcessesCount !== undefined && s.backgroundProcessesCount > 0) {
+        items.push(`${s.backgroundProcessesCount} daemon${s.backgroundProcessesCount !== 1 ? 's' : ''}`);
+    }
+    if (s.scheduledJobsCount !== undefined && s.scheduledJobsCount > 0) {
+        items.push(`${s.scheduledJobsCount} job${s.scheduledJobsCount !== 1 ? 's' : ''}`);
+    }
+
+    return items;
+});
 </script>
 
 <template>
@@ -39,13 +57,13 @@ const isConnected = computed(() => props.server.status === ServerStatus.Connecte
                     {{ server.displayableType }}
                 </span>
                 <PhpVersionBadge v-if="server.phpVersionLabel" :version="server.phpVersionLabel" />
+                <DatabaseVersionBadge v-if="server.displayableDatabaseType && isConnected" :type="server.displayableDatabaseType" />
             </div>
         </div>
 
-        <!-- Database Info -->
-        <div v-if="server.displayableDatabaseType && isConnected" class="flex-shrink-0 flex items-center gap-2 text-sm text-muted-foreground">
-            <Database class="w-4 h-4" />
-            <span>{{ server.displayableDatabaseType }}</span>
+        <!-- Server Stats -->
+        <div v-if="isConnected && statsItems.length > 0" class="flex-shrink-0 text-sm text-muted-foreground">
+            {{ statsItems.join(' · ') }}
         </div>
 
         <!-- Right side - Status -->

@@ -45,6 +45,9 @@ class ServerResource extends JsonResource
             'lastConnectedAt' => $this->last_connected_at?->toISOString(),
             'createdAt' => $this->created_at->toISOString(),
             'updatedAt' => $this->updated_at->toISOString(),
+            'sitesCount' => $this->sites_count ?? $this->sites()->count(),
+            'backgroundProcessesCount' => $this->background_processes_count ?? $this->backgroundProcesses()->count(),
+            'scheduledJobsCount' => $this->scheduled_jobs_count ?? $this->scheduledJobs()->count(),
             'can' => $this->buildPermissions($request, ['view', 'update', 'delete', 'archive', 'reboot']),
         ];
     }

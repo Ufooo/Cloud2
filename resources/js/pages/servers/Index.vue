@@ -70,7 +70,7 @@ const hasServers = computed(() => props.servers.data.length > 0);
             </EmptyState>
 
             <!-- Server List -->
-            <Card v-else class="overflow-hidden py-0">
+            <Card v-else class="overflow-hidden bg-white py-0">
                 <div class="divide-y">
                     <ServerCardListItem
                         v-for="server in servers.data"
