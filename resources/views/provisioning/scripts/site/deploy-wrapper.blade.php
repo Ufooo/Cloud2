@@ -1,9 +1,11 @@
 @php
-$createReleasePlaceholder = $site->type->supportsZeroDowntime()
+$useZeroDowntime = $site->zero_downtime && $site->type->supportsZeroDowntime();
+
+$createReleasePlaceholder = $useZeroDowntime
     ? view('provisioning.scripts.deploy.placeholders.create-release')->render()
     : '';
 
-$activateReleasePlaceholder = $site->type->supportsZeroDowntime()
+$activateReleasePlaceholder = $useZeroDowntime
     ? view('provisioning.scripts.deploy.placeholders.activate-release')->render()
     : '';
 
@@ -12,10 +14,17 @@ $restartQueuesPlaceholder = view('provisioning.scripts.deploy.placeholders.resta
 
 $processedDeployScript = $deployScriptContent;
 
-if ($site->type->supportsZeroDowntime()) {
+if ($useZeroDowntime) {
     $processedDeployScript = str_replace(
         ['$CREATE_RELEASE()', '$ACTIVATE_RELEASE()'],
         [trim($createReleasePlaceholder), trim($activateReleasePlaceholder)],
+        $processedDeployScript
+    );
+} else {
+    // Remove zero-downtime placeholders for non-zero-downtime deployments
+    $processedDeployScript = str_replace(
+        ['$CREATE_RELEASE()', '$ACTIVATE_RELEASE()'],
+        ['', ''],
         $processedDeployScript
     );
 }
@@ -66,10 +75,13 @@ export NIP_ROLLBACK="{{ ($deployment->is_rollback ?? false) ? '1' : '0' }}"
 
 echo -e '\e[32m=> Deploying site {{ $domain }}\e[0m'
 
-@if($site->type->supportsZeroDowntime())
+@if($useZeroDowntime)
 {!! $processedDeployScript !!}
 @else
 cd "$NIP_SITE_PATH"
+
+# Set release directory to site path for non-zero-downtime deployments
+export NIP_RELEASE_DIRECTORY="$NIP_SITE_PATH"
 
 echo -e '\e[32m=> Pulling latest changes\e[0m'
 git pull origin $NIP_SITE_BRANCH
@@ -82,7 +94,7 @@ echo -e '\e[32m=> Executing deployment script\e[0m'
 echo -e '\e[32m=> Setting permissions\e[0m'
 chown -R {{ $user }}:{{ $user }} "{{ $fullPath }}"
 
-@if($site->type->supportsZeroDowntime())
+@if($useZeroDowntime)
 chmod -R 775 "{{ $fullPath }}/storage"
 if [ -n "$NIP_RELEASE_DIRECTORY" ]; then
     chmod -R 775 "$NIP_RELEASE_DIRECTORY/bootstrap/cache" 2>/dev/null || true
