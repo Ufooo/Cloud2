@@ -232,12 +232,14 @@ class Site extends Model
 
     public function getFullPath(): string
     {
-        return "/home/{$this->user}/{$this->domain}";
+        return "/home/{$this->user}/{$this->root_directory}";
     }
 
     public function getCurrentPath(): string
     {
-        return "{$this->getFullPath()}/current";
+        return $this->zero_downtime
+            ? "{$this->getFullPath()}/current"
+            : $this->getFullPath();
     }
 
     public function getRootPath(): string
@@ -248,9 +250,8 @@ class Site extends Model
     public function getWebPath(): string
     {
         $webDir = $this->web_directory === '/' ? '' : $this->web_directory;
-        $basePath = $this->zero_downtime ? $this->getCurrentPath() : $this->getFullPath();
 
-        return $basePath.$webDir;
+        return $this->getCurrentPath().$webDir;
     }
 
     public function getPhpSocketPath(): ?string
