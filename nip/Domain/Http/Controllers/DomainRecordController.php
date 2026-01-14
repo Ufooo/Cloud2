@@ -35,8 +35,18 @@ class DomainRecordController extends Controller
             ->orderBy('name')
             ->paginate(15);
 
-        $certificates = $site->certificates()
+        // Get certificates: site's own + linked via domain_records
+        $linkedCertificateIds = $site->domainRecords()
+            ->whereNotNull('certificate_id')
+            ->pluck('certificate_id')
+            ->unique();
+
+        $certificates = \Nip\Domain\Models\Certificate::query()
             ->with('site.server')
+            ->where(function ($query) use ($site, $linkedCertificateIds) {
+                $query->where('site_id', $site->id)
+                    ->orWhereIn('id', $linkedCertificateIds);
+            })
             ->orderBy('active', 'desc')
             ->orderBy('created_at', 'desc')
             ->paginate(15);
