@@ -8,7 +8,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Pencil, Trash2, User } from 'lucide-vue-next';
+import { Database, MoreHorizontal, Pencil, Server, Trash2, User } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 type BadgeVariant =
@@ -63,7 +63,7 @@ const showDropdown = computed(() => canUpdate.value || canDelete.value);
 
 <template>
     <div
-        class="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-accent/50"
+        class="flex items-center gap-4 px-4 py-4 transition-colors hover:bg-muted/50"
     >
         <div
             class="flex size-10 items-center justify-center rounded-lg bg-muted"
@@ -77,26 +77,31 @@ const showDropdown = computed(() => canUpdate.value || canDelete.value);
                 <span class="truncate font-medium text-foreground">
                     {{ user.username }}
                 </span>
-                <span
+                <Badge
                     v-if="user.readonly"
-                    class="text-xs text-muted-foreground"
+                    variant="outline"
+                    class="px-1.5 py-0 text-xs font-normal"
                 >
                     Read only
-                </span>
+                </Badge>
             </div>
-            <span
-                class="flex items-center gap-x-1 text-xs text-muted-foreground"
-            >
-                <template v-if="user.serverName && showServer">
+            <div class="flex items-center gap-x-2">
+                <span
+                    v-if="user.serverName && showServer"
+                    class="flex items-center gap-x-1.5 text-xs text-muted-foreground"
+                >
+                    <Server class="size-3.5" />
                     <span>{{ user.serverName }}</span>
-                    <span v-if="user.databaseCount !== undefined">·</span>
-                </template>
-                <span v-if="user.databaseCount !== undefined">
-                    {{ user.databaseCount }} database{{
-                        user.databaseCount !== 1 ? 's' : ''
-                    }}
                 </span>
-            </span>
+                <Badge
+                    v-if="user.databaseCount !== undefined"
+                    variant="outline"
+                    class="gap-1 px-1.5 py-0 text-xs font-normal"
+                >
+                    <Database class="size-3" />
+                    {{ user.databaseCount }}
+                </Badge>
+            </div>
         </div>
 
         <!-- Right side -->

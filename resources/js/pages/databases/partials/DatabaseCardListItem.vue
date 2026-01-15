@@ -7,7 +7,14 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Database, MoreHorizontal, Trash2 } from 'lucide-vue-next';
+import {
+    Database,
+    Globe,
+    HardDrive,
+    MoreHorizontal,
+    Server,
+    Trash2,
+} from 'lucide-vue-next';
 import { computed } from 'vue';
 
 type BadgeVariant =
@@ -62,7 +69,7 @@ const showStatusBadge = computed(
 
 <template>
     <div
-        class="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-accent/50"
+        class="flex items-center gap-4 px-4 py-4 transition-colors hover:bg-muted/50"
     >
         <div
             class="flex size-10 items-center justify-center rounded-lg bg-muted"
@@ -77,29 +84,45 @@ const showStatusBadge = computed(
                     {{ database.name }}
                 </span>
             </div>
-            <span
-                class="flex items-center gap-x-1 text-xs text-muted-foreground"
-            >
-                <template v-if="database.serverName && showServer">
+            <div class="flex items-center gap-x-2">
+                <span
+                    v-if="database.serverName && showServer"
+                    class="flex items-center gap-x-1.5 text-xs text-muted-foreground"
+                >
+                    <Server class="size-3.5" />
                     <span>{{ database.serverName }}</span>
-                </template>
-                <template v-if="database.siteDomain && showSite">
-                    <span v-if="database.serverName && showServer">·</span>
-                    <span>{{ database.siteDomain }}</span>
-                </template>
-            </span>
+                </span>
+                <Badge
+                    v-if="database.displayableSize && !showStatusBadge"
+                    variant="outline"
+                    class="gap-2 bg-muted"
+                >
+                    <HardDrive class="size-3" />
+                    {{ database.displayableSize }}
+                </Badge>
+            </div>
         </div>
 
         <!-- Right side -->
         <div class="flex items-center gap-4">
+            <!-- Site badge -->
+            <Badge
+                v-if="database.siteDomain && showSite"
+                variant="outline"
+                class="gap-1.5 bg-muted px-2.5 py-1"
+            >
+                <Globe class="size-3.5 text-muted-foreground" />
+                <span class="text-sm text-muted-foreground">
+                    {{ database.siteDomain }}
+                </span>
+            </Badge>
+
+            <!-- Status badge -->
             <Badge
                 v-if="showStatusBadge"
                 :variant="database.statusBadgeVariant"
             >
                 {{ database.displayableStatus }}
-            </Badge>
-            <Badge v-else-if="database.displayableSize" variant="secondary">
-                {{ database.displayableSize }}
             </Badge>
 
             <DropdownMenu v-if="canDelete">

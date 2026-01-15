@@ -12,6 +12,7 @@ import EmptyState from '@/components/shared/EmptyState.vue';
 import Pagination from '@/components/shared/Pagination.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { useConfirmation } from '@/composables/useConfirmation';
 import { useResourceStatusUpdates } from '@/composables/useResourceStatusUpdates';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -25,7 +26,7 @@ import type {
 } from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
 import { Deferred, Head, router } from '@inertiajs/vue3';
-import { Database, Loader2, Plus, RefreshCw, User } from 'lucide-vue-next';
+import { Database, Loader2, Plus, RefreshCw, Search, User } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import CreateDatabaseDialog from './partials/CreateDatabaseDialog.vue';
 import CreateDatabaseUserDialog from './partials/CreateDatabaseUserDialog.vue';
@@ -87,6 +88,9 @@ interface Props {
     databaseUsers: PaginatedResponse<DatabaseUserItem> | DatabaseUserItem[];
     server: Server | null;
     site: Site | null;
+    filters?: {
+        search: string | null;
+    };
 }
 
 const props = defineProps<Props>();
@@ -131,6 +135,18 @@ const pageTitle = computed(() => {
 const breadcrumbs = computed<BreadcrumbItem[]>(() => [
     { title: 'Databases', href: index.url() },
 ]);
+
+// Search functionality
+const searchQuery = ref(props.filters?.search ?? '');
+const isSearching = computed(() => !!props.filters?.search);
+
+function handleSearch() {
+    router.get(
+        index.url(),
+        { search: searchQuery.value || undefined },
+        { preserveState: true, preserveScroll: true },
+    );
+}
 
 // Dialog states
 const showDatabaseDialog = ref(false);
@@ -389,9 +405,25 @@ async function handleRefreshSizes() {
 
     <!-- Global layout -->
     <AppLayout v-else :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-4">
+        <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto p-6">
+            <!-- Header -->
             <div class="flex items-center justify-between">
-                <h1 class="text-2xl font-semibold">Databases</h1>
+                <div>
+                    <h1 class="text-2xl font-semibold">Databases</h1>
+                    <p class="text-gray-500">
+                        Manage your databases and users
+                    </p>
+                </div>
+                <div class="relative">
+                    <Search class="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                        v-model="searchQuery"
+                        type="text"
+                        placeholder="Search databases..."
+                        class="w-64 pl-9"
+                        @keydown.enter="handleSearch"
+                    />
+                </div>
             </div>
 
             <!-- Database Warnings -->
@@ -402,23 +434,26 @@ async function handleRefreshSizes() {
                 @script-click="handleScriptClick"
             />
 
-            <!-- Databases Section -->
-            <Card>
-                <CardHeader class="pb-2">
-                    <CardTitle class="flex items-center gap-2 text-lg">
-                        <Database class="size-5" />
-                        Databases
-                    </CardTitle>
-                </CardHeader>
-                <CardContent class="p-0">
-                    <EmptyState
-                        v-if="!hasDatabases"
-                        :icon="Database"
-                        title="No databases yet"
-                        description="Create your first database on a server."
-                        class="py-8"
-                    />
-                    <div v-else class="divide-y">
+            <!-- Empty State -->
+            <EmptyState
+                v-if="!hasDatabases && !hasDatabaseUsers && !isSearching"
+                :icon="Database"
+                title="No databases yet"
+                description="Create your first database on a server."
+            />
+
+            <!-- No Search Results -->
+            <EmptyState
+                v-else-if="!hasDatabases && !hasDatabaseUsers && isSearching"
+                :icon="Search"
+                title="No results found"
+                :description="`No databases or users match '${filters?.search}'`"
+            />
+
+            <template v-else>
+                <!-- Databases Section -->
+                <Card v-if="hasDatabases" class="overflow-hidden bg-white py-0">
+                    <div class="divide-y">
                         <DatabaseCardListItem
                             v-for="database in databases"
                             :key="database.id"
@@ -426,63 +461,61 @@ async function handleRefreshSizes() {
                             @delete="deleteDatabase"
                         />
                     </div>
-                    <Pagination
-                        v-if="hasDatabases"
-                        :meta="props.databases.meta"
-                    />
-                </CardContent>
-            </Card>
+                </Card>
+                <p v-else-if="isSearching" class="text-sm text-muted-foreground">
+                    No databases match your search.
+                </p>
 
-            <!-- Database Users Section -->
-            <Card>
-                <CardHeader class="pb-2">
-                    <CardTitle class="flex items-center gap-2 text-lg">
+                <!-- Pagination -->
+                <Pagination :meta="props.databases.meta" />
+
+                <!-- Database Users Section -->
+                <div class="space-y-3">
+                    <h2 class="flex items-center gap-2 text-lg font-semibold">
                         <User class="size-5" />
                         Database Users
-                    </CardTitle>
-                </CardHeader>
-                <CardContent class="p-0">
+                    </h2>
                     <Deferred data="databaseUsers">
                         <template #fallback>
-                            <div class="space-y-3 p-4">
-                                <div
-                                    v-for="i in 3"
-                                    :key="i"
-                                    class="flex items-center gap-4"
-                                >
+                            <Card class="overflow-hidden bg-white py-0">
+                                <div class="space-y-3 p-4">
                                     <div
-                                        class="h-10 w-10 animate-pulse rounded-full bg-muted"
-                                    />
-                                    <div class="flex-1 space-y-2">
+                                        v-for="i in 3"
+                                        :key="i"
+                                        class="flex items-center gap-4"
+                                    >
                                         <div
-                                            class="h-4 w-32 animate-pulse rounded bg-muted"
+                                            class="h-10 w-10 animate-pulse rounded-full bg-muted"
                                         />
-                                        <div
-                                            class="h-3 w-24 animate-pulse rounded bg-muted"
-                                        />
+                                        <div class="flex-1 space-y-2">
+                                            <div
+                                                class="h-4 w-32 animate-pulse rounded bg-muted"
+                                            />
+                                            <div
+                                                class="h-3 w-24 animate-pulse rounded bg-muted"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            </Card>
                         </template>
 
-                        <EmptyState
-                            v-if="!hasDatabaseUsers"
-                            :icon="User"
-                            title="No database users yet"
-                            description="Create your first database user on a server."
-                            class="py-8"
-                        />
-                        <div v-else class="divide-y">
-                            <DatabaseUserCardListItem
-                                v-for="user in databaseUsers"
-                                :key="user.id"
-                                :user="user"
-                                @delete="deleteUser"
-                            />
-                        </div>
+                        <Card v-if="hasDatabaseUsers" class="overflow-hidden bg-white py-0">
+                            <div class="divide-y">
+                                <DatabaseUserCardListItem
+                                    v-for="user in databaseUsers"
+                                    :key="user.id"
+                                    :user="user"
+                                    @delete="deleteUser"
+                                />
+                            </div>
+                        </Card>
+                        <p v-else class="text-sm text-muted-foreground">
+                            No database users match your search.
+                        </p>
                     </Deferred>
-                </CardContent>
-            </Card>
+                </div>
+            </template>
         </div>
 
         <ScriptOutputModal ref="scriptOutputModal" />

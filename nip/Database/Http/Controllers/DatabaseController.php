@@ -35,10 +35,20 @@ class DatabaseController extends Controller
 
     public function index(): Response
     {
+        $search = request('search');
+
         $databases = Database::query()
             ->with(['server', 'site'])
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhereHas('server', fn ($sq) => $sq->where('name', 'like', "%{$search}%"))
+                        ->orWhereHas('site', fn ($sq) => $sq->where('domain', 'like', "%{$search}%"));
+                });
+            })
             ->orderBy('name')
-            ->paginate(15);
+            ->paginate(15)
+            ->withQueryString();
 
         return Inertia::render('databases/Index', [
             'databases' => DatabaseResource::collection($databases),
@@ -46,11 +56,21 @@ class DatabaseController extends Controller
                 DatabaseUser::query()
                     ->with('server')
                     ->withCount('databases')
+                    ->when($search, function ($query, $search) {
+                        $query->where(function ($q) use ($search) {
+                            $q->where('username', 'like', "%{$search}%")
+                                ->orWhereHas('server', fn ($sq) => $sq->where('name', 'like', "%{$search}%"));
+                        });
+                    })
                     ->orderBy('username')
                     ->paginate(15)
+                    ->withQueryString()
             )),
             'server' => null,
             'site' => null,
+            'filters' => [
+                'search' => $search,
+            ],
         ]);
     }
 
