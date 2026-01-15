@@ -15,6 +15,7 @@ use Nip\BackgroundProcess\Models\BackgroundProcess;
 use Nip\Composer\Models\ComposerCredential;
 use Nip\Database\Models\Database;
 use Nip\Database\Models\DatabaseUser;
+use Nip\Domain\Enums\CertificateStatus;
 use Nip\Domain\Enums\DomainRecordType;
 use Nip\Domain\Models\Certificate;
 use Nip\Domain\Models\DomainRecord;
@@ -32,6 +33,7 @@ use Nip\Site\Enums\PackageManager;
 use Nip\Site\Enums\SiteProvisioningStep;
 use Nip\Site\Enums\SiteStatus;
 use Nip\Site\Enums\SiteType;
+use Nip\Site\Enums\SslStatus;
 use Nip\Site\Enums\WwwRedirectType;
 use Nip\SourceControl\Models\SourceControl;
 use Nip\SourceControl\Services\GitHubService;
@@ -172,6 +174,44 @@ class Site extends Model
     public function certificates(): HasMany
     {
         return $this->hasMany(Certificate::class);
+    }
+
+    public function getSslStatus(): SslStatus
+    {
+        $primaryDomain = $this->relationLoaded('primaryDomain')
+            ? $this->primaryDomain
+            : $this->primaryDomain()->with('certificate')->first();
+
+        if (! $primaryDomain?->certificate_id) {
+            return SslStatus::None;
+        }
+
+        $certificate = $primaryDomain->relationLoaded('certificate')
+            ? $primaryDomain->certificate
+            : $primaryDomain->certificate;
+
+        if (! $certificate || $certificate->status !== CertificateStatus::Installed) {
+            return SslStatus::None;
+        }
+
+        if ($certificate->expires_at?->isPast()) {
+            return SslStatus::Expired;
+        }
+
+        if ($certificate->isExpiringSoon()) {
+            return SslStatus::Expiring;
+        }
+
+        return SslStatus::Active;
+    }
+
+    public function getSslExpiresAt(): ?\Carbon\Carbon
+    {
+        $primaryDomain = $this->relationLoaded('primaryDomain')
+            ? $this->primaryDomain
+            : $this->primaryDomain()->with('certificate')->first();
+
+        return $primaryDomain?->certificate?->expires_at;
     }
 
     /**

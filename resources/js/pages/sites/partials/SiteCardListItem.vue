@@ -6,9 +6,9 @@ import RepositoryBadge from '@/components/RepositoryBadge.vue';
 import SiteTypeBadge from '@/components/SiteTypeBadge.vue';
 import { Button } from '@/components/ui/button';
 import SiteStatusBadge from '@/pages/sites/partials/SiteStatusBadge.vue';
-import { SiteStatus, type Site } from '@/types';
+import { SiteStatus, SslStatus, type Site } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { Clock, MoreHorizontal, Server, User } from 'lucide-vue-next';
+import { Clock, Lock, MoreHorizontal, Server, User } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface Props {
@@ -21,6 +21,23 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const isInstalled = computed(() => props.site.status === SiteStatus.Installed);
+
+const sslIndicatorClass = computed(() => {
+    switch (props.site.sslStatus) {
+        case SslStatus.Active:
+            return 'bg-emerald-500';
+        case SslStatus.Expiring:
+            return 'bg-orange-500';
+        case SslStatus.Expired:
+            return 'bg-red-500';
+        default:
+            return null;
+    }
+});
+
+const showSslIndicator = computed(
+    () => props.site.sslStatus && props.site.sslStatus !== SslStatus.None,
+);
 </script>
 
 <template>
@@ -28,8 +45,17 @@ const isInstalled = computed(() => props.site.status === SiteStatus.Installed);
         :href="show.url({ site: site.slug })"
         class="flex items-center gap-4 px-4 py-4 transition-colors hover:bg-muted/50"
     >
-        <!-- Avatar -->
-        <Avatar :name="site.domain" :color="site.avatarColor" size="md" />
+        <!-- Avatar with SSL indicator -->
+        <div class="relative">
+            <Avatar :name="site.domain" :color="site.avatarColor" size="md" />
+            <div
+                v-if="showSslIndicator"
+                class="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full ring-2 ring-background"
+                :class="sslIndicatorClass"
+            >
+                <Lock class="h-2 w-2 text-white" />
+            </div>
+        </div>
 
         <!-- Main Info -->
         <div class="flex-1 min-w-0">

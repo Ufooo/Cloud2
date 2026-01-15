@@ -15,7 +15,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import PackageBadges from '@/pages/sites/partials/PackageBadges.vue';
 import SiteStatusBadge from '@/pages/sites/partials/SiteStatusBadge.vue';
 import type { BreadcrumbItem, ProvisionScriptData, Site } from '@/types';
-import { SiteStatus } from '@/types';
+import { SiteStatus, SslStatus } from '@/types';
 import { Link, router } from '@inertiajs/vue3';
 import { useEcho } from '@laravel/echo-vue';
 import {
@@ -26,6 +26,7 @@ import {
     ExternalLink,
     GitBranch,
     Globe,
+    Layers,
     LayoutDashboard,
     Lock,
     Package,
@@ -150,6 +151,24 @@ const isInstalled = computed(
 );
 const isDeployingInProgress = ref(false);
 
+// SSL indicator
+const sslIndicatorClass = computed(() => {
+    switch (props.site.sslStatus) {
+        case SslStatus.Active:
+            return 'bg-emerald-500';
+        case SslStatus.Expiring:
+            return 'bg-orange-500';
+        case SslStatus.Expired:
+            return 'bg-red-500';
+        default:
+            return null;
+    }
+});
+
+const showSslIndicator = computed(
+    () => props.site.sslStatus && props.site.sslStatus !== SslStatus.None,
+);
+
 function triggerDeploy() {
     if (isDeployingInProgress.value || !props.site.can?.deploy) return;
 
@@ -182,22 +201,11 @@ function triggerDeploy() {
                                 size="lg"
                             />
                             <div
-                                v-if="isInstalled"
-                                class="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-background"
+                                v-if="showSslIndicator"
+                                class="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full ring-2 ring-background"
+                                :class="sslIndicatorClass"
                             >
-                                <svg
-                                    class="h-2 w-2 text-white"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="3"
-                                        d="M5 13l4 4L19 7"
-                                    />
-                                </svg>
+                                <Lock class="h-2 w-2 text-white" />
                             </div>
                         </div>
 
@@ -281,6 +289,21 @@ function triggerDeploy() {
                         </div>
                     </div>
 
+                    <!-- Unix User Box -->
+                    <div class="flex-1 border-r px-6 py-3">
+                        <div
+                            class="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground"
+                        >
+                            <User class="size-3.5" />
+                            Unix User
+                        </div>
+                        <div class="mt-1">
+                            <code class="font-mono text-sm">{{
+                                site.user
+                            }}</code>
+                        </div>
+                    </div>
+
                     <!-- Repository Box -->
                     <div v-if="site.repository" class="flex-1 border-r px-6 py-3">
                         <div
@@ -303,8 +326,33 @@ function triggerDeploy() {
                         </div>
                     </div>
 
-                    <!-- Last Deploy Box -->
+                    <!-- Deployment Mode Box -->
                     <div class="flex-1 border-r px-6 py-3">
+                        <div
+                            class="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground"
+                        >
+                            <Layers class="size-3.5" />
+                            Deployment
+                        </div>
+                        <div class="mt-1">
+                            <Badge
+                                v-if="site.zeroDowntime"
+                                class="border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                            >
+                                Zero-Downtime
+                            </Badge>
+                            <Badge
+                                v-else
+                                variant="outline"
+                                class="text-muted-foreground"
+                            >
+                                Standard
+                            </Badge>
+                        </div>
+                    </div>
+
+                    <!-- Last Deploy Box -->
+                    <div class="flex-1 px-6 py-3">
                         <div
                             class="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground"
                         >
@@ -319,21 +367,6 @@ function triggerDeploy() {
                             >
                                 {{ site.displayableDeployStatus }}
                             </Badge>
-                        </div>
-                    </div>
-
-                    <!-- Unix User Box -->
-                    <div class="flex-1 px-6 py-3">
-                        <div
-                            class="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground"
-                        >
-                            <User class="size-3.5" />
-                            Unix User
-                        </div>
-                        <div class="mt-1">
-                            <code class="font-mono text-sm">{{
-                                site.user
-                            }}</code>
                         </div>
                     </div>
                 </div>

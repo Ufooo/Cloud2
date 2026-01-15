@@ -4,6 +4,7 @@ namespace Nip\Site\Data;
 
 use Nip\Server\Enums\IdentityColor;
 use Nip\Site\Enums\SiteStatus;
+use Nip\Site\Enums\SslStatus;
 use Nip\Site\Models\Site;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
@@ -69,6 +70,9 @@ class SiteData extends Data
         public ?string $databaseName,
         public ?int $databaseUserId,
         public ?string $databaseUserName,
+        // SSL info
+        public SslStatus $sslStatus,
+        public ?string $sslExpiresAt,
     ) {}
 
     public static function fromModel(Site $site): self
@@ -125,6 +129,8 @@ class SiteData extends Data
             databaseName: $site->relationLoaded('database') ? $site->database?->name : null,
             databaseUserId: $site->database_user_id,
             databaseUserName: $site->relationLoaded('databaseUser') ? $site->databaseUser?->username : null,
+            sslStatus: $site->getSslStatus(),
+            sslExpiresAt: $site->getSslExpiresAt()?->toISOString(),
         );
     }
 

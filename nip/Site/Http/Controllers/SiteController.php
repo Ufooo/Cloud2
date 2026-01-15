@@ -46,7 +46,7 @@ class SiteController extends Controller
         $search = request('search');
 
         $sites = Site::query()
-            ->with(['server', 'sourceControl'])
+            ->with(['server', 'sourceControl', 'primaryDomain.certificate'])
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('domain', 'like', "%{$search}%")
