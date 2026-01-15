@@ -232,7 +232,9 @@ class Site extends Model
 
     public function getFullPath(): string
     {
-        return "/home/{$this->user}/{$this->root_directory}";
+        $directory = $this->root_directory === '/' ? $this->domain : $this->root_directory;
+
+        return "/home/{$this->user}/{$directory}";
     }
 
     public function getCurrentPath(): string
