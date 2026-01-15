@@ -12,12 +12,12 @@ echo "Deleting site {{ $domain }}..."
 #
 
 # Primary domain
-if [ -L "/etc/nginx/sites-enabled/{{ $domain }}" ]; then
+if [ -e "/etc/nginx/sites-enabled/{{ $domain }}" ]; then
     echo "Disabling site in Nginx..."
     rm -f /etc/nginx/sites-enabled/{{ $domain }}
 fi
 
-if [ -f "/etc/nginx/sites-available/{{ $domain }}" ]; then
+if [ -e "/etc/nginx/sites-available/{{ $domain }}" ]; then
     echo "Removing Nginx site configuration..."
     rm -f /etc/nginx/sites-available/{{ $domain }}
 fi
@@ -25,12 +25,12 @@ fi
 # Domain aliases and additional domains
 @foreach($domainRecords as $domainName)
 @if($domainName !== $domain)
-if [ -L "/etc/nginx/sites-enabled/{{ $domainName }}" ]; then
+if [ -e "/etc/nginx/sites-enabled/{{ $domainName }}" ]; then
     echo "Disabling alias {{ $domainName }} in Nginx..."
     rm -f /etc/nginx/sites-enabled/{{ $domainName }}
 fi
 
-if [ -f "/etc/nginx/sites-available/{{ $domainName }}" ]; then
+if [ -e "/etc/nginx/sites-available/{{ $domainName }}" ]; then
     echo "Removing Nginx configuration for {{ $domainName }}..."
     rm -f /etc/nginx/sites-available/{{ $domainName }}
 fi
