@@ -64,6 +64,11 @@ class SiteData extends Data
         /** @var array<string, bool>|null */
         public ?array $packages,
         public SitePermissionsData $can,
+        // Database info
+        public ?int $databaseId,
+        public ?string $databaseName,
+        public ?int $databaseUserId,
+        public ?string $databaseUserName,
     ) {}
 
     public static function fromModel(Site $site): self
@@ -116,6 +121,10 @@ class SiteData extends Data
             packageDetails: self::getPackageDetailsData($site),
             packages: $site->packages,
             can: $site->getPermissions(),
+            databaseId: $site->database_id,
+            databaseName: $site->relationLoaded('database') ? $site->database?->name : null,
+            databaseUserId: $site->database_user_id,
+            databaseUserName: $site->relationLoaded('databaseUser') ? $site->databaseUser?->username : null,
         );
     }
 

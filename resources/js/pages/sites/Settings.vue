@@ -13,6 +13,15 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -22,14 +31,13 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { useConfirmation } from '@/composables/useConfirmation';
 import { IDENTITY_COLOR_MAP } from '@/composables/useIdentityColor';
 import SiteLayout from '@/layouts/SiteLayout.vue';
 import { IdentityColor, type Site } from '@/types';
 import { isPhpBasedSiteType } from '@/utils/constants';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { Folder, GitBranch, Trash2 } from 'lucide-vue-next';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 interface SelectOption {
     value: string;
@@ -45,7 +53,11 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const { confirmInput } = useConfirmation();
+// Delete dialog state
+const showDeleteDialog = ref(false);
+const deleteConfirmValue = ref('');
+const deleteDatabase = ref(false);
+const deleteDatabaseUser = ref(false);
 
 // General settings form
 const generalForm = useForm({
@@ -95,17 +107,28 @@ function submitGitForm() {
     });
 }
 
-async function handleDelete() {
-    const confirmed = await confirmInput({
-        title: 'Delete site',
-        description: `Type "${props.site.domain}" to confirm permanently deleting this site. This action cannot be undone.`,
-        value: props.site.domain,
-    });
-
-    if (confirmed) {
-        router.delete(destroy.url(props.site));
-    }
+function openDeleteDialog() {
+    deleteConfirmValue.value = '';
+    deleteDatabase.value = false;
+    deleteDatabaseUser.value = false;
+    showDeleteDialog.value = true;
 }
+
+function confirmDelete() {
+    if (deleteConfirmValue.value !== props.site.domain) return;
+
+    router.delete(destroy.url(props.site), {
+        data: {
+            delete_database: deleteDatabase.value,
+            delete_database_user: deleteDatabaseUser.value,
+        },
+    });
+    showDeleteDialog.value = false;
+}
+
+const canConfirmDelete = computed(
+    () => deleteConfirmValue.value === props.site.domain,
+);
 
 // Check if site type is PHP-based to show PHP version selector
 const isPhpBased = computed(() => isPhpBasedSiteType(props.site.type));
@@ -413,7 +436,7 @@ const isPhpBased = computed(() => isPhpBasedSiteType(props.site.type));
                         <Button
                             v-if="site.can?.delete"
                             variant="destructive"
-                            @click="handleDelete"
+                            @click="openDeleteDialog"
                         >
                             <Trash2 class="mr-2 size-4" />
                             Delete site
@@ -422,5 +445,77 @@ const isPhpBased = computed(() => isPhpBasedSiteType(props.site.type));
                 </CardContent>
             </Card>
         </div>
+
+        <!-- Delete Confirmation Dialog -->
+        <Dialog v-model:open="showDeleteDialog">
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Delete site</DialogTitle>
+                    <DialogDescription>
+                        Type "{{ site.domain }}" to confirm permanently deleting
+                        this site. This action cannot be undone.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div class="space-y-4 py-4">
+                    <Input
+                        v-model="deleteConfirmValue"
+                        :placeholder="site.domain"
+                        @keyup.enter="canConfirmDelete && confirmDelete()"
+                    />
+
+                    <div
+                        v-if="site.databaseName"
+                        class="flex items-center space-x-2"
+                    >
+                        <Checkbox
+                            id="delete-database"
+                            v-model:checked="deleteDatabase"
+                        />
+                        <label
+                            for="delete-database"
+                            class="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                            Delete database
+                            <code class="rounded bg-muted px-1 py-0.5">{{
+                                site.databaseName
+                            }}</code>
+                        </label>
+                    </div>
+
+                    <div
+                        v-if="site.databaseUserName"
+                        class="flex items-center space-x-2"
+                    >
+                        <Checkbox
+                            id="delete-database-user"
+                            v-model:checked="deleteDatabaseUser"
+                        />
+                        <label
+                            for="delete-database-user"
+                            class="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                            Delete database user
+                            <code class="rounded bg-muted px-1 py-0.5">{{
+                                site.databaseUserName
+                            }}</code>
+                        </label>
+                    </div>
+                </div>
+
+                <DialogFooter>
+                    <Button variant="outline" @click="showDeleteDialog = false">
+                        Cancel
+                    </Button>
+                    <Button
+                        variant="destructive"
+                        :disabled="!canConfirmDelete"
+                        @click="confirmDelete"
+                    >
+                        Delete site
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </SiteLayout>
 </template>

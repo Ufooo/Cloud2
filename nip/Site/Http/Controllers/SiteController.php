@@ -190,7 +190,11 @@ class SiteController extends Controller
     {
         Gate::authorize('update', $site->server);
 
-        $site->load(['server.phpVersions' => fn ($q) => $q->where('status', 'installed')->orderBy('version', 'desc')]);
+        $site->load([
+            'server.phpVersions' => fn ($q) => $q->where('status', 'installed')->orderBy('version', 'desc'),
+            'database',
+            'databaseUser',
+        ]);
 
         return Inertia::render('sites/Settings', [
             'site' => SiteData::fromModel($site),
@@ -244,9 +248,12 @@ class SiteController extends Controller
             'Cannot delete a site while installation or deletion is in progress.'
         );
 
+        $deleteDatabase = (bool) request('delete_database', false);
+        $deleteDatabaseUser = (bool) request('delete_database_user', false);
+
         $site->update(['status' => SiteStatus::Deleting]);
 
-        DeleteSiteJob::dispatch($site);
+        DeleteSiteJob::dispatch($site, $deleteDatabase, $deleteDatabaseUser);
 
         return redirect()
             ->route('sites.index')->with('success', 'Site is being deleted.');

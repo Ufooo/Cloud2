@@ -187,4 +187,26 @@ if [ -f "$SSH_KEY_FILE" ]; then
     rm -f "${SSH_KEY_FILE}.pub"
 fi
 
+@if($deleteDatabase && $databaseName)
+#
+# Delete Database
+#
+
+echo "Deleting database {{ $databaseName }}..."
+mysql -e "DROP DATABASE IF EXISTS \`{{ $databaseName }}\`;"
+echo "Database {{ $databaseName }} deleted"
+@endif
+
+@if($deleteDatabaseUser && $databaseUserName)
+#
+# Delete Database User
+#
+
+echo "Deleting database user {{ $databaseUserName }}..."
+mysql -e "DROP USER IF EXISTS '{{ $databaseUserName }}'@'localhost';"
+mysql -e "DROP USER IF EXISTS '{{ $databaseUserName }}'@'%';"
+mysql -e "FLUSH PRIVILEGES;"
+echo "Database user {{ $databaseUserName }} deleted"
+@endif
+
 echo "Site {{ $domain }} deleted successfully!"
