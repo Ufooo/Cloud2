@@ -24,6 +24,8 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::prefix('/servers/{server:slug}')->group(function () {
         Route::get('/', [ServerController::class, 'show'])->name('servers.show');
         Route::delete('/', [ServerController::class, 'destroy'])->name('servers.destroy');
+        Route::post('/refresh-metrics', [ServerController::class, 'refreshMetrics'])
+            ->name('servers.refresh-metrics');
         Route::get('/failed-scripts', [ProvisionScriptController::class, 'failedForServer'])
             ->name('servers.failed-scripts');
 

@@ -4,6 +4,28 @@ import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import ExpiringCertificatesWidget from './Dashboard/partials/ExpiringCertificatesWidget.vue';
+import ServersWidget from './Dashboard/partials/ServersWidget.vue';
+
+interface ServerWidget {
+    id: number;
+    name: string;
+    slug: string;
+    ipAddress: string;
+    status: string;
+    statusLabel: string;
+    isConnected: boolean;
+    sitesCount: number;
+    uptimeFormatted: string | null;
+    loadAvgFormatted: string | null;
+    cpuPercent: number;
+    ramTotalBytes: number | null;
+    ramUsedBytes: number | null;
+    ramPercent: number;
+    diskTotalBytes: number | null;
+    diskUsedBytes: number | null;
+    diskPercent: number;
+    lastMetricsAt: string | null;
+}
 
 interface ExpiringCertificate {
     id: number;
@@ -20,6 +42,9 @@ interface ExpiringCertificate {
 }
 
 interface Props {
+    servers: {
+        data: ServerWidget[];
+    };
     expiringCertificates: {
         data: ExpiringCertificate[];
     };
@@ -40,6 +65,10 @@ const breadcrumbs: BreadcrumbItem[] = [
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto p-4">
+            <!-- Servers Widget -->
+            <ServersWidget :servers="servers.data" />
+
+            <!-- Certificates Widget -->
             <div class="grid gap-4 md:grid-cols-3">
                 <div class="aspect-video">
                     <ExpiringCertificatesWidget

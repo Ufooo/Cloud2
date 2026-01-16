@@ -11,6 +11,9 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+    --text-xxs: 10px;
+    --text-xxs--line-height: 1.2;
+
     --font-sans:
         'Poppins', ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',

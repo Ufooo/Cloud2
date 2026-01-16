@@ -4,6 +4,7 @@ namespace Nip\Server\Http\Controllers;
 
 use App\Http\Controllers\Concerns\LoadsServerPermissions;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
@@ -13,6 +14,7 @@ use Nip\Php\Actions\CreatePhpVersion;
 use Nip\Php\Enums\PhpVersion;
 use Nip\Php\Enums\PhpVersionStatus;
 use Nip\Server\Actions\GenerateServerSshKey;
+use Nip\Server\Actions\RefreshServerMetrics;
 use Nip\Server\Data\ServerData;
 use Nip\Server\Data\ServerPermissionsData;
 use Nip\Server\Enums\DatabaseType;
@@ -104,6 +106,31 @@ class ServerController extends Controller
 
         return redirect()
             ->route('servers.index')->with('success', 'Server deleted successfully.');
+    }
+
+    public function refreshMetrics(Server $server, RefreshServerMetrics $refreshServerMetrics): JsonResponse
+    {
+        Gate::authorize('view', $server);
+
+        $success = $refreshServerMetrics->handle($server);
+        $server->refresh();
+
+        return response()->json([
+            'success' => $success,
+            'status' => $server->status->value,
+            'statusLabel' => $server->status->label(),
+            'isConnected' => $server->status === ServerStatus::Connected,
+            'uptimeFormatted' => $server->uptime_formatted,
+            'loadAvgFormatted' => $server->load_avg_formatted,
+            'cpuPercent' => $server->cpu_percent ?? 0,
+            'ramTotalBytes' => $server->ram_total_bytes,
+            'ramUsedBytes' => $server->ram_used_bytes,
+            'ramPercent' => $server->ram_percent ?? 0,
+            'diskTotalBytes' => $server->disk_total_bytes,
+            'diskUsedBytes' => $server->disk_used_bytes,
+            'diskPercent' => $server->disk_percent ?? 0,
+            'lastMetricsAt' => $server->last_metrics_at?->toISOString(),
+        ]);
     }
 
     public function settings(Server $server): Response

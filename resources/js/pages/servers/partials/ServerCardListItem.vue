@@ -68,8 +68,8 @@ const statsItems = computed(() => {
 
         <!-- Right side - Status -->
         <div class="flex-shrink-0 w-28 text-right">
+            <div class="text-xs text-muted-foreground mb-1">Status</div>
             <template v-if="isConnected">
-                <div class="text-xs text-muted-foreground mb-1">Status</div>
                 <div class="text-sm text-green-600 dark:text-green-400 font-medium">Connected</div>
             </template>
             <ServerStatusBadge v-else :status="server.status" />

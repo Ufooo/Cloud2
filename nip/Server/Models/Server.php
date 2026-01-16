@@ -87,6 +87,18 @@ class Server extends Model
         'cloud_provider_url',
         'is_ready',
         'last_connected_at',
+        'uptime_seconds',
+        'load_avg_1',
+        'load_avg_5',
+        'load_avg_15',
+        'cpu_percent',
+        'ram_total_bytes',
+        'ram_used_bytes',
+        'ram_percent',
+        'disk_total_bytes',
+        'disk_used_bytes',
+        'disk_percent',
+        'last_metrics_at',
     ];
 
     protected $hidden = [
@@ -107,6 +119,18 @@ class Server extends Model
             'is_ready' => 'boolean',
             'provision_step' => 'integer',
             'last_connected_at' => 'datetime',
+            'uptime_seconds' => 'integer',
+            'load_avg_1' => 'decimal:2',
+            'load_avg_5' => 'decimal:2',
+            'load_avg_15' => 'decimal:2',
+            'cpu_percent' => 'integer',
+            'ram_total_bytes' => 'integer',
+            'ram_used_bytes' => 'integer',
+            'ram_percent' => 'integer',
+            'disk_total_bytes' => 'integer',
+            'disk_used_bytes' => 'integer',
+            'disk_percent' => 'integer',
+            'last_metrics_at' => 'datetime',
         ];
     }
 
@@ -296,5 +320,30 @@ class Server extends Model
     public function getSshPrivateKey(): ?string
     {
         return $this->ssh_private_key;
+    }
+
+    protected function uptimeFormatted(): Attribute
+    {
+        return Attribute::get(function () {
+            if (! $this->uptime_seconds) {
+                return null;
+            }
+
+            $days = intdiv($this->uptime_seconds, 86400);
+            $hours = intdiv($this->uptime_seconds % 86400, 3600);
+
+            return "{$days}d {$hours}h";
+        });
+    }
+
+    protected function loadAvgFormatted(): Attribute
+    {
+        return Attribute::get(function () {
+            if ($this->load_avg_1 === null) {
+                return null;
+            }
+
+            return "{$this->load_avg_1}, {$this->load_avg_5}, {$this->load_avg_15}";
+        });
     }
 }

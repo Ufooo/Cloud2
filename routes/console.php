@@ -11,3 +11,5 @@ Artisan::command('inspire', function () {
 Schedule::command('horizon:snapshot')->everyFiveMinutes();
 
 Schedule::command('certificates:renew-expiring')->dailyAt('04:00');
+
+Schedule::command('servers:collect-metrics')->everyFiveMinutes();
