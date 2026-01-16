@@ -35,6 +35,7 @@ interface ExpiringCertificate {
     siteSlug: string;
     siteDomain: string;
     domains: string[];
+    domainsFormatted: string;
     expiresAt: string;
     expiresAtHuman: string;
     daysUntilExpiry: number;
@@ -69,12 +70,10 @@ const breadcrumbs: BreadcrumbItem[] = [
             <ServersWidget :servers="servers.data" />
 
             <!-- Certificates Widget -->
-            <div class="grid gap-4 md:grid-cols-3">
-                <div class="aspect-video">
-                    <ExpiringCertificatesWidget
-                        :certificates="expiringCertificates.data"
-                    />
-                </div>
+            <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <ExpiringCertificatesWidget
+                    :certificates="expiringCertificates.data"
+                />
             </div>
         </div>
     </AppLayout>

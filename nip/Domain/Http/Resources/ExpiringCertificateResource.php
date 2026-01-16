@@ -30,10 +30,23 @@ class ExpiringCertificateResource extends JsonResource
             'siteSlug' => $this->site?->slug,
             'siteDomain' => $this->site?->domain,
             'domains' => $this->domains,
+            'domainsFormatted' => $this->formatDomains($this->domains),
             'expiresAt' => $this->expires_at?->toISOString(),
             'expiresAtHuman' => $this->expires_at ? 'in '.$this->expires_at->diffForHumans(syntax: true) : null,
             'daysUntilExpiry' => $daysUntilExpiry,
             'canRenew' => $this->type === CertificateType::LetsEncrypt,
         ];
+    }
+
+    /**
+     * @param  array<string>  $domains
+     */
+    private function formatDomains(array $domains): string
+    {
+        if (count($domains) <= 2) {
+            return implode(', ', $domains);
+        }
+
+        return $domains[0].', +'.(count($domains) - 1);
     }
 }

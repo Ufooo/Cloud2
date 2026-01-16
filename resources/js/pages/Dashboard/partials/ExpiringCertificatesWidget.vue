@@ -16,6 +16,7 @@ interface ExpiringCertificate {
     siteSlug: string;
     siteDomain: string;
     domains: string[];
+    domainsFormatted: string;
     expiresAt: string;
     expiresAtHuman: string;
     daysUntilExpiry: number;
@@ -38,11 +39,6 @@ function getUrgencyClass(days: number): string {
     return 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
 }
 
-function formatDomains(domains: string[]): string {
-    if (domains.length <= 2) return domains.join(', ');
-    return `${domains[0]}, +${domains.length - 1}`;
-}
-
 function handleRenew(cert: ExpiringCertificate) {
     if (!cert.canRenew || renewingIds.value.has(cert.id)) return;
     renewingIds.value.add(cert.id);
@@ -58,7 +54,7 @@ function isRenewing(id: number): boolean {
 </script>
 
 <template>
-    <Card class="flex h-full flex-col overflow-hidden bg-white dark:bg-card">
+    <Card class="bg-white dark:bg-card">
         <div class="border-b px-3 py-2.5">
             <div class="flex items-center justify-between">
                 <span class="text-sm font-semibold">Expiring Certificates</span>
@@ -67,7 +63,7 @@ function isRenewing(id: number): boolean {
                 </Badge>
             </div>
         </div>
-        <div v-if="hasCertificates" class="flex-1 overflow-y-auto">
+        <div v-if="hasCertificates">
             <div class="divide-y">
                 <div
                     v-for="cert in certificates"
@@ -83,7 +79,7 @@ function isRenewing(id: number): boolean {
                             {{ cert.siteDomain }}
                         </a>
                         <span class="block truncate text-xs text-muted-foreground">
-                            {{ formatDomains(cert.domains) }}
+                            {{ cert.domainsFormatted }}
                         </span>
                     </div>
                     <Badge variant="secondary" :class="getUrgencyClass(cert.daysUntilExpiry)" class="shrink-0 text-xs">
@@ -102,7 +98,7 @@ function isRenewing(id: number): boolean {
                 </div>
             </div>
         </div>
-        <div v-else class="flex flex-1 items-center justify-center p-4">
+        <div v-else class="flex items-center justify-center p-4">
             <span class="text-xs text-muted-foreground">No expiring certificates</span>
         </div>
     </Card>
