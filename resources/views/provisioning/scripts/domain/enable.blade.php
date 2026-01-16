@@ -14,6 +14,8 @@ echo "Enabling domain {{ $domain }} for site {{ $site->domain }}..."
 SITES_AVAILABLE="/etc/nginx/sites-available/{{ $domain }}"
 SITES_ENABLED="/etc/nginx/sites-enabled/{{ $domain }}"
 
+@include('provisioning.scripts.partials.ensure-fastcgi-defaults')
+
 #
 # Verify Configuration Exists
 #

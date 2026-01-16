@@ -15,6 +15,8 @@ echo "Adding domain {{ $domain }} to site {{ $site->domain }}..."
 SITE_CONF_DIR="/etc/nginx/netipar-conf/{{ $site->id }}"
 DOMAIN_CONF_DIR="$SITE_CONF_DIR/{{ $domain }}"
 
+@include('provisioning.scripts.partials.ensure-fastcgi-defaults')
+
 #
 # Create Domain Configuration Directory
 #
