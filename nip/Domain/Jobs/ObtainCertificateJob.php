@@ -42,11 +42,6 @@ class ObtainCertificateJob extends BaseProvisionJob
         ]);
 
         // Automatically activate SSL after successful certificate obtainment
-        // Deactivate any other certificates for this site first
-        $this->certificate->site->certificates()
-            ->whereNot('id', $this->certificate->id)
-            ->update(['active' => false]);
-
         EnableSslJob::dispatch($this->certificate);
     }
 

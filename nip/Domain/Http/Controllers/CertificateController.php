@@ -70,7 +70,6 @@ class CertificateController extends Controller
 
             // Auto-activate if requested
             if ($data['auto_activate'] ?? true) {
-                $site->certificates()->update(['active' => false]);
                 $certificateData['active'] = true;
             }
         }
@@ -135,9 +134,6 @@ class CertificateController extends Controller
         if ($certificate->status !== CertificateStatus::Installed) {
             return redirect()->route('sites.domains.index', $site)->with('error', 'Only installed certificates can be activated.');
         }
-
-        // Deactivate all other certificates for this site
-        $site->certificates()->update(['active' => false]);
 
         // Dispatch job to enable SSL on the server
         EnableSslJob::dispatch($certificate);

@@ -51,9 +51,8 @@ class DomainRecordController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(15);
 
-        // Collect domains covered by active certificates (single query, no N+1)
-        $activeCertificateDomains = $site->certificates()
-            ->where('active', true)
+        // Collect domains covered by any certificates (single query, no N+1)
+        $allCertificateDomains = $site->certificates()
             ->pluck('domains')
             ->flatten()
             ->unique()
@@ -65,7 +64,7 @@ class DomainRecordController extends Controller
         return Inertia::render('sites/domains/Index', [
             'site' => SiteData::fromModel($site->load('server')),
             'domainRecords' => DomainRecordResource::collection($domainRecords)
-                ->additional(['activeCertificateDomains' => $activeCertificateDomains]),
+                ->additional(['allCertificateDomains' => $allCertificateDomains]),
             'certificates' => \Nip\Domain\Http\Resources\CertificateResource::collection($certificates),
             'wwwRedirectTypes' => WwwRedirectType::options(),
             'certificateTypes' => \Nip\Domain\Enums\CertificateType::options(),

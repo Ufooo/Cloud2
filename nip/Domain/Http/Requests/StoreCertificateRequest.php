@@ -28,9 +28,24 @@ class StoreCertificateRequest extends FormRequest
 
         $type = $this->input('type');
 
+        // Common domain validation - check if domain already has a certificate
+        $domainAlreadyHasCertificate = function ($attribute, $value, $fail) {
+            /** @var Site $site */
+            $site = $this->route('site');
+            $existingCertificateDomains = $site->certificates()
+                ->pluck('domains')
+                ->flatten()
+                ->unique()
+                ->all();
+
+            if (in_array($value, $existingCertificateDomains)) {
+                $fail('This domain already has a certificate. Please delete the existing certificate first.');
+            }
+        };
+
         // Let's Encrypt: requires domain and options
         if ($type === CertificateType::LetsEncrypt->value) {
-            $rules['domain'] = ['required', 'string'];
+            $rules['domain'] = ['required', 'string', $domainAlreadyHasCertificate];
             $rules['verification_method'] = ['required', 'in:http,dns'];
             $rules['key_algorithm'] = ['required', 'in:ecdsa,rsa'];
             $rules['isrg_root_chain'] = ['boolean'];
@@ -41,11 +56,13 @@ class StoreCertificateRequest extends FormRequest
                     'required',
                     'array',
                     'min:1',
-                    function ($attribute, $value, $fail) {
+                    function ($attribute, $value, $fail) use ($domainAlreadyHasCertificate) {
                         foreach ($value as $domain => $subdomain) {
                             if (! is_string($subdomain) || ! preg_match('/^verify-[a-z0-9]+$/', $subdomain)) {
                                 $fail("Invalid ACME subdomain format for {$domain}.");
                             }
+                            // Check if any domain in acme_subdomains already has a certificate
+                            $domainAlreadyHasCertificate('acme_subdomains', $domain, $fail);
                         }
                     },
                 ];
@@ -54,7 +71,7 @@ class StoreCertificateRequest extends FormRequest
 
         // Existing certificate: requires certificate and private key
         if ($type === CertificateType::Existing->value) {
-            $rules['domain'] = ['required', 'string'];
+            $rules['domain'] = ['required', 'string', $domainAlreadyHasCertificate];
             $rules['certificate'] = ['required', 'string'];
             $rules['private_key'] = ['required', 'string'];
             $rules['auto_activate'] = ['boolean'];
@@ -62,7 +79,7 @@ class StoreCertificateRequest extends FormRequest
 
         // CSR: requires all CSR fields
         if ($type === CertificateType::Csr->value) {
-            $rules['domain'] = ['required', 'string'];
+            $rules['domain'] = ['required', 'string', $domainAlreadyHasCertificate];
             $rules['sans'] = ['nullable', 'string'];
             $rules['csr_country'] = ['required', 'string', 'size:2'];
             $rules['csr_state'] = ['required', 'string', 'max:255'];
@@ -73,7 +90,7 @@ class StoreCertificateRequest extends FormRequest
 
         // Clone: requires source certificate
         if ($type === CertificateType::Clone->value) {
-            $rules['domain'] = ['required', 'string'];
+            $rules['domain'] = ['required', 'string', $domainAlreadyHasCertificate];
             $rules['source_certificate_id'] = ['required', 'integer', 'exists:certificates,id'];
         }
 

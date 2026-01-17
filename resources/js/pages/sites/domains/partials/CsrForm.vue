@@ -35,7 +35,7 @@ const props = defineProps<Props>();
 
 const availableDomains = computed(() => {
     return props.domainRecords.filter(
-        (d) => d.status === 'enabled' && !d.hasActiveCertificate,
+        (d) => d.status === 'enabled' && !d.hasCertificate,
     );
 });
 </script>

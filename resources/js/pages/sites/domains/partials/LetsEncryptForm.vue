@@ -45,7 +45,7 @@ const props = defineProps<Props>();
 
 const availableDomains = computed(() => {
     return props.domainRecords
-        .filter((d) => d.status === 'enabled' && !d.hasActiveCertificate)
+        .filter((d) => d.status === 'enabled' && !d.hasCertificate)
         .map((d) => ({
             ...d,
             displayName: d.allowWildcard ? `*.${d.name}` : d.name,
