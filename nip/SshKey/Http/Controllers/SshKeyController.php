@@ -51,6 +51,8 @@ class SshKeyController extends Controller
 
         $unixUser = UnixUser::findOrFail($request->validated('unix_user_id'));
 
+        abort_unless($unixUser->server_id === $server->id, 403, 'Unix user does not belong to this server.');
+
         $sshKey = (new CreateSshKey)->handle(
             $server,
             $unixUser,

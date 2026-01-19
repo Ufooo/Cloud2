@@ -86,6 +86,10 @@ class CertificateController extends Controller
         // Clone specific
         if ($type === CertificateType::Clone) {
             $sourceCert = Certificate::findOrFail($data['source_certificate_id']);
+
+            // Verify user has access to the source certificate's site
+            Gate::authorize('view', $sourceCert->site->server);
+
             $certificateData['source_certificate_id'] = $sourceCert->id;
             $certificateData['certificate'] = $sourceCert->certificate;
             $certificateData['private_key'] = $sourceCert->private_key;
@@ -116,6 +120,8 @@ class CertificateController extends Controller
     {
         Gate::authorize('update', $site->server);
 
+        abort_unless($certificate->site_id === $site->id, 403);
+
         if ($certificate->active) {
             return redirect()->route('sites.domains.index', $site)->with('error', 'Cannot delete an active certificate. Please deactivate it first.');
         }
@@ -131,6 +137,8 @@ class CertificateController extends Controller
     {
         Gate::authorize('update', $site->server);
 
+        abort_unless($certificate->site_id === $site->id, 403);
+
         if ($certificate->status !== CertificateStatus::Installed) {
             return redirect()->route('sites.domains.index', $site)->with('error', 'Only installed certificates can be activated.');
         }
@@ -144,6 +152,8 @@ class CertificateController extends Controller
     public function deactivate(Site $site, Certificate $certificate): RedirectResponse
     {
         Gate::authorize('update', $site->server);
+
+        abort_unless($certificate->site_id === $site->id, 403);
 
         if (! $certificate->active) {
             return redirect()->route('sites.domains.index', $site)->with('error', 'Certificate is already inactive.');
@@ -159,6 +169,8 @@ class CertificateController extends Controller
     {
         Gate::authorize('update', $site->server);
 
+        abort_unless($certificate->site_id === $site->id, 403);
+
         if ($certificate->status !== CertificateStatus::Installed) {
             return redirect()->route('sites.domains.index', $site)->with('error', 'Only installed certificates can be renewed.');
         }
@@ -173,6 +185,8 @@ class CertificateController extends Controller
     public function verifyDns(Site $site, Certificate $certificate): JsonResponse
     {
         Gate::authorize('view', $site->server);
+
+        abort_unless($certificate->site_id === $site->id, 403);
 
         $acmeSubdomains = $certificate->acme_subdomains ?? [];
 
@@ -204,6 +218,8 @@ class CertificateController extends Controller
     public function obtainAfterVerification(Site $site, Certificate $certificate): RedirectResponse
     {
         Gate::authorize('update', $site->server);
+
+        abort_unless($certificate->site_id === $site->id, 403);
 
         if ($certificate->status !== CertificateStatus::PendingVerification) {
             return redirect()->route('sites.domains.index', $site)->with('error', 'Certificate is not pending verification.');

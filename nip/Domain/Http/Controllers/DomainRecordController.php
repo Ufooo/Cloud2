@@ -99,6 +99,8 @@ class DomainRecordController extends Controller
     {
         Gate::authorize('update', $site->server);
 
+        abort_unless($domainRecord->site_id === $site->id, 403);
+
         $data = $request->validated();
 
         $domainRecord->update([
@@ -112,6 +114,8 @@ class DomainRecordController extends Controller
     public function destroy(Site $site, DomainRecord $domainRecord): RedirectResponse
     {
         Gate::authorize('update', $site->server);
+
+        abort_unless($domainRecord->site_id === $site->id, 403);
 
         if ($domainRecord->isPrimary()) {
             return redirect()->route('sites.domains.index', $site)->with('error', 'Cannot delete the primary domain.');
@@ -128,6 +132,8 @@ class DomainRecordController extends Controller
     public function markAsPrimary(Site $site, DomainRecord $domainRecord): RedirectResponse
     {
         Gate::authorize('update', $site->server);
+
+        abort_unless($domainRecord->site_id === $site->id, 403);
 
         if ($domainRecord->status !== DomainRecordStatus::Enabled) {
             return redirect()->route('sites.domains.index', $site)->with('error', 'Only enabled domains can be set as primary.');
@@ -146,6 +152,8 @@ class DomainRecordController extends Controller
     {
         Gate::authorize('update', $site->server);
 
+        abort_unless($domainRecord->site_id === $site->id, 403);
+
         if ($domainRecord->status !== DomainRecordStatus::Disabled) {
             return redirect()->route('sites.domains.index', $site)->with('error', 'Only disabled domains can be enabled.');
         }
@@ -161,6 +169,8 @@ class DomainRecordController extends Controller
     public function disable(Site $site, DomainRecord $domainRecord): RedirectResponse
     {
         Gate::authorize('update', $site->server);
+
+        abort_unless($domainRecord->site_id === $site->id, 403);
 
         if ($domainRecord->isPrimary()) {
             return redirect()->route('sites.domains.index', $site)->with('error', 'Cannot disable the primary domain.');
@@ -181,6 +191,8 @@ class DomainRecordController extends Controller
     public function verifyDns(Site $site, DomainRecord $domainRecord): JsonResponse
     {
         Gate::authorize('view', $site->server);
+
+        abort_unless($domainRecord->site_id === $site->id, 403);
 
         $cloudflare = new CloudflareService;
         $subdomains = $domainRecord->getOrCreateAcmeSubdomains();

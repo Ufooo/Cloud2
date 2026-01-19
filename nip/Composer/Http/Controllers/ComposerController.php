@@ -4,6 +4,7 @@ namespace Nip\Composer\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 use Nip\Composer\Enums\ComposerCredentialStatus;
@@ -19,6 +20,8 @@ class ComposerController extends Controller
 {
     public function index(Site $site): Response
     {
+        Gate::authorize('view', $site->server);
+
         return Inertia::render('sites/composer/Index', [
             'site' => SiteData::fromModel($site),
             'credentials' => ComposerCredentialResource::collection($site->composerCredentials),
@@ -27,6 +30,8 @@ class ComposerController extends Controller
 
     public function store(Site $site, StoreComposerCredentialRequest $request): RedirectResponse
     {
+        Gate::authorize('update', $site->server);
+
         $site->composerCredentials()->create([
             ...$request->validated(),
             'unix_user_id' => $site->unixUser->id,
@@ -39,6 +44,8 @@ class ComposerController extends Controller
 
     public function update(Site $site, ComposerCredential $credential, UpdateComposerCredentialRequest $request): RedirectResponse
     {
+        Gate::authorize('update', $site->server);
+
         abort_if($credential->site_id !== $site->id, 404);
 
         $credential->update($request->validated());
@@ -50,6 +57,8 @@ class ComposerController extends Controller
 
     public function destroy(Site $site, ComposerCredential $credential): RedirectResponse
     {
+        Gate::authorize('update', $site->server);
+
         abort_if($credential->site_id !== $site->id, 404);
 
         $credential->update(['status' => ComposerCredentialStatus::Deleting]);

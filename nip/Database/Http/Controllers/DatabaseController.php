@@ -98,6 +98,9 @@ class DatabaseController extends Controller
             )),
             'server' => ServerData::from($server),
             'site' => null,
+            'filters' => [
+                'search' => null,
+            ],
         ]);
     }
 
@@ -134,6 +137,9 @@ class DatabaseController extends Controller
             'databaseUsers' => $databaseUsers,
             'server' => null,
             'site' => SiteData::fromModel($site),
+            'filters' => [
+                'search' => null,
+            ],
         ]);
     }
 

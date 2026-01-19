@@ -3,6 +3,7 @@
 namespace Nip\Server\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 use Nip\Php\Enums\PhpVersion;
 use Nip\Server\Enums\DatabaseType;
 use Nip\Server\Enums\IdentityColor;
@@ -24,7 +25,8 @@ class ServerFactory extends Factory
 
         return [
             'name' => $name,
-            'slug' => \Illuminate\Support\Str::slug($name).'-'.fake()->randomLetter().fake()->randomLetter().fake()->randomLetter(),
+            'slug' => Str::slug($name).'-'.fake()->randomLetter().fake()->randomLetter().fake()->randomLetter(),
+            'provisioning_token' => Str::random(64),
             'provider' => fake()->randomElement(ServerProvider::cases()),
             'provider_server_id' => fake()->uuid(),
             'type' => fake()->randomElement(ServerType::cases()),

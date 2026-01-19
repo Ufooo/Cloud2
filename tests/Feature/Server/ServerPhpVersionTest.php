@@ -163,6 +163,7 @@ it('marks php version as installed when provisioning completes', function () {
         ->post('/provisioning/callback/status', [
             'server_id' => $server->id,
             'status' => 10,
+            'token' => $server->provisioning_token,
         ]);
 
     $response->assertSuccessful();
@@ -170,4 +171,22 @@ it('marks php version as installed when provisioning completes', function () {
     $phpVersion->refresh();
 
     expect($phpVersion->status)->toBe(PhpVersionStatus::Installed);
+});
+
+it('rejects provisioning callback with invalid token', function () {
+    $server = Server::factory()->create([
+        'provision_step' => 1,
+    ]);
+
+    $response = $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class)
+        ->post('/provisioning/callback/status', [
+            'server_id' => $server->id,
+            'status' => 10,
+            'token' => 'invalid-token',
+        ]);
+
+    $response->assertForbidden();
+
+    $server->refresh();
+    expect($server->provision_step)->toBe(1);
 });

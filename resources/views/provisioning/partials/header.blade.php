@@ -1,7 +1,7 @@
 export DEBIAN_FRONTEND=noninteractive
 
 function provisionPing {
-  curl --insecure --data "status=$2&server_id=$1" {{ $callbackUrl }}
+  curl --insecure --data "status=$2&server_id=$1&token={{ $server->provisioning_token }}" {{ $callbackUrl }}
 }
 
 cat > /etc/apt/apt.conf.d/90lock-timeout << 'EOF'

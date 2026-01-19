@@ -3,6 +3,7 @@
 namespace Nip\SshKey\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Validator;
 use Nip\SshKey\Models\SshKey;
 use Nip\SshKey\Rules\SshPublicKeyRule;
@@ -11,7 +12,7 @@ class StoreSshKeyRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return Gate::allows('update', $this->route('server'));
     }
 
     /**

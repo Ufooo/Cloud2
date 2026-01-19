@@ -1,5 +1,38 @@
     apt-get install -y --force-yes unattended-upgrades
 
+# Configure Fail2ban with hardened settings
+cat > /etc/fail2ban/jail.local << 'EOF'
+[DEFAULT]
+# Ban time: 24 hours (increased from default 10 minutes)
+bantime = 24h
+
+# Ban after 3 failed attempts
+maxretry = 3
+
+# Detection window: 10 minutes
+findtime = 10m
+
+# Whitelist localhost
+ignoreip = 127.0.0.1/8 ::1
+
+[sshd]
+enabled = true
+port = ssh
+maxretry = 3
+bantime = 24h
+
+# Recidive jail - ban repeat offenders for 1 week
+[recidive]
+enabled = true
+logpath = /var/log/fail2ban.log
+banaction = %(banaction_allports)s
+bantime = 1w
+findtime = 1d
+maxretry = 3
+EOF
+
+systemctl restart fail2ban
+
 cat > /etc/apt/apt.conf.d/50unattended-upgrades << 'EOF'
 Unattended-Upgrade::Allowed-Origins {
     "${distro_id}:${distro_codename}-security";

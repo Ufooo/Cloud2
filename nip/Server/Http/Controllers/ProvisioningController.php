@@ -49,9 +49,12 @@ class ProvisioningController extends Controller
         $validated = $request->validate([
             'server_id' => ['required', 'integer'],
             'status' => ['required', 'integer'],
+            'token' => ['required', 'string'],
         ]);
 
         $server = Server::query()->findOrFail($validated['server_id']);
+
+        abort_unless($validated['token'] === $server->provisioning_token, 403);
 
         $server->update([
             'provision_step' => $validated['status'],

@@ -21,7 +21,7 @@ class ComposerCredentialResource extends JsonResource
             'user' => $this->when($this->isUserLevel(), $this->unixUser?->username),
             'repository' => $this->repository,
             'username' => $this->username,
-            'password' => $this->password,
+            'hasPassword' => $this->password !== null,
             'status' => $this->status?->value,
             'displayableStatus' => $this->status?->label(),
             'statusBadgeVariant' => $this->status?->badgeVariant(),

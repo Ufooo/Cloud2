@@ -190,6 +190,7 @@ it('marks ssh keys and unix users as installed when provisioning completes', fun
         ->post('/provisioning/callback/status', [
             'server_id' => $server->id,
             'status' => 10,
+            'token' => $server->provisioning_token,
         ]);
 
     $response->assertSuccessful();
