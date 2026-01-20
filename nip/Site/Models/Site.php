@@ -23,6 +23,8 @@ use Nip\Php\Enums\PhpVersion;
 use Nip\Redirect\Models\RedirectRule;
 use Nip\Scheduler\Models\ScheduledJob;
 use Nip\Security\Models\SecurityRule;
+use Nip\SecurityMonitor\Models\SecurityGitWhitelist;
+use Nip\SecurityMonitor\Models\SecurityScan;
 use Nip\Server\Enums\IdentityColor;
 use Nip\Server\Models\Server;
 use Nip\Site\Data\SitePermissionsData;
@@ -99,6 +101,9 @@ class Site extends Model
         'notes',
         'detected_packages',
         'last_deployed_at',
+        'git_monitor_enabled',
+        'security_scan_interval_minutes',
+        'security_scan_retention_days',
     ];
 
     /**
@@ -123,6 +128,7 @@ class Site extends Model
             'deployment_retention' => 'integer',
             'detected_packages' => 'array',
             'last_deployed_at' => 'datetime',
+            'git_monitor_enabled' => 'boolean',
         ];
     }
 
@@ -268,6 +274,30 @@ class Site extends Model
     public function composerCredentials(): HasMany
     {
         return $this->hasMany(ComposerCredential::class);
+    }
+
+    /**
+     * @return HasMany<SecurityScan, $this>
+     */
+    public function securityScans(): HasMany
+    {
+        return $this->hasMany(SecurityScan::class);
+    }
+
+    /**
+     * @return HasOne<SecurityScan, $this>
+     */
+    public function latestSecurityScan(): HasOne
+    {
+        return $this->hasOne(SecurityScan::class)->latestOfMany();
+    }
+
+    /**
+     * @return HasMany<SecurityGitWhitelist, $this>
+     */
+    public function gitWhitelists(): HasMany
+    {
+        return $this->hasMany(SecurityGitWhitelist::class);
     }
 
     public function getFullPath(): string

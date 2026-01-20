@@ -38,7 +38,7 @@ interface Props {
     servers: ServerWidget[];
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const copiedId = ref<number | null>(null);
 const refreshingIds = ref<Set<number>>(new Set());

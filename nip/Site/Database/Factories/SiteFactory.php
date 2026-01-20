@@ -43,6 +43,9 @@ class SiteFactory extends Factory
             'branch' => null,
             'allow_wildcard' => false,
             'www_redirect_type' => WwwRedirectType::FromWww,
+            'git_monitor_enabled' => true,
+            'security_scan_interval_minutes' => 60,
+            'security_scan_retention_days' => 7,
         ];
     }
 

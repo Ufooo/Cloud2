@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { index as composerIndex } from '@/actions/Nip/Composer/Http/Controllers/ComposerController';
 import { indexForSite as databasesIndex } from '@/actions/Nip/Database/Http/Controllers/DatabaseController';
+import { show as securityMonitorShow } from '@/actions/Nip/SecurityMonitor/Http/Controllers/SecurityMonitorController';
 import {
     deploy,
     index as sitesIndex,
@@ -21,6 +22,7 @@ import { useEcho } from '@laravel/echo-vue';
 import {
     Activity,
     Bell,
+    Bug,
     Clock,
     Database,
     ExternalLink,
@@ -48,7 +50,6 @@ const props = withDefaults(defineProps<Props>(), {
     showSidebar: true,
 });
 
-// Real-time updates via WebSocket (useEcho handles lifecycle automatically)
 useEcho(`sites.${props.site.id}`, '.SiteStatusUpdated', () => {
     router.reload({ only: ['site'], preserveScroll: true });
 });
@@ -68,6 +69,8 @@ interface NavItem {
     title: string;
     href: string;
     icon: FunctionalComponent;
+    badge?: number;
+    badgeClass?: string;
 }
 
 const navItems = computed<NavItem[]>(() => [
@@ -107,6 +110,13 @@ const navItems = computed<NavItem[]>(() => [
         icon: Lock,
     },
     {
+        title: 'Security Monitor',
+        href: securityMonitorShow.url(props.site),
+        icon: Bug,
+        badge: props.site.securityIssuesCount || undefined,
+        badgeClass: 'bg-orange-100 text-orange-600 border border-orange-200',
+    },
+    {
         title: 'Redirects',
         href: `/sites/${props.site.slug}/redirects`,
         icon: Share2,
@@ -130,11 +140,14 @@ const navItems = computed<NavItem[]>(() => [
 
 function isActive(item: NavItem): boolean {
     const pathname = window.location.pathname;
-    // Exact match for overview, prefix match for others
+
     if (item.href === `/sites/${props.site.slug}`) {
         return pathname === item.href;
     }
-    return pathname.startsWith(item.href);
+
+    return pathname === item.href ||
+           pathname.startsWith(item.href + '/') ||
+           pathname.startsWith(item.href + '?');
 }
 
 const scriptOutputModal = ref<InstanceType<typeof ScriptOutputModal> | null>(
@@ -145,13 +158,9 @@ function handleScriptClick(script: ProvisionScriptData) {
     scriptOutputModal.value?.open(script);
 }
 
-// Deploy functionality
-const isInstalled = computed(
-    () => props.site.status === SiteStatus.Installed,
-);
+const isInstalled = computed(() => props.site.status === SiteStatus.Installed);
 const isDeployingInProgress = ref(false);
 
-// SSL indicator
 const sslIndicatorClass = computed(() => {
     switch (props.site.sslStatus) {
         case SslStatus.Active:
@@ -189,7 +198,9 @@ function triggerDeploy() {
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col overflow-hidden">
             <!-- Full Width Header -->
-            <header class="shrink-0 bg-gradient-to-b from-muted/40 to-background">
+            <header
+                class="shrink-0 bg-gradient-to-b from-muted/40 to-background"
+            >
                 <div class="flex items-center justify-between px-8 py-5">
                     <!-- Left: Avatar + Essential Info -->
                     <div class="flex items-center gap-4">
@@ -202,7 +213,7 @@ function triggerDeploy() {
                             />
                             <div
                                 v-if="showSslIndicator"
-                                class="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full ring-2 ring-background"
+                                class="absolute -right-0.5 -bottom-0.5 flex h-4 w-4 items-center justify-center rounded-full ring-2 ring-background"
                                 :class="sslIndicatorClass"
                             >
                                 <Lock class="h-2 w-2 text-white" />
@@ -267,9 +278,7 @@ function triggerDeploy() {
                     >
                         <Rocket class="mr-2 size-4" />
                         {{
-                            isDeployingInProgress
-                                ? 'Starting...'
-                                : 'Deploy Now'
+                            isDeployingInProgress ? 'Starting...' : 'Deploy Now'
                         }}
                     </Button>
                 </div>
@@ -279,7 +288,7 @@ function triggerDeploy() {
                     <!-- Server Box -->
                     <div class="flex-1 border-r px-6 py-3">
                         <div
-                            class="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground"
+                            class="flex items-center gap-2 text-xs font-medium tracking-wider text-muted-foreground uppercase"
                         >
                             <Server class="size-3.5" />
                             Server
@@ -292,7 +301,7 @@ function triggerDeploy() {
                     <!-- Unix User Box -->
                     <div class="flex-1 border-r px-6 py-3">
                         <div
-                            class="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground"
+                            class="flex items-center gap-2 text-xs font-medium tracking-wider text-muted-foreground uppercase"
                         >
                             <User class="size-3.5" />
                             Unix User
@@ -305,9 +314,12 @@ function triggerDeploy() {
                     </div>
 
                     <!-- Repository Box -->
-                    <div v-if="site.repository" class="flex-1 border-r px-6 py-3">
+                    <div
+                        v-if="site.repository"
+                        class="flex-1 border-r px-6 py-3"
+                    >
                         <div
-                            class="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground"
+                            class="flex items-center gap-2 text-xs font-medium tracking-wider text-muted-foreground uppercase"
                         >
                             <GitBranch class="size-3.5" />
                             Repository
@@ -329,7 +341,7 @@ function triggerDeploy() {
                     <!-- Deployment Mode Box -->
                     <div class="flex-1 border-r px-6 py-3">
                         <div
-                            class="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground"
+                            class="flex items-center gap-2 text-xs font-medium tracking-wider text-muted-foreground uppercase"
                         >
                             <Layers class="size-3.5" />
                             Deployment
@@ -354,16 +366,22 @@ function triggerDeploy() {
                     <!-- Last Deploy Box -->
                     <div class="flex-1 px-6 py-3">
                         <div
-                            class="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground"
+                            class="flex items-center gap-2 text-xs font-medium tracking-wider text-muted-foreground uppercase"
                         >
                             <Clock class="size-3.5" />
                             Last Deploy
                         </div>
-                        <div class="mt-1 flex items-center gap-2 text-sm font-medium">
-                            <span>{{ site.lastDeployedAtHuman ?? 'Never' }}</span>
+                        <div
+                            class="mt-1 flex items-center gap-2 text-sm font-medium"
+                        >
+                            <span>{{
+                                site.lastDeployedAtHuman ?? 'Never'
+                            }}</span>
                             <Badge
                                 v-if="site.deployStatus"
-                                :variant="site.deployStatusBadgeVariant ?? 'secondary'"
+                                :variant="
+                                    site.deployStatusBadgeVariant ?? 'secondary'
+                                "
                             >
                                 {{ site.displayableDeployStatus }}
                             </Badge>
@@ -393,7 +411,14 @@ function triggerDeploy() {
                                     ]"
                                 >
                                     <component :is="item.icon" class="size-4" />
-                                    {{ item.title }}
+                                    <span class="flex-1">{{ item.title }}</span>
+                                    <span
+                                        v-if="item.badge"
+                                        class="flex h-5 min-w-5 items-center justify-center rounded-md px-1.5 text-xs font-medium tabular-nums"
+                                        :class="item.badgeClass"
+                                    >
+                                        {{ item.badge }}
+                                    </span>
                                 </Link>
                             </li>
                         </ul>

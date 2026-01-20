@@ -18,10 +18,12 @@ export interface NavItem {
     icon?: LucideIcon;
     isActive?: boolean;
     badge?: string | number;
+    badgeClass?: string;
 }
 
 export interface SidebarCounts {
     sites: number;
+    securityIssues: number;
 }
 
 export type AppPageProps<

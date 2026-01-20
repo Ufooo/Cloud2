@@ -15,6 +15,7 @@ return [
     Nip\Redirect\Providers\RedirectServiceProvider::class,
     Nip\Scheduler\Providers\SchedulerServiceProvider::class,
     Nip\Security\Providers\SecurityServiceProvider::class,
+    Nip\SecurityMonitor\Providers\SecurityMonitorServiceProvider::class,
     Nip\Server\Providers\ServerServiceProvider::class,
     Nip\Site\Providers\SiteServiceProvider::class,
     Nip\SourceControl\Providers\SourceControlServiceProvider::class,

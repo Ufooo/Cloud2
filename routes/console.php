@@ -13,3 +13,7 @@ Schedule::command('horizon:snapshot')->everyFiveMinutes();
 Schedule::command('certificates:renew-expiring')->dailyAt('04:00');
 
 Schedule::command('servers:collect-metrics')->everyFiveMinutes();
+
+Schedule::command('security:scan')->everyMinute()->withoutOverlapping();
+
+Schedule::command('security:cleanup')->dailyAt('03:00');

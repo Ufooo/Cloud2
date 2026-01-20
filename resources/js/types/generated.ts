@@ -52,7 +52,6 @@ export type DomainRecordData = {
 id: string;
 siteId: string;
 certificateId: string | null;
-hasCertificate: boolean;
 isSecured: boolean;
 certificateType: string | null;
 name: string;
@@ -86,6 +85,7 @@ status: RuleStatus;
 displayableType: string;
 displayableStatus: string;
 };
+export enum GitChangeType { Modified = 'modified', Untracked = 'untracked', Deleted = 'deleted', Added = 'added', Renamed = 'renamed', Copied = 'copied', Unknown = 'unknown', Any = 'any' };
 export enum GracePeriod { OneMinute = 1, TwoMinutes = 2, FiveMinutes = 5, TenMinutes = 10, ThirtyMinutes = 30, OneHour = 60 };
 export enum IdentityColor { Blue = 'blue', Green = 'green', Orange = 'orange', Purple = 'purple', Red = 'red', Yellow = 'yellow', Cyan = 'cyan', Gray = 'gray' };
 export enum JobStatus { Pending = 'pending', Installing = 'installing', Installed = 'installed', Paused = 'paused', Deleting = 'deleting', Failed = 'failed' };
@@ -140,7 +140,13 @@ export enum RedirectRuleStatus { Pending = 'pending', Installing = 'installing',
 export enum RedirectType { Permanent = 'permanent', Temporary = 'temporary' };
 export enum RuleStatus { Pending = 'pending', Installing = 'installing', Installed = 'installed', Failed = 'failed', Deleting = 'deleting' };
 export enum RuleType { Allow = 'allow', Deny = 'deny' };
+export enum ScanStatus { Pending = 'pending', Running = 'running', Clean = 'clean', IssuesDetected = 'issues_detected', Error = 'error' };
 export enum SecurityRuleStatus { Pending = 'pending', Installing = 'installing', Installed = 'installed', Updating = 'updating', Removing = 'removing', Failed = 'failed' };
+export type SecuritySettingsData = {
+git_monitor_enabled: boolean;
+security_scan_interval_minutes: number;
+security_scan_retention_days: number;
+};
 export type SelectOptionData = {
 value: string | number;
 label: string;
@@ -274,6 +280,7 @@ databaseUserId: number | null;
 databaseUserName: string | null;
 sslStatus: SslStatus;
 sslExpiresAt: string | null;
+securityIssuesCount: number;
 };
 export enum SitePackage { Laravel = 'laravel', Horizon = 'horizon', Octane = 'octane', Pulse = 'pulse', Reverb = 'reverb', Inertia = 'inertia', Nightwatch = 'nightwatch', InertiaSsr = 'inertia_ssr', Scheduler = 'scheduler', Maintenance = 'maintenance' };
 export type SitePermissionsData = {

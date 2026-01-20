@@ -42,7 +42,7 @@ const page = usePage();
                         <span class="truncate">{{ item.title }}</span>
                     </Link>
                 </SidebarMenuButton>
-                <SidebarMenuBadge v-if="item.badge">
+                <SidebarMenuBadge v-if="item.badge" :class="item.badgeClass">
                     {{ item.badge }}
                 </SidebarMenuBadge>
             </SidebarMenuItem>

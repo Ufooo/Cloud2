@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { index as databasesIndex } from '@/actions/Nip/Database/Http/Controllers/DatabaseController';
+import { index as securityMonitorIndex } from '@/actions/Nip/SecurityMonitor/Http/Controllers/SecurityMonitorController';
 import { index as serversIndex } from '@/actions/Nip/Server/Http/Controllers/ServerController';
 import { index as sitesIndex } from '@/actions/Nip/Site/Http/Controllers/SiteController';
 import { index as sourceControlIndex } from '@/actions/Nip/SourceControl/Http/Controllers/SourceControlController';
@@ -19,6 +20,7 @@ import type { AppPageProps, NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import {
+    Bug,
     Database,
     GitBranch,
     Layers,
@@ -54,6 +56,13 @@ const mainNavItems = computed<NavItem[]>(() => [
         title: 'Databases',
         href: databasesIndex.url(),
         icon: Database,
+    },
+    {
+        title: 'Security Monitor',
+        href: securityMonitorIndex.url(),
+        icon: Bug,
+        badge: counts.value.securityIssues || undefined,
+        badgeClass: 'bg-orange-100 text-orange-600 border-orange-200',
     },
     {
         title: 'Settings',

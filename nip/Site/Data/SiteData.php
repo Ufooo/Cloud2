@@ -48,7 +48,6 @@ class SiteData extends Data
         public ?string $lastDeployedAt,
         public ?string $lastDeployedAtHuman,
         public ?string $createdAt,
-        // Deployment settings
         public ?string $deployScript,
         public bool $pushToDeploy,
         public bool $autoSource,
@@ -65,14 +64,13 @@ class SiteData extends Data
         /** @var array<string, bool>|null */
         public ?array $packages,
         public SitePermissionsData $can,
-        // Database info
         public ?int $databaseId,
         public ?string $databaseName,
         public ?int $databaseUserId,
         public ?string $databaseUserName,
-        // SSL info
         public SslStatus $sslStatus,
         public ?string $sslExpiresAt,
+        public int $securityIssuesCount,
     ) {}
 
     public static function fromModel(Site $site): self
@@ -131,6 +129,7 @@ class SiteData extends Data
             databaseUserName: $site->relationLoaded('databaseUser') ? $site->databaseUser?->username : null,
             sslStatus: $site->getSslStatus(),
             sslExpiresAt: $site->getSslExpiresAt()?->toISOString(),
+            securityIssuesCount: $site->latestSecurityScan?->git_new_count ?? 0,
         );
     }
 
