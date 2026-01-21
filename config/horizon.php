@@ -54,9 +54,7 @@ return [
     */
 
     'waits' => [
-        'redis:high' => 30,
         'redis:default' => 60,
-        'redis:low' => 120,
         'redis:provisioning' => 180,
     ],
 
@@ -125,19 +123,6 @@ return [
     */
 
     'defaults' => [
-        'supervisor-high' => [
-            'connection' => 'redis',
-            'queue' => ['high'],
-            'balance' => 'auto',
-            'autoScalingStrategy' => 'time',
-            'minProcesses' => 2,
-            'maxProcesses' => 10,
-            'balanceMaxShift' => 1,
-            'balanceCooldown' => 3,
-            'tries' => 3,
-            'timeout' => 60,
-            'memory' => 512,
-        ],
         'supervisor-default' => [
             'connection' => 'redis',
             'queue' => ['default'],
@@ -160,27 +145,10 @@ return [
             'timeout' => 610, // MUST MATCH retry_after in queue.php
             'memory' => 512,
         ],
-        'supervisor-low' => [
-            'connection' => 'redis',
-            'queue' => ['low'],
-            'balance' => 'auto',
-            'autoScalingStrategy' => 'size',
-            'minProcesses' => 1,
-            'maxProcesses' => 3,
-            'balanceMaxShift' => 1,
-            'balanceCooldown' => 3,
-            'tries' => 3,
-            'timeout' => 300,
-            'memory' => 512,
-        ],
     ],
 
     'environments' => [
         'production' => [
-            'supervisor-high' => [
-                'maxProcesses' => 20,
-                'balanceMaxShift' => 2,
-            ],
             'supervisor-default' => [
                 'maxProcesses' => 10,
                 'balanceMaxShift' => 2,
@@ -188,23 +156,14 @@ return [
             'supervisor-provisioning' => [
                 'processes' => 5,
             ],
-            'supervisor-low' => [
-                'maxProcesses' => 5,
-            ],
         ],
 
         'local' => [
-            'supervisor-high' => [
-                'maxProcesses' => 3,
-            ],
             'supervisor-default' => [
-                'maxProcesses' => 2,
+                'maxProcesses' => 3,
             ],
             'supervisor-provisioning' => [
                 'processes' => 1,
-            ],
-            'supervisor-low' => [
-                'maxProcesses' => 2,
             ],
         ],
     ],

@@ -25,9 +25,7 @@ class CollectServerMetricsJob implements ShouldQueue
 
     public function __construct(
         public Server $server
-    ) {
-        $this->onQueue('metrics');
-    }
+    ) {}
 
     public function handle(SSHService $ssh): void
     {
