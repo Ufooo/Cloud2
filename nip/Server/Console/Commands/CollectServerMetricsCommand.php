@@ -3,7 +3,6 @@
 namespace Nip\Server\Console\Commands;
 
 use Illuminate\Console\Command;
-use Nip\Server\Enums\ServerStatus;
 use Nip\Server\Jobs\CollectServerMetricsJob;
 use Nip\Server\Models\Server;
 
@@ -11,12 +10,11 @@ class CollectServerMetricsCommand extends Command
 {
     protected $signature = 'servers:collect-metrics {--sync : Run synchronously instead of queuing}';
 
-    protected $description = 'Collect metrics from all connected servers';
+    protected $description = 'Collect metrics from all configured servers';
 
     public function handle(): int
     {
         $servers = Server::query()
-            ->where('status', ServerStatus::Connected)
             ->whereNotNull('ip_address')
             ->whereNotNull('ssh_private_key')
             ->get();
