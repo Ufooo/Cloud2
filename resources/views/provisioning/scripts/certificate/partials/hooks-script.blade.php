@@ -61,9 +61,15 @@ deploy_cert() {
     cp "$FULLCHAINFILE" "$CERT_PATH/fullchain.crt"
     cp "$CHAINFILE" "$CERT_PATH/chain.crt" 2>/dev/null || true
 
+    # Backward compatibility: create .pem copies for Forge-migrated configs
+    cp "$KEYFILE" "$CERT_PATH/privkey.pem"
+    cp "$FULLCHAINFILE" "$CERT_PATH/fullchain.pem"
+
     chmod 600 "$CERT_PATH/private.key"
+    chmod 600 "$CERT_PATH/privkey.pem"
     chmod 644 "$CERT_PATH/certificate.crt"
     chmod 644 "$CERT_PATH/fullchain.crt"
+    chmod 644 "$CERT_PATH/fullchain.pem"
 
     echo "Certificate deployed to $CERT_PATH"
 }
