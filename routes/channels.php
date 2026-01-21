@@ -17,3 +17,7 @@ Broadcast::channel('sites.{siteId}', function ($user, $siteId) {
 Broadcast::channel('deployments.{deploymentId}', function ($user, $deploymentId) {
     return $user !== null;
 });
+
+Broadcast::channel('dashboard', function ($user) {
+    return $user !== null;
+});

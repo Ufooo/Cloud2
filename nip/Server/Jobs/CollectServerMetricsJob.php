@@ -9,8 +9,10 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Nip\Server\Enums\ServerStatus;
+use Nip\Server\Events\ServerMetricsUpdated;
 use Nip\Server\Models\Server;
 use Nip\Server\Services\SSH\SSHService;
+use Throwable;
 
 class CollectServerMetricsJob implements ShouldQueue
 {
@@ -51,6 +53,13 @@ class CollectServerMetricsJob implements ShouldQueue
                 'last_metrics_at' => now(),
                 'last_connected_at' => now(),
             ]);
+
+            // Broadcast safely - don't let broadcast failures affect server status
+            try {
+                ServerMetricsUpdated::dispatch($this->server);
+            } catch (Throwable) {
+                // Silently ignore - Reverb may be unavailable
+            }
         } catch (Exception $e) {
             $this->handleFailure($e);
 

@@ -32,4 +32,9 @@ enum ServerStatus: string implements HasStatusBadge
             self::Connecting, self::Provisioning, self::Resizing, self::Stopping, self::Locked, self::Off, self::Unknown => 'secondary',
         };
     }
+
+    public function isConnected(): bool
+    {
+        return $this === self::Connected;
+    }
 }

@@ -4,6 +4,7 @@ import {
     show,
 } from '@/actions/Nip/Server/Http/Controllers/ServerController';
 import { Card } from '@/components/ui/card';
+import { useDashboardUpdates } from '@/composables/useDashboardUpdates';
 import {
     Tooltip,
     TooltipContent,
@@ -43,6 +44,24 @@ defineProps<Props>();
 const copiedId = ref<number | null>(null);
 const refreshingIds = ref<Set<number>>(new Set());
 const localServerData = reactive<Record<number, Partial<ServerWidget>>>({});
+
+useDashboardUpdates((payload) => {
+    localServerData[payload.serverId] = {
+        status: payload.status,
+        statusLabel: payload.statusLabel,
+        isConnected: payload.isConnected,
+        uptimeFormatted: payload.uptimeFormatted,
+        loadAvgFormatted: payload.loadAvgFormatted,
+        cpuPercent: payload.cpuPercent,
+        ramTotalBytes: payload.ramTotalBytes,
+        ramUsedBytes: payload.ramUsedBytes,
+        ramPercent: payload.ramPercent,
+        diskTotalBytes: payload.diskTotalBytes,
+        diskUsedBytes: payload.diskUsedBytes,
+        diskPercent: payload.diskPercent,
+        lastMetricsAt: payload.lastMetricsAt,
+    };
+});
 
 async function copyIp(server: ServerWidget) {
     await navigator.clipboard.writeText(server.ipAddress);
