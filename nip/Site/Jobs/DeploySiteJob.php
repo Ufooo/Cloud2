@@ -2,6 +2,7 @@
 
 namespace Nip\Site\Jobs;
 
+use Illuminate\Support\Facades\Log;
 use Nip\Deployment\Enums\DeploymentStatus;
 use Nip\Deployment\Events\DeploymentUpdated;
 use Nip\Deployment\Models\Deployment;
@@ -11,6 +12,7 @@ use Nip\Server\Services\SSH\ExecutionResult;
 use Nip\Site\Enums\DeployStatus;
 use Nip\Site\Events\SiteStatusUpdated;
 use Nip\Site\Models\Site;
+use Throwable;
 
 class DeploySiteJob extends BaseProvisionJob
 {
@@ -42,8 +44,12 @@ class DeploySiteJob extends BaseProvisionJob
         // Update deployment output in database
         $this->deployment->update(['output' => $fullOutput]);
 
-        // Broadcast the update
-        DeploymentUpdated::dispatch($this->deployment);
+        // Broadcast the update (safely, in case Reverb is unavailable)
+        try {
+            DeploymentUpdated::dispatch($this->deployment);
+        } catch (Throwable) {
+            // Silently ignore - Reverb may be unavailable during self-deployment
+        }
     }
 
     protected function getResourceType(): string
@@ -103,11 +109,10 @@ class DeploySiteJob extends BaseProvisionJob
             'last_deployed_at' => now(),
         ]);
 
-        DeploymentUpdated::dispatch($this->deployment);
-        SiteStatusUpdated::dispatch($this->site);
+        $this->safeBroadcast();
     }
 
-    protected function handleFailure(\Throwable $exception): void
+    protected function handleFailure(Throwable $exception): void
     {
         // Get the actual script output if available
         $output = $this->script?->output ?? $this->deployment->output ?? '';
@@ -122,8 +127,7 @@ class DeploySiteJob extends BaseProvisionJob
             'deploy_status' => DeployStatus::Failed,
         ]);
 
-        DeploymentUpdated::dispatch($this->deployment);
-        SiteStatusUpdated::dispatch($this->site);
+        $this->safeBroadcast();
     }
 
     /**
@@ -138,5 +142,24 @@ class DeploySiteJob extends BaseProvisionJob
             'server:'.$this->site->server_id,
             'deploy',
         ];
+    }
+
+    /**
+     * Safely broadcast deployment and site status updates.
+     * Catches broadcast errors to prevent deployment failures when Reverb is unavailable
+     * (e.g., when deploying the Cloud application to itself).
+     */
+    private function safeBroadcast(): void
+    {
+        try {
+            DeploymentUpdated::dispatch($this->deployment);
+            SiteStatusUpdated::dispatch($this->site);
+        } catch (Throwable $e) {
+            Log::warning('Failed to broadcast deployment update (Reverb may be unavailable)', [
+                'deployment_id' => $this->deployment->id,
+                'site_id' => $this->site->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }
