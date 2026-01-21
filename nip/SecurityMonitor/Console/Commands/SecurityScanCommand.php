@@ -107,18 +107,19 @@ class SecurityScanCommand extends Command
             ->where('git_monitor_enabled', true)
             ->whereNotNull('repository')
             ->where('repository', '!=', '')
-            ->where(function ($query) {
-                // Sites that have never been scanned
-                $query->whereDoesntHave('latestSecurityScan')
-                    // Or sites where the last scan is older than the interval
-                    ->orWhereHas('latestSecurityScan', function ($subQuery) {
-                        $subQuery->whereRaw(
-                            'DATE_ADD(completed_at, INTERVAL sites.security_scan_interval_minutes MINUTE) < NOW()'
-                        );
-                    });
-            })
-            ->with('server')
-            ->get();
+            ->with(['server', 'latestSecurityScan'])
+            ->get()
+            ->filter(function (Site $site) {
+                $latestScan = $site->latestSecurityScan;
+
+                if (! $latestScan) {
+                    return true;
+                }
+
+                $nextDueAt = $latestScan->completed_at->addMinutes($site->security_scan_interval_minutes);
+
+                return $nextDueAt->lte(now());
+            });
 
         if ($sitesToScan->isEmpty()) {
             $this->info('No sites due for scanning.');
