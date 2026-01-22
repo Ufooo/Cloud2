@@ -428,7 +428,7 @@ const isPhpBased = computed(() => isPhpBasedSiteType(props.site.type));
                                 application code and untracked files from within
                                 the
                                 <code class="rounded bg-muted px-1 py-0.5">{{
-                                    site.fullPath
+                                    site.basePath
                                 }}</code>
                                 directory.
                             </p>

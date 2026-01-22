@@ -43,7 +43,7 @@ interface Props {
 const props = defineProps<Props>();
 
 const sites = computed(() => props.sites.data);
-const searchQuery = ref(props.filters.search ?? '');
+const searchQuery = ref(props.filters?.search ?? '');
 
 function handleSearch() {
     router.get(
@@ -99,7 +99,7 @@ const siteTypeGroups = computed(() => {
 });
 
 const hasSites = computed(() => sites.value.length > 0);
-const isSearching = computed(() => !!props.filters.search);
+const isSearching = computed(() => !!props.filters?.search);
 
 function openTypeSelectDialog() {
     showTypeSelectDialog.value = true;
@@ -162,7 +162,7 @@ function selectTypeAndNavigate(type: string) {
                 v-else-if="!hasSites && isSearching"
                 :icon="Search"
                 title="No sites found"
-                :description="`No sites match '${filters.search}'`"
+                :description="`No sites match '${filters?.search ?? ''}'`"
             />
 
             <!-- Site List -->

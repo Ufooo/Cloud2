@@ -114,7 +114,7 @@ function copyDeployHookUrl() {
                                 id="deploy_script"
                                 v-model="form.deploy_script"
                                 class="min-h-[300px] font-mono text-sm"
-                                placeholder="cd $NIP_SITE_PATH&#10;git pull origin $NIP_SITE_BRANCH&#10;composer install --no-dev&#10;php artisan migrate --force"
+                                placeholder="cd $NIP_APPLICATION_PATH&#10;git pull origin $NIP_SITE_BRANCH&#10;composer install --no-dev&#10;php artisan migrate --force"
                             />
                             <p class="text-sm text-muted-foreground">
                                 The commands that will be run to deploy your

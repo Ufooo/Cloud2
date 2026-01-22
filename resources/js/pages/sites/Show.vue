@@ -41,18 +41,26 @@ const isInstalling = computed(() => props.site.status === SiteStatus.Installing)
                 <CardContent class="space-y-4">
                     <div>
                         <span class="text-sm text-muted-foreground">
-                            Full Path
+                            Site Root
                         </span>
                         <p class="mt-1 break-all font-mono text-sm font-medium">
-                            {{ site.fullPath }}
+                            {{ site.siteRoot }}
                         </p>
                     </div>
                     <div>
                         <span class="text-sm text-muted-foreground">
-                            Web Path
+                            Application Path
                         </span>
                         <p class="mt-1 break-all font-mono text-sm font-medium">
-                            {{ site.webPath }}
+                            {{ site.applicationPath }}
+                        </p>
+                    </div>
+                    <div>
+                        <span class="text-sm text-muted-foreground">
+                            Document Root
+                        </span>
+                        <p class="mt-1 break-all font-mono text-sm font-medium">
+                            {{ site.documentRoot }}
                         </p>
                     </div>
                     <div>
