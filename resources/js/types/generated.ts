@@ -255,7 +255,6 @@ packageManager: string | null;
 buildCommand: string | null;
 repository: string | null;
 branch: string | null;
-displayableRepository: string | null;
 sourceControlProvider: string | null;
 avatarColor: IdentityColor | null;
 notes: string | null;

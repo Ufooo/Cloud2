@@ -327,7 +327,7 @@ function triggerDeploy() {
                         <div
                             class="mt-1 flex items-center gap-2 text-sm font-medium"
                         >
-                            {{ site.displayableRepository }}
+                            {{ site.repository }}
                             <Badge
                                 v-if="site.branch"
                                 variant="secondary"

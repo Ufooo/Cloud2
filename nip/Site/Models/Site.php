@@ -420,17 +420,6 @@ class Site extends Model
         return 'https://'.$this->domain;
     }
 
-    public function getDisplayableRepository(): ?string
-    {
-        if (! $this->repository) {
-            return null;
-        }
-
-        $branch = $this->branch ?? 'main';
-
-        return "{$this->repository}:{$branch}";
-    }
-
     public function getDeployHookUrl(): ?string
     {
         if (! $this->deploy_hook_token) {
