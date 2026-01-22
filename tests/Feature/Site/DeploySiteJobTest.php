@@ -75,15 +75,14 @@ it('generates deploy script with correct environment variables', function () {
         ->toContain('Deploying site example.com')
         ->toContain('export NIP_SITE_ROOT=')
         ->toContain('export NIP_RELEASES_PATH=')
-        ->toContain('export NIP_SITE_PATH=')
+        ->toContain('export NIP_APPLICATION_PATH=')
         ->toContain('export NIP_SITE_BRANCH="develop"')
         ->toContain('export NIP_SITE_REPOSITORY=')
         ->toContain('export NIP_PHP=')
         ->toContain('export NIP_PHP_FPM=')
         ->toContain('export NIP_COMPOSER=')
-        // Zero-downtime vars are inside placeholder expansion
-        ->toContain('NIP_RELEASE_NAME=')
-        ->toContain('NIP_RELEASE_DIRECTORY=');
+        // NIP_RELEASE_DIRECTORY is set for script compatibility in non-ZD mode
+        ->toContain('export NIP_RELEASE_DIRECTORY="$NIP_APPLICATION_PATH"');
 });
 
 it('includes zero-downtime deployment for laravel sites', function () {
@@ -94,6 +93,7 @@ it('includes zero-downtime deployment for laravel sites', function () {
         ->create([
             'status' => SiteStatus::Installed,
             'deploy_status' => DeployStatus::Deploying,
+            'zero_downtime' => true,
         ]);
     $deployment = Deployment::factory()->for($site)->create([
         'status' => DeploymentStatus::Deploying,
@@ -157,8 +157,10 @@ it('uses simple git pull for non-zero-downtime sites', function () {
         ->toContain('git pull origin')
         ->toContain('npm ci || npm install')
         ->toContain('npm run build')
+        // NIP_RELEASE_NAME is only for ZD (timestamp-based release names)
         ->not->toContain('NIP_RELEASE_NAME')
-        ->not->toContain('NIP_RELEASE_DIRECTORY')
+        // NIP_RELEASE_DIRECTORY is set in non-ZD for script compatibility (points to NIP_APPLICATION_PATH)
+        ->toContain('export NIP_RELEASE_DIRECTORY="$NIP_APPLICATION_PATH"')
         ->not->toContain('Activating release');
 });
 

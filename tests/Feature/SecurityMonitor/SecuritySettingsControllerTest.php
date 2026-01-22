@@ -16,7 +16,7 @@ beforeEach(function () {
 
 it('can update security settings', function () {
     $this->actingAs($this->user)
-        ->patch(route('sites.securitySettings.update', $this->site), [
+        ->patch(route('sites.securityMonitor.settings', $this->site), [
             'security_scan_interval_minutes' => 60,
             'security_scan_retention_days' => 14,
             'git_monitor_enabled' => true,
@@ -32,7 +32,7 @@ it('can update security settings', function () {
 
 it('can enable git monitoring', function () {
     $this->actingAs($this->user)
-        ->patch(route('sites.securitySettings.update', $this->site), [
+        ->patch(route('sites.securityMonitor.settings', $this->site), [
             'git_monitor_enabled' => true,
         ])
         ->assertRedirect();
@@ -45,7 +45,7 @@ it('can disable git monitoring', function () {
     $this->site->update(['git_monitor_enabled' => true]);
 
     $this->actingAs($this->user)
-        ->patch(route('sites.securitySettings.update', $this->site), [
+        ->patch(route('sites.securityMonitor.settings', $this->site), [
             'git_monitor_enabled' => false,
         ])
         ->assertRedirect();
@@ -56,7 +56,7 @@ it('can disable git monitoring', function () {
 
 it('validates scan interval minutes to allowed values', function () {
     $this->actingAs($this->user)
-        ->patch(route('sites.securitySettings.update', $this->site), [
+        ->patch(route('sites.securityMonitor.settings', $this->site), [
             'security_scan_interval_minutes' => 999,
         ])
         ->assertSessionHasErrors(['security_scan_interval_minutes']);
@@ -67,7 +67,7 @@ it('accepts valid scan interval minutes', function () {
 
     foreach ($validIntervals as $interval) {
         $this->actingAs($this->user)
-            ->patch(route('sites.securitySettings.update', $this->site), [
+            ->patch(route('sites.securityMonitor.settings', $this->site), [
                 'security_scan_interval_minutes' => $interval,
             ])
             ->assertRedirect();
@@ -78,7 +78,7 @@ it('accepts valid scan interval minutes', function () {
 
 it('validates retention days to allowed values', function () {
     $this->actingAs($this->user)
-        ->patch(route('sites.securitySettings.update', $this->site), [
+        ->patch(route('sites.securityMonitor.settings', $this->site), [
             'security_scan_retention_days' => 999,
         ])
         ->assertSessionHasErrors(['security_scan_retention_days']);
@@ -89,7 +89,7 @@ it('accepts valid retention days', function () {
 
     foreach ($validDays as $days) {
         $this->actingAs($this->user)
-            ->patch(route('sites.securitySettings.update', $this->site), [
+            ->patch(route('sites.securityMonitor.settings', $this->site), [
                 'security_scan_retention_days' => $days,
             ])
             ->assertRedirect();
@@ -105,7 +105,7 @@ it('can update only specific fields', function () {
     ]);
 
     $this->actingAs($this->user)
-        ->patch(route('sites.securitySettings.update', $this->site), [
+        ->patch(route('sites.securityMonitor.settings', $this->site), [
             'git_monitor_enabled' => true,
         ])
         ->assertRedirect();
@@ -116,7 +116,7 @@ it('can update only specific fields', function () {
 });
 
 it('requires authentication to update security settings', function () {
-    $this->patch(route('sites.securitySettings.update', $this->site), [
+    $this->patch(route('sites.securityMonitor.settings', $this->site), [
         'git_monitor_enabled' => true,
     ])->assertRedirect(route('login'));
 });

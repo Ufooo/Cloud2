@@ -112,7 +112,7 @@ it('can view security show page for specific site', function () {
     ]);
 
     $this->actingAs($this->user)
-        ->get(route('sites.security', $site))
+        ->get(route('sites.securityMonitor', $site))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('security-monitor/show/page')
@@ -208,7 +208,7 @@ it('requires authentication for all actions', function () {
     $this->get(route('securityMonitor.index'))
         ->assertRedirect(route('login'));
 
-    $this->get(route('sites.security', $site))
+    $this->get(route('sites.securityMonitor', $site))
         ->assertRedirect(route('login'));
 
     $this->post(route('securityMonitor.scan', $site))

@@ -52,7 +52,7 @@ it('creates background process with correct command', function () {
 
     expect($process->name)->toBe(InertiaSSRService::SSR_DAEMON_NAME)
         ->and($process->command)->toBe($expectedCommand)
-        ->and($process->directory)->toBe($this->site->getCurrentPath())
+        ->and($process->directory)->toBe($this->site->getProjectPath())
         ->and($process->user)->toBe($this->site->user)
         ->and($process->site_id)->toBe($this->site->id)
         ->and($process->server_id)->toBe($this->server->id)
