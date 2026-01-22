@@ -140,7 +140,7 @@ function getPackageActionLabel(pkg: DetectedPackageData): string {
 </script>
 
 <template>
-    <Card>
+    <Card class="bg-white">
         <CardHeader>
             <div class="flex items-center justify-between">
                 <div>

@@ -79,7 +79,7 @@ function copyDeployHookUrl() {
     <SiteLayout :site="site">
         <div class="space-y-6">
             <!-- Deployment Settings -->
-            <Card>
+            <Card class="bg-white">
                 <CardHeader>
                     <CardTitle class="flex items-center gap-2">
                         <Rocket class="size-5" />
@@ -231,7 +231,7 @@ function copyDeployHookUrl() {
             </Card>
 
             <!-- Keys -->
-            <Card>
+            <Card class="bg-white">
                 <CardHeader>
                     <CardTitle class="flex items-center gap-2">
                         <Key class="size-5" />

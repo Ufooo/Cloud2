@@ -11,6 +11,7 @@ use Inertia\Response;
 use Nip\Database\Enums\DatabaseStatus;
 use Nip\Database\Enums\DatabaseUserStatus;
 use Nip\Deployment\Enums\DeploymentStatus;
+use Nip\Deployment\Http\Resources\DeploymentResource;
 use Nip\Deployment\Models\Deployment;
 use Nip\Domain\Enums\DomainRecordStatus;
 use Nip\Domain\Enums\DomainRecordType;
@@ -181,8 +182,14 @@ class SiteController extends Controller
         $site->refresh();
         $site->load('server');
 
+        $recentDeployments = Deployment::where('site_id', $site->id)
+            ->latest()
+            ->limit(5)
+            ->get();
+
         return Inertia::render('sites/Show', [
             'site' => SiteData::fromModel($site),
+            'recentDeployments' => DeploymentResource::collection($recentDeployments),
         ]);
     }
 

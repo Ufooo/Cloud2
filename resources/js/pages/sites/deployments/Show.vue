@@ -223,7 +223,7 @@ watch(isDeploying, (deploying) => {
             </div>
 
             <!-- Build Logs -->
-            <Card>
+            <Card class="bg-white">
                 <Collapsible v-model:open="buildLogsOpen">
                     <CardHeader class="py-3">
                         <CollapsibleTrigger
@@ -303,7 +303,7 @@ watch(isDeploying, (deploying) => {
             </Card>
 
             <!-- Deployment Logs -->
-            <Card>
+            <Card class="bg-white">
                 <Collapsible v-model:open="deploymentLogsOpen">
                     <CardHeader class="py-3">
                         <CollapsibleTrigger

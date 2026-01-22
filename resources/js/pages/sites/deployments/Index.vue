@@ -31,7 +31,7 @@ const { getStatusIcon, getStatusClass, isDeploying } = useDeploymentStatus();
     <Head :title="`Deployments - ${site.domain}`" />
 
     <SiteLayout :site="site">
-        <Card>
+        <Card class="bg-white">
             <CardHeader class="flex flex-row items-center justify-between">
                 <div>
                     <CardTitle class="flex items-center gap-2">

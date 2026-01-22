@@ -90,7 +90,7 @@ const showSslIndicator = computed(
         />
 
         <!-- Right side -->
-        <div class="flex-shrink-0 text-right w-28">
+        <div class="flex-shrink-0 text-right w-32">
             <template v-if="isInstalled">
                 <div class="text-xs text-muted-foreground mb-1">Last deploy</div>
                 <div v-if="site.lastDeployedAtHuman" class="flex items-center justify-end gap-1 text-sm text-muted-foreground">
