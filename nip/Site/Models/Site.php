@@ -300,30 +300,108 @@ class Site extends Model
         return $this->hasMany(SecurityGitWhitelist::class);
     }
 
-    public function getFullPath(): string
+    /**
+     * Site root - where git clone/pull happens and shared files (.env) live.
+     * Always: /home/{user}/{domain}
+     */
+    public function getSiteRoot(): string
     {
-        $directory = $this->root_directory === '/' ? $this->domain : $this->root_directory;
-
-        return "/home/{$this->user}/{$directory}";
+        return "/home/{$this->user}/{$this->domain}";
     }
 
-    public function getCurrentPath(): string
+    /**
+     * Application path - where artisan/composer commands run.
+     * Non-ZD: /home/{user}/{domain}{root_directory}
+     * ZD: /home/{user}/{domain}/current (symlink already includes root_directory)
+     */
+    public function getApplicationPath(): string
     {
-        return $this->zero_downtime
-            ? "{$this->getFullPath()}/current"
-            : $this->getFullPath();
+        if ($this->zero_downtime) {
+            return $this->getSiteRoot().'/current';
+        }
+
+        $path = $this->getSiteRoot();
+        if ($this->root_directory !== '/') {
+            $path .= $this->root_directory;
+        }
+
+        return $path;
     }
 
-    public function getRootPath(): string
+    /**
+     * Document root - Nginx serves files from here.
+     * Application path + web_directory (e.g., /public for Laravel)
+     */
+    public function getDocumentRoot(): string
     {
-        return $this->getCurrentPath().$this->web_directory;
+        $path = $this->getApplicationPath();
+        if ($this->web_directory !== '/') {
+            $path .= $this->web_directory;
+        }
+
+        return $path;
     }
 
+    /**
+     * Release path for zero-downtime deployments.
+     * /home/{user}/{domain}/releases/{timestamp}{root_directory}
+     */
+    public function getReleasePath(string $timestamp): string
+    {
+        $path = $this->getSiteRoot().'/releases/'.$timestamp;
+        if ($this->root_directory !== '/') {
+            $path .= $this->root_directory;
+        }
+
+        return $path;
+    }
+
+    /**
+     * @deprecated Use getSiteRoot() instead
+     */
+    public function getBasePath(): string
+    {
+        return $this->getSiteRoot();
+    }
+
+    /**
+     * @deprecated Use getApplicationPath() instead
+     */
+    public function getProjectPath(): string
+    {
+        return $this->getApplicationPath();
+    }
+
+    /**
+     * @deprecated Use getDocumentRoot() instead
+     */
     public function getWebPath(): string
     {
-        $webDir = $this->web_directory === '/' ? '' : $this->web_directory;
+        return $this->getDocumentRoot();
+    }
 
-        return $this->getCurrentPath().$webDir;
+    /**
+     * @deprecated Use getSiteRoot() instead
+     */
+    public function getFullPath(): string
+    {
+        return $this->getSiteRoot();
+    }
+
+    /**
+     * @deprecated Use getApplicationPath() instead
+     */
+    public function getCurrentPath(): string
+    {
+        return $this->getApplicationPath();
+    }
+
+    /**
+     * @deprecated Use getDocumentRoot() instead
+     */
+    public function getRootPath(): string
+    {
+        return $this->getDocumentRoot();
     }
 
     public function getPhpSocketPath(): ?string
