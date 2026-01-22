@@ -45,7 +45,6 @@ class UpdateSitePhpVersionJob extends BaseProvisionJob
             'oldVersion' => $this->site->php_version?->version(),
             'newVersion' => $this->resolvePhpVersionString($this->newVersion),
             'user' => $this->site->user,
-            'fullPath' => $this->site->getFullPath(),
         ])->render();
     }
 

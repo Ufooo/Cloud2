@@ -119,7 +119,7 @@ class SiteScheduledJobController extends Controller
         }
 
         $phpVersion = $site->php_version;
-        $artisanPath = $site->getCurrentPath().'/artisan';
+        $artisanPath = $site->getProjectPath().'/artisan';
 
         $job = $site->scheduledJobs()->create([
             'server_id' => $site->server_id,

@@ -20,7 +20,8 @@ class InstallComposerDependenciesJob extends BaseSiteProvisionJob
     {
         return view('provisioning.scripts.site.steps.install-composer-dependencies', [
             'site' => $this->site,
-            'fullPath' => $this->site->getFullPath(),
+            'siteRoot' => $this->site->getSiteRoot(),
+            'applicationPath' => $this->site->getApplicationPath(),
             'user' => $this->site->user,
             'packageManager' => $this->site->package_manager,
             'hasRepository' => ! empty($this->site->repository),

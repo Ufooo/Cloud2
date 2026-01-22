@@ -17,7 +17,6 @@ class CreatePhpFpmPoolJob extends BaseSiteProvisionJob
             'site' => $this->site,
             'domain' => $this->site->domain,
             'user' => $this->site->user,
-            'fullPath' => $this->site->getFullPath(),
             'phpVersion' => $this->site->php_version?->version(),
         ])->render();
     }

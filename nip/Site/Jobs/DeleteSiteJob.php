@@ -55,7 +55,7 @@ class DeleteSiteJob extends BaseProvisionJob
             'site' => $this->site,
             'user' => $this->site->user,
             'domain' => $this->site->domain,
-            'fullPath' => $this->site->getFullPath(),
+            'siteRoot' => $this->site->getSiteRoot(),
             'phpVersion' => $this->site->php_version?->version(),
             'shouldDeletePool' => ! $otherSitesWithSameUser,
             'installedPhpVersions' => $this->site->server->phpVersions->pluck('version')->toArray(),

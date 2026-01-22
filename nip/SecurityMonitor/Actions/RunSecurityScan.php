@@ -59,12 +59,15 @@ class RunSecurityScan
      */
     private function runGitScan(Collection $sites, Collection $scans): void
     {
-        // Build paths for git scan
-        $paths = $sites->map(fn ($site) => $site->getCurrentPath())->toArray();
+        // Build site data for git scan (path + user for each site)
+        $siteData = $sites->map(fn ($site) => [
+            'path' => $site->getProjectPath(),
+            'user' => $site->user,
+        ])->values()->toArray();
 
-        // Generate the git scan script with paths
+        // Generate the git scan script with site data
         $script = view('provisioning.scripts.security.git-scan', [
-            'paths' => $paths,
+            'sites' => $siteData,
         ])->render();
 
         try {

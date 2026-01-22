@@ -19,14 +19,14 @@ class ProcessGitStatus
     {
         $parsedData = $this->parser->parse($gitOutput);
 
-        $error = $this->parser->getSiteError($parsedData, $site->getCurrentPath());
+        $error = $this->parser->getSiteError($parsedData, $site->getProjectPath());
         if ($error) {
             $scan->update(['error_message' => "Git error: {$error}"]);
 
             return;
         }
 
-        $changes = $this->parser->getChangesForSite($parsedData, $site->getCurrentPath());
+        $changes = $this->parser->getChangesForSite($parsedData, $site->getProjectPath());
         if (empty($changes)) {
             return;
         }

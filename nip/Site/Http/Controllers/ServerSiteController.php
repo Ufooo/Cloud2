@@ -41,6 +41,9 @@ class ServerSiteController extends Controller
             'siteTypes' => SiteType::options(),
             'packageManagers' => PackageManager::options(),
             'colors' => IdentityColor::options(),
+            'filters' => [
+                'search' => null,
+            ],
         ]);
     }
 }

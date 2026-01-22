@@ -20,7 +20,7 @@ class BuildFrontendAssetsJob extends BaseSiteProvisionJob
     {
         return view('provisioning.scripts.site.steps.build-frontend-assets', [
             'site' => $this->site,
-            'fullPath' => $this->site->getFullPath(),
+            'applicationPath' => $this->site->getApplicationPath(),
             'user' => $this->site->user,
             'buildCommand' => $this->site->build_command,
             'packageManager' => $this->site->package_manager,

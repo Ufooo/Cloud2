@@ -44,7 +44,8 @@ class SyncComposerAuthJob extends BaseProvisionJob
 
         return view('provisioning.scripts.site.steps.sync-composer-auth', [
             'site' => $this->site,
-            'fullPath' => $this->site->getFullPath(),
+            'siteRoot' => $this->site->getSiteRoot(),
+            'applicationPath' => $this->site->getApplicationPath(),
             'user' => $this->site->user,
             'authJson' => json_encode($authJson, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
         ])->render();

@@ -20,7 +20,7 @@ class RunMigrationsJob extends BaseSiteProvisionJob
     {
         return view('provisioning.scripts.site.steps.run-migrations', [
             'site' => $this->site,
-            'fullPath' => $this->site->getFullPath(),
+            'applicationPath' => $this->site->getApplicationPath(),
             'user' => $this->site->user,
             'siteType' => $this->site->type,
             'hasRepository' => ! empty($this->site->repository),

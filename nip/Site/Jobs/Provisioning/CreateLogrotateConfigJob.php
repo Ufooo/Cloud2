@@ -17,7 +17,7 @@ class CreateLogrotateConfigJob extends BaseSiteProvisionJob
             'site' => $this->site,
             'domain' => $this->site->domain,
             'user' => $this->site->user,
-            'fullPath' => $this->site->getFullPath(),
+            'siteRoot' => $this->site->getSiteRoot(),
         ])->render();
     }
 }

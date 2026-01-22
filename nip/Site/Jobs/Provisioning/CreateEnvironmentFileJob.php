@@ -22,7 +22,9 @@ class CreateEnvironmentFileJob extends BaseSiteProvisionJob
 
         return view('provisioning.scripts.site.steps.create-environment-file', [
             'site' => $this->site,
-            'fullPath' => $this->site->getFullPath(),
+            'siteRoot' => $this->site->getSiteRoot(),
+            'applicationPath' => $this->site->getApplicationPath(),
+            'zeroDowntime' => $this->site->zero_downtime,
             'user' => $this->site->user,
             'environment' => $this->site->environment ?? '',
             'database' => $database,

@@ -23,7 +23,8 @@ class FinalizeSiteJob extends BaseSiteProvisionJob
     {
         return view('provisioning.scripts.site.steps.finalize-site', [
             'site' => $this->site,
-            'fullPath' => $this->site->getFullPath(),
+            'siteRoot' => $this->site->getSiteRoot(),
+            'applicationPath' => $this->site->getApplicationPath(),
             'user' => $this->site->user,
             'domain' => $this->site->domain,
         ])->render();

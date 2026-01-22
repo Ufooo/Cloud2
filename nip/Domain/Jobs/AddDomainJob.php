@@ -50,8 +50,8 @@ class AddDomainJob extends BaseProvisionJob
         return view('provisioning.scripts.domain.partials.nginx-config', [
             'site' => $site,
             'domain' => $this->domainRecord->name,
-            'fullPath' => $site->getFullPath(),
-            'rootPath' => $site->getRootPath(),
+            'applicationPath' => $site->getApplicationPath(),
+            'documentRoot' => $site->getDocumentRoot(),
             'phpSocket' => $site->getPhpSocketPath(),
             'siteType' => $site->type,
             'allowWildcard' => $this->domainRecord->allow_wildcard,

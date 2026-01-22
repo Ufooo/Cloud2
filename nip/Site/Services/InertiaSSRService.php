@@ -29,7 +29,7 @@ class InertiaSSRService
             'site_id' => $site->id,
             'name' => self::SSR_DAEMON_NAME,
             'command' => $command,
-            'directory' => $site->getCurrentPath(),
+            'directory' => $site->getProjectPath(),
             'user' => $site->user,
             'processes' => 1,
             'startsecs' => 1,

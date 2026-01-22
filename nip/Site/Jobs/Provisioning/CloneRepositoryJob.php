@@ -25,7 +25,8 @@ class CloneRepositoryJob extends BaseSiteProvisionJob
             'skipClone' => ! $this->site->repository,
             'repository' => $cloneUrl,
             'branch' => $this->site->branch ?? 'main',
-            'fullPath' => $this->site->getFullPath(),
+            'siteRoot' => $this->site->getSiteRoot(),
+            'rootDirectory' => $this->site->root_directory,
             'user' => $this->site->user,
         ])->render();
     }

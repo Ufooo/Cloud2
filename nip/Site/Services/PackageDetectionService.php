@@ -22,7 +22,7 @@ class PackageDetectionService
      */
     public function detectPackages(Site $site): array
     {
-        $composerLockPath = $site->getCurrentPath().'/composer.lock';
+        $composerLockPath = $site->getApplicationPath().'/composer.lock';
 
         try {
             $this->ssh->connect($site->server, $site->user);
@@ -130,8 +130,8 @@ class PackageDetectionService
             return [];
         }
 
-        $basePath = $site->zero_downtime ? $site->getCurrentPath() : $site->getFullPath();
-        $versionFile = "{$basePath}/wp-includes/version.php";
+        $applicationPath = $site->getApplicationPath();
+        $versionFile = "{$applicationPath}/wp-includes/version.php";
 
         try {
             $this->ssh->connect($site->server, $site->user);
