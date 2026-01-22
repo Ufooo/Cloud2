@@ -11,10 +11,9 @@ exit 0
 @else
 echo "Running database migrations for {{ $site->domain }}..."
 
-SITE_PATH="{{ $fullPath }}"
-CURRENT_PATH="$SITE_PATH/current"
+APPLICATION_PATH="{{ $applicationPath }}"
 
-cd "$CURRENT_PATH"
+cd "$APPLICATION_PATH"
 
 #
 # Run Laravel Migrations

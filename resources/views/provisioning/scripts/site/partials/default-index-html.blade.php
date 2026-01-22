@@ -1,4 +1,4 @@
-    cat > "$TARGET_DIR{{ $webDirectory }}/index.html" << 'HTMLEOF'
+    cat > "$PROJECT_DIR{{ $webDirectory }}/index.html" << 'HTMLEOF'
 <!DOCTYPE html>
 <html lang="en">
 <head>

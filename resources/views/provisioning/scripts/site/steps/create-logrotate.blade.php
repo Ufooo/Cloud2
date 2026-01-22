@@ -7,8 +7,8 @@ set -e
 echo "Creating logrotate configuration..."
 
 cat > /etc/logrotate.d/netipar-{{ $site->id }} << 'EOF'
-{{ $fullPath }}/storage/logs/*.log
-{{ $fullPath }}/shared/storage/logs/*.log {
+{{ $siteRoot }}/storage/logs/*.log
+{{ $siteRoot }}/shared/storage/logs/*.log {
     su {{ $user }} {{ $user }}
     weekly
     maxsize 100M

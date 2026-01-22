@@ -50,9 +50,10 @@ mkdir -p /tmp/site-{{ $site->id }}
 ln -sf /usr/bin/php{{ $phpVersion }} /tmp/site-{{ $site->id }}/php
 export PATH="/tmp/site-{{ $site->id }}:$PATH"
 
-export NIP_SITE_ROOT="{{ $fullPath }}"
-export NIP_RELEASES_PATH="{{ $fullPath }}/releases"
-export NIP_SITE_PATH="{{ $currentPath }}"
+export NIP_SITE_ROOT="{{ $siteRoot }}"
+export NIP_RELEASES_PATH="{{ $siteRoot }}/releases"
+export NIP_ROOT_DIRECTORY="{{ $rootDirectory }}"
+export NIP_APPLICATION_PATH="{{ $applicationPath }}"
 export NIP_SITE_BRANCH="{{ $branch }}"
 export NIP_SITE_REPOSITORY="{{ $site->getCloneUrl() }}"
 
@@ -77,9 +78,9 @@ echo -e '\e[32m=> Deploying site {{ $domain }}\e[0m'
 @if($useZeroDowntime)
 {!! $processedDeployScript !!}
 @else
-cd "$NIP_SITE_PATH"
+cd "$NIP_APPLICATION_PATH"
 
-export NIP_RELEASE_DIRECTORY="$NIP_SITE_PATH"
+export NIP_RELEASE_DIRECTORY="$NIP_APPLICATION_PATH"
 
 echo -e '\e[32m=> Pulling latest changes\e[0m'
 git pull origin $NIP_SITE_BRANCH
@@ -91,13 +92,13 @@ echo -e '\e[32m=> Executing deployment script\e[0m'
 
 echo -e '\e[32m=> Setting permissions\e[0m'
 @if($useZeroDowntime)
-chmod -R 775 "{{ $fullPath }}/storage"
+chmod -R 775 "{{ $siteRoot }}/storage"
 if [ -n "$NIP_RELEASE_DIRECTORY" ]; then
     chmod -R 775 "$NIP_RELEASE_DIRECTORY/bootstrap/cache" 2>/dev/null || true
 fi
 @else
-chmod -R 775 "{{ $currentPath }}/storage" 2>/dev/null || true
-chmod -R 775 "{{ $currentPath }}/bootstrap/cache" 2>/dev/null || true
+chmod -R 775 "{{ $applicationPath }}/storage" 2>/dev/null || true
+chmod -R 775 "{{ $applicationPath }}/bootstrap/cache" 2>/dev/null || true
 @endif
 
 echo -e '\e[32m=> Deployment complete\e[0m'

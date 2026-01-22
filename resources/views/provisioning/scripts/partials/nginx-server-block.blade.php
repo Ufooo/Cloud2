@@ -15,7 +15,7 @@ server {
 @endif
 
     server_tokens off;
-    root {{ $rootPath }};
+    root {{ $documentRoot }};
 
     # NETIPAR SSL (DO NOT REMOVE!)
     # ssl_certificate;
@@ -25,7 +25,7 @@ server {
     include /etc/nginx/netipar-conf/{{ $site->id }}/site.conf;
 
     # Site-specific Nginx includes
-    include {{ $fullPath }}/nginx.conf*;
+    include {{ $applicationPath }}/nginx.conf*;
 
 @if($siteType->isPhpBased())
     location / {

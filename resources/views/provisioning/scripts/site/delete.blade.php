@@ -166,14 +166,14 @@ service nginx reload
 # Remove Site Directory
 #
 
-SITE_PATH="{{ $fullPath }}"
+SITE_ROOT="{{ $siteRoot }}"
 
-if [ -d "$SITE_PATH" ]; then
-    echo "Removing site directory at $SITE_PATH..."
-    rm -rf "$SITE_PATH"
+if [ -d "$SITE_ROOT" ]; then
+    echo "Removing site directory at $SITE_ROOT..."
+    rm -rf "$SITE_ROOT"
     echo "Site directory removed"
 else
-    echo "Site directory does not exist at $SITE_PATH"
+    echo "Site directory does not exist at $SITE_ROOT"
 fi
 
 #

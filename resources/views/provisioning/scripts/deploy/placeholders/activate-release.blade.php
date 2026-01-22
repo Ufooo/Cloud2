@@ -6,4 +6,4 @@ cd "$NIP_RELEASES_PATH"
 CURRENT_RELEASE=$(readlink -f "$NIP_SITE_ROOT/current" | xargs basename)
 ls -t | tail -n +6 | grep -v "^${CURRENT_RELEASE}$" | xargs -r rm -rf
 
-cd "$NIP_SITE_PATH"
+cd "$NIP_APPLICATION_PATH"

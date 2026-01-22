@@ -9,7 +9,7 @@ echo '{"sites":['
 
 first_site=true
 
-@foreach($paths as $path)
+@foreach($sites as $site)
 # Add comma separator for subsequent sites
 if [ "$first_site" = true ]; then
     first_site=false
@@ -17,7 +17,8 @@ else
     echo ','
 fi
 
-site_path="{{ $path }}"
+site_path="{{ $site['path'] }}"
+site_user="{{ $site['user'] }}"
 
 # Check if directory exists
 if [ ! -d "$site_path" ]; then
@@ -81,7 +82,7 @@ EOF
 
                 echo -n "{\"status\":\"$escaped_status\",\"type\":\"$type\",\"file\":\"$escaped_file\"}"
 
-            done < <(git status --porcelain 2>/dev/null)
+            done < <(sudo -u "$site_user" git status --porcelain 2>/dev/null)
 
             echo ']}'
         fi

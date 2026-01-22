@@ -11,10 +11,9 @@ exit 0
 @else
 echo "Building frontend assets for {{ $site->domain }}..."
 
-SITE_PATH="{{ $fullPath }}"
-CURRENT_PATH="$SITE_PATH/current"
+APPLICATION_PATH="{{ $applicationPath }}"
 
-cd "$CURRENT_PATH"
+cd "$APPLICATION_PATH"
 
 #
 # Build Frontend Assets

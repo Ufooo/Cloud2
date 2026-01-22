@@ -3,20 +3,26 @@ set -e
 
 echo -e '\e[32m=> Creating environment file for {{ $site->domain }}\e[0m'
 
-SITE_PATH="{{ $fullPath }}"
-CURRENT_PATH="$SITE_PATH/current"
-ENV_FILE="$CURRENT_PATH/.env"
-SHARED_ENV="$SITE_PATH/.env"
+SITE_ROOT="{{ $siteRoot }}"
+APPLICATION_PATH="{{ $applicationPath }}"
+ZERO_DOWNTIME="{{ $zeroDowntime ? 'true' : 'false' }}"
 
-if [ -f "$CURRENT_PATH/.env.example" ]; then
+# For ZD: .env at siteRoot, symlinked to applicationPath
+# For non-ZD: .env directly at applicationPath
+ENV_FILE="$APPLICATION_PATH/.env"
+@if($zeroDowntime)
+SHARED_ENV="$SITE_ROOT/.env"
+@endif
+
+if [ -f "$APPLICATION_PATH/.env.example" ]; then
     echo -e '\e[32m=> Copying .env.example to .env\e[0m'
-    cp "$CURRENT_PATH/.env.example" "$ENV_FILE"
+    cp "$APPLICATION_PATH/.env.example" "$ENV_FILE"
 fi
 
-if [ -f "$CURRENT_PATH/artisan" ] && [ ! -f "$ENV_FILE" ]; then
+if [ -f "$APPLICATION_PATH/artisan" ] && [ ! -f "$ENV_FILE" ]; then
     echo -e '\e[32m=> Detected Laravel project, generating .env file\e[0m'
 
-    LARAVEL_VERSION=$(cat "$CURRENT_PATH/composer.json" | sed -n -e 's/.*"laravel\/framework": "[^0-9]*\([0-9.]\+\)".*/\1/p1' | cut -d "." -f 1)
+    LARAVEL_VERSION=$(cat "$APPLICATION_PATH/composer.json" | sed -n -e 's/.*"laravel\/framework": "[^0-9]*\([0-9.]\+\)".*/\1/p1' | cut -d "." -f 1)
 
     if [ -z "$LARAVEL_VERSION" ]; then
         LARAVEL_VERSION=11
@@ -176,11 +182,15 @@ if [ -f "$ENV_FILE" ]; then
 fi
 
 if [ -f "$ENV_FILE" ]; then
-    echo -e '\e[32m=> Creating shared .env symlink\e[0m'
+@if($zeroDowntime)
+    echo -e '\e[32m=> Creating shared .env symlink for zero-downtime\e[0m'
     cp "$ENV_FILE" "$SHARED_ENV"
     rm -f "$ENV_FILE"
     ln -sf "$SHARED_ENV" "$ENV_FILE"
     chmod 644 "$SHARED_ENV"
+@else
+    chmod 644 "$ENV_FILE"
+@endif
 fi
 
 echo -e '\e[32m=> Environment file created successfully!\e[0m'

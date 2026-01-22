@@ -11,10 +11,10 @@ exit 0
 @else
 echo "Installing dependencies for {{ $site->domain }}..."
 
-SITE_PATH="{{ $fullPath }}"
-CURRENT_PATH="$SITE_PATH/current"
+SITE_ROOT="{{ $siteRoot }}"
+APPLICATION_PATH="{{ $applicationPath }}"
 
-cd "$CURRENT_PATH"
+cd "$APPLICATION_PATH"
 
 #
 # Install Composer Dependencies
@@ -24,8 +24,8 @@ if [ -f "composer.json" ]; then
     echo "Installing Composer dependencies..."
 
     # Link auth.json if exists
-    if [ -f "$SITE_PATH/auth.json" ]; then
-        ln -sf "$SITE_PATH/auth.json" "$CURRENT_PATH/auth.json"
+    if [ -f "$SITE_ROOT/auth.json" ]; then
+        ln -sf "$SITE_ROOT/auth.json" "$APPLICATION_PATH/auth.json"
     fi
 
     php{{ $composerPhpVersion }} {{ $composerBinary }} install \

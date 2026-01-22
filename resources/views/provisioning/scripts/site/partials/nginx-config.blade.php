@@ -11,8 +11,8 @@ include /etc/nginx/netipar-conf/{{ $site->id }}/{{ $domain }}/before/*;
 @include('provisioning.scripts.partials.nginx-server-block', [
     'site' => $site,
     'domain' => $domain,
-    'fullPath' => $fullPath,
-    'rootPath' => $rootPath,
+    'applicationPath' => $applicationPath,
+    'documentRoot' => $documentRoot,
     'phpSocket' => $phpSocket,
     'siteType' => $siteType,
     'allowWildcard' => $allowWildcard,

@@ -3,22 +3,22 @@ set -e
 
 echo -e '\e[32m=> Finalizing installation for {{ $domain }}\e[0m'
 
-SITE_PATH="{{ $fullPath }}"
-CURRENT_PATH="$SITE_PATH/current"
+SITE_ROOT="{{ $siteRoot }}"
+APPLICATION_PATH="{{ $applicationPath }}"
 
 echo -e '\e[32m=> Setting permissions\e[0m'
 
-chmod -R 755 "$SITE_PATH"
+chmod -R 755 "$SITE_ROOT"
 
-if [ -d "$SITE_PATH/storage" ]; then
-    chmod -R 775 "$SITE_PATH/storage"
+if [ -d "$SITE_ROOT/storage" ]; then
+    chmod -R 775 "$SITE_ROOT/storage"
 fi
 
-if [ -d "$CURRENT_PATH/bootstrap/cache" ]; then
-    chmod -R 775 "$CURRENT_PATH/bootstrap/cache"
+if [ -d "$APPLICATION_PATH/bootstrap/cache" ]; then
+    chmod -R 775 "$APPLICATION_PATH/bootstrap/cache"
 fi
 
-cd "$CURRENT_PATH"
+cd "$APPLICATION_PATH"
 
 if [ -f "artisan" ]; then
     echo -e '\e[32m=> Clearing application caches\e[0m'
@@ -33,10 +33,10 @@ if [ -f "artisan" ]; then
     php artisan view:cache || true
 fi
 
-if [ -d "$SITE_PATH/releases" ]; then
+if [ -d "$SITE_ROOT/releases" ]; then
     echo -e '\e[32m=> Purging old releases\e[0m'
-    cd "$SITE_PATH/releases"
-    CURRENT_RELEASE=$(readlink -f "$SITE_PATH/current" | xargs basename)
+    cd "$SITE_ROOT/releases"
+    CURRENT_RELEASE=$(readlink -f "$SITE_ROOT/current" | xargs basename)
     ls -t | tail -n +6 | grep -v "^${CURRENT_RELEASE}$" | xargs -r rm -rf
 fi
 
