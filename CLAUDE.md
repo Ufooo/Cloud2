@@ -129,6 +129,74 @@ Registered in `bootstrap/providers.php`. Each module's ServiceProvider:
 - Discovers migrations from `Database/Migrations/`
 - Registers commands from `Console/Commands/`
 
+## Site Path Architecture
+
+Sites are deployed with the following directory structure:
+
+### Path Components
+
+| Field | Purpose | Example |
+|-------|---------|---------|
+| `domain` | Primary site domain, folder name for git clone | `example.com` |
+| `user` | Unix user owning the site | `john` |
+| `root_directory` | Subfolder within git repo (for monorepos) | `/`, `/frontend`, `/backend` |
+| `web_directory` | Nginx document root relative to project | `/public`, `/` |
+| `zero_downtime` | Whether to use releases/symlink deployment | `true`/`false` |
+
+### Directory Structure
+
+**Without Zero Downtime (`zero_downtime = false`):**
+```
+/home/{user}/{domain}/              ← Git clone/pull here (siteRoot)
+├── .git/
+├── {root_directory}/               ← Project root (applicationPath) - if not "/"
+│   └── {web_directory}/            ← Nginx root (documentRoot)
+└── storage/, .env, etc.
+```
+
+**With Zero Downtime (`zero_downtime = true`):**
+```
+/home/{user}/{domain}/              ← Site root (siteRoot)
+├── .env                            ← Shared, symlinked into releases
+├── storage/                        ← Shared, symlinked into releases
+├── releases/
+│   ├── 20260122120000/             ← Git clone goes here
+│   │   └── {root_directory}/       ← Actual project files
+│   └── 20260122130000/
+└── current → releases/20260122130000{root_directory}  ← Symlink to project!
+    └── {web_directory}/            ← Nginx root (documentRoot)
+```
+
+### Site Model Path Methods
+
+```php
+// Site root - where git clone/pull happens, .env lives
+// Always: /home/{user}/{domain}
+$site->getSiteRoot();
+
+// Application path - where artisan/composer commands run
+// Non-ZD: /home/{user}/{domain}{root_directory}
+// ZD: /home/{user}/{domain}/current (symlink already includes root_directory)
+$site->getApplicationPath();
+
+// Document root - Nginx serves files from here
+// applicationPath + web_directory
+$site->getDocumentRoot();
+
+// Release path for ZD deployments
+// /home/{user}/{domain}/releases/{timestamp}{root_directory}
+$site->getReleasePath($timestamp);
+```
+
+### Key Rules
+
+1. **Git operations** always happen at `siteRoot` (domain folder)
+2. **Code operations** (artisan, composer) happen at `applicationPath`
+3. **ZD symlink** (`/current`) points to the **project directory** including `root_directory`
+4. **Shared files** (.env, storage) are at `siteRoot` and symlinked into releases
+5. **root_directory = "/"** means project is at repo root (most common)
+6. **root_directory = "/frontend"** means monorepo with project in subfolder
+
 ## Middleware Configuration
 
 Configured in `bootstrap/app.php` (Laravel 12 style), not Kernel.php:
