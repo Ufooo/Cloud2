@@ -9,11 +9,33 @@ set -eo pipefail
 echo "Updating PHP version for {{ $domain }} from {{ $oldVersion }} to {{ $newVersion }}..."
 
 NGINX_CONF="/etc/nginx/sites-available/{{ $domain }}"
+NEW_FPM_SOCKET="/var/run/php/php{{ $newVersion }}-fpm-{{ $user }}.sock"
 
 if [[ ! -f "$NGINX_CONF" ]]; then
     echo "Error: Nginx configuration not found at $NGINX_CONF"
     exit 1
 fi
+
+#
+# Verify new PHP-FPM socket exists
+#
+
+echo "Checking if PHP {{ $newVersion }} FPM socket exists for {{ $user }}..."
+
+# Wait up to 30 seconds for the socket to appear (FPM pool might still be starting)
+for i in {1..30}; do
+    if [[ -S "$NEW_FPM_SOCKET" ]]; then
+        echo "PHP-FPM socket found: $NEW_FPM_SOCKET"
+        break
+    fi
+    if [[ $i -eq 30 ]]; then
+        echo "Error: PHP-FPM socket not found at $NEW_FPM_SOCKET"
+        echo "The PHP-FPM pool for {{ $user }} with PHP {{ $newVersion }} must be created first."
+        exit 1
+    fi
+    echo "Waiting for FPM socket... ($i/30)"
+    sleep 1
+done
 
 #
 # Update Nginx Configuration
