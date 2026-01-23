@@ -49,6 +49,25 @@ NEW_SOCKET="php{{ $newVersion }}-fpm-{{ $user }}.sock"
 
 sed -i.bak "s|$OLD_SOCKET|$NEW_SOCKET|g" "$NGINX_CONF"
 
+@if(! empty($domainRecords))
+#
+# Update Domain Records Nginx Configurations
+#
+
+echo "Updating domain records nginx configurations..."
+
+@foreach($domainRecords as $domainRecord)
+DOMAIN_CONF="/etc/nginx/sites-available/{{ $domainRecord }}"
+if [[ -f "$DOMAIN_CONF" ]]; then
+    echo "Updating $DOMAIN_CONF..."
+    sed -i.bak "s|$OLD_SOCKET|$NEW_SOCKET|g" "$DOMAIN_CONF"
+    rm -f "$DOMAIN_CONF.bak"
+else
+    echo "Note: Nginx config not found for {{ $domainRecord }}, skipping..."
+fi
+@endforeach
+@endif
+
 #
 # Test Nginx Configuration
 #

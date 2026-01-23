@@ -39,9 +39,15 @@ class UpdateSitePhpVersionJob extends BaseProvisionJob
 
     protected function generateScript(): string
     {
+        $domainRecords = $this->site->domainRecords()
+            ->where('name', '!=', $this->site->domain)
+            ->pluck('name')
+            ->toArray();
+
         return view('provisioning.scripts.site.steps.update-php-version', [
             'site' => $this->site,
             'domain' => $this->site->domain,
+            'domainRecords' => $domainRecords,
             'oldVersion' => $this->site->php_version?->version(),
             'newVersion' => $this->resolvePhpVersionString($this->newVersion),
             'user' => $this->site->user,
