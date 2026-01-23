@@ -46,6 +46,30 @@ echo "Reloading Nginx..."
 systemctl reload nginx
 
 #
+# Ensure user has sudoers permissions for deployment
+#
+
+echo "Ensuring sudoers permissions for {{ $user }}..."
+
+# PHP-FPM reload permission
+if ! grep -q "^{{ $user }} .*php\*-fpm" /etc/sudoers.d/php-fpm 2>/dev/null; then
+    echo "{{ $user }} ALL=NOPASSWD: /usr/sbin/service php*-fpm reload" >> /etc/sudoers.d/php-fpm
+    echo "Added PHP-FPM sudoers entry for {{ $user }}"
+fi
+
+# Supervisor permission
+if ! grep -q "^{{ $user }} .*supervisorctl" /etc/sudoers.d/supervisor 2>/dev/null; then
+    echo "{{ $user }} ALL=NOPASSWD: /usr/bin/supervisorctl *" >> /etc/sudoers.d/supervisor
+    echo "Added Supervisor sudoers entry for {{ $user }}"
+fi
+
+# Nginx permission
+if ! grep -q "^{{ $user }} .*nginx" /etc/sudoers.d/nginx 2>/dev/null; then
+    echo "{{ $user }} ALL=NOPASSWD: /usr/sbin/service nginx *" >> /etc/sudoers.d/nginx
+    echo "Added Nginx sudoers entry for {{ $user }}"
+fi
+
+#
 # Note: Isolated PHP-FPM pool management is handled by separate jobs
 # (CreateIsolatedPhpFpmPoolJob / DeleteIsolatedPhpFpmPoolJob)
 #
