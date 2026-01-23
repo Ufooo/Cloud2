@@ -23,7 +23,6 @@ import {
     Copy,
     Folder,
     FolderRoot,
-    GitCommit,
     Globe,
     Rocket,
 } from 'lucide-vue-next';
@@ -197,20 +196,12 @@ async function copyToClipboard(text: string, key: string) {
                             </code>
 
                             <!-- Commit Message -->
-                            <div
-                                class="flex min-w-0 flex-1 items-center gap-1.5"
+                            <span
+                                v-if="deployment.commitMessage"
+                                class="min-w-0 flex-1 truncate text-sm"
                             >
-                                <GitCommit
-                                    v-if="deployment.commitMessage"
-                                    class="size-3.5 shrink-0 text-muted-foreground"
-                                />
-                                <span class="truncate text-sm">
-                                    {{
-                                        deployment.commitMessage ||
-                                        'Manual deployment'
-                                    }}
-                                </span>
-                            </div>
+                                {{ deployment.commitMessage }}
+                            </span>
 
                             <!-- Time -->
                             <span

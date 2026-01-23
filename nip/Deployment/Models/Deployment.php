@@ -75,6 +75,15 @@ class Deployment extends Model
         return substr($this->commit_hash, 0, self::SHORT_HASH_LENGTH);
     }
 
+    public function getCommitSubject(): ?string
+    {
+        if (! $this->commit_message) {
+            return null;
+        }
+
+        return strtok($this->commit_message, "\n");
+    }
+
     public function getDuration(): ?int
     {
         if (! $this->started_at || ! $this->ended_at) {

@@ -23,7 +23,7 @@ class DeploymentResource extends JsonResource
             'statusColor' => $this->status?->color(),
             'commitHash' => $this->commit_hash,
             'shortCommitHash' => $this->getShortCommitHash(),
-            'commitMessage' => $this->commit_message,
+            'commitMessage' => $this->getCommitSubject(),
             'commitAuthor' => $this->commit_author,
             'branch' => $this->branch,
             'deployedBy' => $this->user?->name,

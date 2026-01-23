@@ -15,7 +15,7 @@ import { useDeploymentStatus } from '@/composables/useDeploymentStatus';
 import SiteLayout from '@/layouts/SiteLayout.vue';
 import type { Deployment, Paginated, Site } from '@/types';
 import { Head, Link } from '@inertiajs/vue3';
-import { GitCommit, Rocket, Settings } from 'lucide-vue-next';
+import { Rocket, Settings } from 'lucide-vue-next';
 
 interface Props {
     site: Site;
@@ -92,18 +92,12 @@ const { getStatusIcon, getStatusClass, isDeploying } = useDeploymentStatus();
                         </code>
 
                         <!-- Commit Message -->
-                        <div class="flex min-w-0 flex-1 items-center gap-2">
-                            <GitCommit
-                                v-if="deployment.commitMessage"
-                                class="size-4 shrink-0 text-muted-foreground"
-                            />
-                            <span class="truncate text-sm">
-                                {{
-                                    deployment.commitMessage ||
-                                    'Manual deployment'
-                                }}
-                            </span>
-                        </div>
+                        <span
+                            v-if="deployment.commitMessage"
+                            class="min-w-0 flex-1 truncate text-sm"
+                        >
+                            {{ deployment.commitMessage }}
+                        </span>
 
                         <!-- Branch & Time -->
                         <div
