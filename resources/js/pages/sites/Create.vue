@@ -298,7 +298,7 @@ function navigateToSites() {
 
     <AppLayout>
         <div class="flex h-full flex-1 flex-col gap-4 p-4">
-            <Card class="mx-auto w-full max-w-2xl">
+            <Card class="mx-auto w-full max-w-2xl bg-white">
                 <CardHeader>
                     <div class="flex items-center gap-3">
                         <SiteTypeIcon :type="siteType.value" class="size-8" />
