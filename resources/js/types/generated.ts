@@ -43,6 +43,7 @@ export type DetectedPackageData = {
 value: string;
 label: string;
 description: string;
+version: string | null;
 hasEnableAction: boolean;
 enableActionLabel: string | null;
 disableActionLabel: string | null;

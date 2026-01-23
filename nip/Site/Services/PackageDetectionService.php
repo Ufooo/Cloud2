@@ -48,9 +48,9 @@ class PackageDetectionService
     }
 
     /**
-     * Parse composer.lock content and extract known packages.
+     * Parse composer.lock content and extract known packages with versions.
      *
-     * @return array<string>
+     * @return array<string, string>
      */
     protected function parseComposerLock(string $content): array
     {
@@ -65,9 +65,10 @@ class PackageDetectionService
 
         foreach ($data['packages'] as $package) {
             $packageName = $package['name'] ?? null;
+            $version = $package['version'] ?? null;
 
             if ($packageName && isset($packageMap[$packageName])) {
-                $detectedPackages[] = $packageMap[$packageName];
+                $detectedPackages[$packageMap[$packageName]] = $version;
             }
         }
 
@@ -75,21 +76,22 @@ class PackageDetectionService
         if (isset($data['packages-dev'])) {
             foreach ($data['packages-dev'] as $package) {
                 $packageName = $package['name'] ?? null;
+                $version = $package['version'] ?? null;
 
-                if ($packageName && isset($packageMap[$packageName])) {
-                    $detectedPackages[] = $packageMap[$packageName];
+                if ($packageName && isset($packageMap[$packageName]) && ! isset($detectedPackages[$packageMap[$packageName]])) {
+                    $detectedPackages[$packageMap[$packageName]] = $version;
                 }
             }
         }
 
-        return array_unique($detectedPackages);
+        return $detectedPackages;
     }
 
     /**
      * Build site packages array from detected packages.
      * Maps detected packages to SitePackage enum values with enabled state.
      *
-     * @param  array<string>  $detectedPackages
+     * @param  array<string, string>  $detectedPackages
      * @return array<string, bool>
      */
     protected function buildSitePackages(array $detectedPackages, Site $site): array
@@ -98,7 +100,7 @@ class PackageDetectionService
 
         // Detect composer packages
         foreach (SitePackage::detectable() as $sitePackage) {
-            if (in_array($sitePackage->value, $detectedPackages, true)) {
+            if (isset($detectedPackages[$sitePackage->value])) {
                 // For now, all detected packages are marked as enabled (true)
                 // In the future, we could check if daemons are actually running
                 $sitePackages[$sitePackage->value] = true;
@@ -106,7 +108,7 @@ class PackageDetectionService
         }
 
         // Detect features for Laravel sites (only add if active)
-        if (in_array('laravel', $detectedPackages, true)) {
+        if (isset($detectedPackages['laravel'])) {
             // Scheduler: only show badge if has active jobs
             if ($site->scheduledJobs()->exists()) {
                 $sitePackages[SitePackage::Scheduler->value] = true;
@@ -174,6 +176,7 @@ class PackageDetectionService
      *     value: string,
      *     label: string,
      *     description: string,
+     *     version: ?string,
      *     hasEnableAction: bool,
      *     enableActionLabel: ?string
      * }>
@@ -184,13 +187,18 @@ class PackageDetectionService
         $packages = [];
 
         foreach (DetectedPackage::cases() as $package) {
-            $isInstalled = in_array($package->value, $detectedPackages, true);
+            // Support both old format (indexed array) and new format (associative with versions)
+            $isInstalled = isset($detectedPackages[$package->value])
+                || in_array($package->value, $detectedPackages, true);
 
             if ($isInstalled) {
+                $version = $detectedPackages[$package->value] ?? null;
+
                 $packages[] = [
                     'value' => $package->value,
                     'label' => $package->label(),
                     'description' => $package->description(),
+                    'version' => is_string($version) ? $version : null,
                     'hasEnableAction' => $package->hasEnableAction(),
                     'enableActionLabel' => $package->enableActionLabel(),
                 ];

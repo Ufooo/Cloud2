@@ -5,6 +5,7 @@ import {
     disableSSR,
     enableSSR,
 } from '@/actions/Nip/Site/Http/Controllers/SiteController';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -197,7 +198,16 @@ function getPackageActionLabel(pkg: DetectedPackageData): string {
                     <div class="flex items-center gap-3">
                         <CheckCircle class="size-5 text-green-500" />
                         <div>
-                            <p class="text-sm font-medium">{{ pkg.label }}</p>
+                            <p class="flex items-center gap-2 text-sm font-medium">
+                                {{ pkg.label }}
+                                <Badge
+                                    v-if="pkg.version"
+                                    variant="custom"
+                                    class="bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-800"
+                                >
+                                    {{ pkg.version }}
+                                </Badge>
+                            </p>
                             <p class="text-xs text-muted-foreground">
                                 {{ pkg.description }}
                             </p>

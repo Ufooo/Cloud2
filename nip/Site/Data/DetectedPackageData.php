@@ -15,18 +15,20 @@ class DetectedPackageData extends Data
         public string $value,
         public string $label,
         public string $description,
+        public ?string $version,
         public bool $hasEnableAction,
         public ?string $enableActionLabel,
         public ?string $disableActionLabel,
         public bool $isEnabled,
     ) {}
 
-    public static function fromEnum(DetectedPackage $package, bool $isEnabled = false): self
+    public static function fromEnum(DetectedPackage $package, bool $isEnabled = false, ?string $version = null): self
     {
         return new self(
             value: $package->value,
             label: $package->label(),
             description: $package->description(),
+            version: $version,
             hasEnableAction: $package->hasEnableAction(),
             enableActionLabel: $package->enableActionLabel(),
             disableActionLabel: $package->disableActionLabel(),
@@ -35,7 +37,7 @@ class DetectedPackageData extends Data
     }
 
     /**
-     * @param  array<string>  $packageValues
+     * @param  array<string, string>|array<string>  $packageValues
      * @return array<self>
      */
     public static function fromPackageValues(array $packageValues, ?Site $site = null): array
@@ -44,9 +46,14 @@ class DetectedPackageData extends Data
         $ssrService = $site ? app(InertiaSSRService::class) : null;
 
         foreach (DetectedPackage::cases() as $package) {
-            if (in_array($package->value, $packageValues, true)) {
+            // Support both old format (indexed array) and new format (associative with versions)
+            $isInstalled = isset($packageValues[$package->value])
+                || in_array($package->value, $packageValues, true);
+
+            if ($isInstalled) {
+                $version = $packageValues[$package->value] ?? null;
                 $isEnabled = self::checkPackageEnabled($package, $site, $ssrService);
-                $details[] = self::fromEnum($package, $isEnabled);
+                $details[] = self::fromEnum($package, $isEnabled, is_string($version) ? $version : null);
             }
         }
 
