@@ -20,7 +20,7 @@ class PhpVersionOptionData extends Data
     public static function fromModel(PhpVersionModel $phpVersion): self
     {
         return new self(
-            value: $phpVersion->version,
+            value: PhpVersion::fromVersion($phpVersion->version)?->value ?? $phpVersion->version,
             label: PhpVersion::fromVersion($phpVersion->version)?->label() ?? "PHP {$phpVersion->version}",
             isDefault: $phpVersion->is_site_default,
         );
