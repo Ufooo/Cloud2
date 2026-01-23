@@ -76,6 +76,7 @@ export {
     ServerStatus,
     ServerType,
     SiteStatus,
+    SiteType,
     SslStatus,
     type CertificateData,
     type DomainRecordData,

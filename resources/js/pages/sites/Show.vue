@@ -16,7 +16,7 @@ import {
 import { useDeploymentStatus } from '@/composables/useDeploymentStatus';
 import SiteLayout from '@/layouts/SiteLayout.vue';
 import type { Deployment, Site } from '@/types';
-import { SiteStatus } from '@/types';
+import { SiteStatus, SiteType } from '@/types';
 import { Head, Link } from '@inertiajs/vue3';
 import {
     Check,
@@ -27,7 +27,7 @@ import {
     Rocket,
 } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
-import DetectedPackages from './partials/DetectedPackages.vue';
+import LaravelPackages from './partials/LaravelPackages.vue';
 import SiteProvisioning from './partials/SiteProvisioning.vue';
 
 interface Props {
@@ -214,8 +214,8 @@ async function copyToClipboard(text: string, key: string) {
                 </CardContent>
             </Card>
 
-            <!-- Detected Packages -->
-            <DetectedPackages :site="site" />
+            <!-- Laravel Packages -->
+            <LaravelPackages v-if="site.type === SiteType.Laravel" :site="site" />
         </div>
     </SiteLayout>
 </template>

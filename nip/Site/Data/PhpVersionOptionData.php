@@ -35,7 +35,7 @@ class PhpVersionOptionData extends Data
     public static function toSelectOptions(Collection $phpVersions): array
     {
         return $phpVersions->map(fn (PhpVersionModel $pv) => new SelectOptionData(
-            value: $pv->version,
+            value: PhpVersion::fromVersion($pv->version)?->value ?? $pv->version,
             label: PhpVersion::fromVersion($pv->version)?->label() ?? "PHP {$pv->version}",
         ))->values()->all();
     }

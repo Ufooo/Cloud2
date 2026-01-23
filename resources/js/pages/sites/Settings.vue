@@ -62,7 +62,7 @@ const deleteDatabaseUser = ref(false);
 // General settings form
 const generalForm = useForm({
     type: props.site.type || '',
-    php_version: props.site.phpVersionLabel || '',
+    php_version: props.site.phpVersion || '',
     avatar_color: props.site.avatarColor as IdentityColor | null,
 });
 
@@ -140,7 +140,7 @@ const isPhpBased = computed(() => isPhpBasedSiteType(props.site.type));
     <SiteLayout :site="site">
         <div class="space-y-6">
             <!-- General Settings -->
-            <Card>
+            <Card class="bg-white">
                 <CardHeader>
                     <CardTitle>Settings</CardTitle>
                     <CardDescription>
@@ -263,7 +263,7 @@ const isPhpBased = computed(() => isPhpBasedSiteType(props.site.type));
             </Card>
 
             <!-- Directories Settings -->
-            <Card>
+            <Card class="bg-white">
                 <CardHeader>
                     <CardTitle class="flex items-center gap-2">
                         <Folder class="size-5" />
@@ -350,7 +350,7 @@ const isPhpBased = computed(() => isPhpBasedSiteType(props.site.type));
             </Card>
 
             <!-- Git Settings -->
-            <Card v-if="site.repository">
+            <Card v-if="site.repository" class="bg-white">
                 <CardHeader>
                     <CardTitle class="flex items-center gap-2">
                         <GitBranch class="size-5" />
@@ -411,7 +411,7 @@ const isPhpBased = computed(() => isPhpBasedSiteType(props.site.type));
             </Card>
 
             <!-- Danger Zone -->
-            <Card class="border-destructive/50">
+            <Card class="border-destructive/50 bg-red-50">
                 <CardHeader>
                     <CardTitle class="text-destructive">Danger</CardTitle>
                     <CardDescription>

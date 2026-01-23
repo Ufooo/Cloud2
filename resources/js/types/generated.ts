@@ -251,6 +251,7 @@ siteRoot: string;
 applicationPath: string;
 documentRoot: string;
 url: string;
+phpVersion: string | null;
 phpVersionLabel: string | null;
 packageManager: string | null;
 buildCommand: string | null;
