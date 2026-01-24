@@ -3,6 +3,8 @@
 namespace Nip\Site\Jobs;
 
 use Illuminate\Support\Facades\Log;
+use Nip\BackgroundProcess\Jobs\SyncBackgroundProcessJob;
+use Nip\Scheduler\Jobs\SyncScheduledJobJob;
 use Nip\Server\Jobs\BaseProvisionJob;
 use Nip\Server\Models\Server;
 use Nip\Server\Services\SSH\ExecutionResult;
@@ -56,9 +58,56 @@ class UpdateSitePhpVersionJob extends BaseProvisionJob
 
     protected function handleSuccess(ExecutionResult $result): void
     {
+        $oldVersion = $this->site->php_version?->version();
+        $newVersion = $this->resolvePhpVersionString($this->newVersion);
+
         $this->site->update([
             'php_version' => $this->newVersion,
         ]);
+
+        // Update scheduled jobs that use PHP
+        $this->updateScheduledJobs($oldVersion, $newVersion);
+
+        // Update background processes that use PHP
+        $this->updateBackgroundProcesses($oldVersion, $newVersion);
+    }
+
+    protected function updateScheduledJobs(?string $oldVersion, string $newVersion): void
+    {
+        if (! $oldVersion) {
+            return;
+        }
+
+        $scheduledJobs = $this->site->scheduledJobs()
+            ->where('command', 'like', "%php{$oldVersion}%")
+            ->get();
+
+        foreach ($scheduledJobs as $job) {
+            $job->update([
+                'command' => str_replace("php{$oldVersion}", "php{$newVersion}", $job->command),
+            ]);
+
+            SyncScheduledJobJob::dispatch($job);
+        }
+    }
+
+    protected function updateBackgroundProcesses(?string $oldVersion, string $newVersion): void
+    {
+        if (! $oldVersion) {
+            return;
+        }
+
+        $processes = $this->site->backgroundProcesses()
+            ->where('command', 'like', "%php{$oldVersion}%")
+            ->get();
+
+        foreach ($processes as $process) {
+            $process->update([
+                'command' => str_replace("php{$oldVersion}", "php{$newVersion}", $process->command),
+            ]);
+
+            SyncBackgroundProcessJob::dispatch($process);
+        }
     }
 
     protected function handleFailure(\Throwable $exception): void

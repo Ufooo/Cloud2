@@ -118,7 +118,7 @@ class SiteScheduledJobController extends Controller
                 ->route('sites.scheduler', $site)->with('info', 'Laravel Scheduler is already configured.');
         }
 
-        $phpVersion = $site->php_version;
+        $phpVersion = $site->php_version->version();
         $artisanPath = $site->getProjectPath().'/artisan';
 
         $job = $site->scheduledJobs()->create([
