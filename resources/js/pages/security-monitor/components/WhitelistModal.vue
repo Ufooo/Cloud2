@@ -105,7 +105,7 @@ function handleClose() {
                     <div class="flex items-center space-x-2">
                         <Checkbox
                             id="all-types"
-                            v-model:checked="form.apply_to_all_types"
+                            v-model="form.apply_to_all_types"
                         />
                         <label
                             for="all-types"

@@ -470,7 +470,7 @@ const isPhpBased = computed(() => isPhpBasedSiteType(props.site.type));
                     >
                         <Checkbox
                             id="delete-database"
-                            v-model:checked="deleteDatabase"
+                            v-model="deleteDatabase"
                         />
                         <label
                             for="delete-database"
@@ -489,7 +489,7 @@ const isPhpBased = computed(() => isPhpBasedSiteType(props.site.type));
                     >
                         <Checkbox
                             id="delete-database-user"
-                            v-model:checked="deleteDatabaseUser"
+                            v-model="deleteDatabaseUser"
                         />
                         <label
                             for="delete-database-user"

@@ -85,7 +85,7 @@ interface DatabaseUserItem {
 
 interface Props {
     databases: PaginatedResponse<DatabaseItem>;
-    databaseUsers: PaginatedResponse<DatabaseUserItem> | DatabaseUserItem[];
+    databaseUsers?: PaginatedResponse<DatabaseUserItem> | DatabaseUserItem[];
     server: Server | null;
     site: Site | null;
     filters?: {
@@ -99,6 +99,9 @@ const { confirmButton } = useConfirmation();
 
 const databases = computed(() => props.databases.data);
 const databaseUsers = computed(() => {
+    if (!props.databaseUsers) {
+        return [];
+    }
     if (Array.isArray(props.databaseUsers)) {
         return props.databaseUsers;
     }
