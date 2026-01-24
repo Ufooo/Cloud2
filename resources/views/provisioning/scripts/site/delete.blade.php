@@ -47,9 +47,9 @@ fi
 # Remove Nginx Configuration Directory
 #
 
-if [ -d "/etc/nginx/netipar-conf/{{ $site->id }}" ]; then
+if [ -d "/etc/nginx/netipar-conf/{{ $site->domain }}" ]; then
     echo "Removing Nginx configuration directory..."
-    rm -rf /etc/nginx/netipar-conf/{{ $site->id }}
+    rm -rf /etc/nginx/netipar-conf/{{ $site->domain }}
 fi
 
 #
@@ -186,27 +186,5 @@ if [ -f "$SSH_KEY_FILE" ]; then
     rm -f "$SSH_KEY_FILE"
     rm -f "${SSH_KEY_FILE}.pub"
 fi
-
-@if($deleteDatabase && $databaseName)
-#
-# Delete Database
-#
-
-echo "Deleting database {{ $databaseName }}..."
-mysql -e "DROP DATABASE IF EXISTS \`{{ $databaseName }}\`;"
-echo "Database {{ $databaseName }} deleted"
-@endif
-
-@if($deleteDatabaseUser && $databaseUserName)
-#
-# Delete Database User
-#
-
-echo "Deleting database user {{ $databaseUserName }}..."
-mysql -e "DROP USER IF EXISTS '{{ $databaseUserName }}'@'localhost';"
-mysql -e "DROP USER IF EXISTS '{{ $databaseUserName }}'@'%';"
-mysql -e "FLUSH PRIVILEGES;"
-echo "Database user {{ $databaseUserName }} deleted"
-@endif
 
 echo "Site {{ $domain }} deleted successfully!"

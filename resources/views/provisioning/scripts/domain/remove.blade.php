@@ -11,7 +11,7 @@ echo "Removing domain {{ $domain }} from site {{ $site->domain }}..."
 # Variables
 #
 
-SITE_CONF_DIR="/etc/nginx/netipar-conf/{{ $site->id }}"
+SITE_CONF_DIR="/etc/nginx/netipar-conf/{{ $site->domain }}"
 DOMAIN_CONF_DIR="$SITE_CONF_DIR/{{ $domain }}"
 
 #

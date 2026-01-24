@@ -45,7 +45,7 @@ EOF
 # Create Site Nginx Configuration Directory
 #
 
-NGINX_CONF_DIR="/etc/nginx/netipar-conf/{{ $site->id }}"
+NGINX_CONF_DIR="/etc/nginx/netipar-conf/{{ $site->domain }}"
 DOMAIN_CONF_DIR="$NGINX_CONF_DIR/{{ $domain }}"
 
 echo "Creating site configuration directories..."
@@ -90,7 +90,7 @@ add_header Permissions-Policy "camera=(), geolocation=(), magnetometer=(), micro
 add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
 
 # CORS - Allow cross-origin requests between site domains
-include netipar-conf/{{ $site->id }}/cors.conf;
+include netipar-conf/{{ $site->domain }}/cors.conf;
 
 # Default index files
 index index.html index.htm index.php;
@@ -99,7 +99,7 @@ index index.html index.htm index.php;
 charset utf-8;
 
 # NETIPAR CONFIG (DO NOT REMOVE!)
-include netipar-conf/{{ $site->id }}/server/*;
+include netipar-conf/{{ $site->domain }}/server/*;
 EOF
 
 SITE_CONF_DIR="$NGINX_CONF_DIR"

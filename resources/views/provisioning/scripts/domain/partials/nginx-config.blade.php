@@ -3,8 +3,8 @@
 # Site: {{ $site->domain }}
 # Generated: {{ now()->toISOString() }}
 
-include /etc/nginx/netipar-conf/{{ $site->id }}/before/*;
-include /etc/nginx/netipar-conf/{{ $site->id }}/{{ $domain }}/before/*;
+include /etc/nginx/netipar-conf/{{ $site->domain }}/before/*;
+include /etc/nginx/netipar-conf/{{ $site->domain }}/{{ $domain }}/before/*;
 
 @include('provisioning.scripts.partials.nginx-server-block', [
     'site' => $site,
@@ -17,5 +17,5 @@ include /etc/nginx/netipar-conf/{{ $site->id }}/{{ $domain }}/before/*;
     'wwwRedirectType' => $wwwRedirectType,
 ])
 
-include /etc/nginx/netipar-conf/{{ $site->id }}/after/*;
-include /etc/nginx/netipar-conf/{{ $site->id }}/{{ $domain }}/after/*;
+include /etc/nginx/netipar-conf/{{ $site->domain }}/after/*;
+include /etc/nginx/netipar-conf/{{ $site->domain }}/{{ $domain }}/after/*;

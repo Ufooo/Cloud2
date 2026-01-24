@@ -22,7 +22,7 @@ server {
     # ssl_certificate_key;
 
     # Site common configuration
-    include /etc/nginx/netipar-conf/{{ $site->id }}/site.conf;
+    include /etc/nginx/netipar-conf/{{ $site->domain }}/site.conf;
 
     # Site-specific Nginx includes
     include {{ $applicationPath }}/nginx.conf*;

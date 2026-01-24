@@ -104,12 +104,12 @@ class Certificate extends Model
 
     public function getCertPath(): string
     {
-        return "/etc/nginx/ssl/{$this->site_id}/{$this->id}";
+        return "/etc/nginx/ssl/{$this->getBaseDomain()}";
     }
 
     public function getSiteConfDir(): string
     {
-        return "/etc/nginx/netipar-conf/{$this->site_id}";
+        return "/etc/nginx/netipar-conf/{$this->site->domain}";
     }
 
     public function generateAcmeSubdomain(): string

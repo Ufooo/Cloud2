@@ -12,7 +12,7 @@ echo "Adding domain {{ $domain }} to site {{ $site->domain }}..."
 # Variables
 #
 
-SITE_CONF_DIR="/etc/nginx/netipar-conf/{{ $site->id }}"
+SITE_CONF_DIR="/etc/nginx/netipar-conf/{{ $site->domain }}"
 DOMAIN_CONF_DIR="$SITE_CONF_DIR/{{ $domain }}"
 
 @include('provisioning.scripts.partials.ensure-fastcgi-defaults')

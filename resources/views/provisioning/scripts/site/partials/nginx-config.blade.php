@@ -3,10 +3,10 @@
 # Generated: {{ now()->toISOString() }}
 
 # Site-level includes
-include /etc/nginx/netipar-conf/{{ $site->id }}/before/*;
+include /etc/nginx/netipar-conf/{{ $site->domain }}/before/*;
 
 # Domain-level includes
-include /etc/nginx/netipar-conf/{{ $site->id }}/{{ $domain }}/before/*;
+include /etc/nginx/netipar-conf/{{ $site->domain }}/{{ $domain }}/before/*;
 
 @include('provisioning.scripts.partials.nginx-server-block', [
     'site' => $site,
@@ -20,7 +20,7 @@ include /etc/nginx/netipar-conf/{{ $site->id }}/{{ $domain }}/before/*;
 ])
 
 # Site-level includes
-include /etc/nginx/netipar-conf/{{ $site->id }}/after/*;
+include /etc/nginx/netipar-conf/{{ $site->domain }}/after/*;
 
 # Domain-level includes
-include /etc/nginx/netipar-conf/{{ $site->id }}/{{ $domain }}/after/*;
+include /etc/nginx/netipar-conf/{{ $site->domain }}/{{ $domain }}/after/*;

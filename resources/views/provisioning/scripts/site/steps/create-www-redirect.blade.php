@@ -6,7 +6,7 @@ set -e
 
 echo "Creating www redirect configuration..."
 
-NGINX_CONF_DIR="/etc/nginx/netipar-conf/{{ $site->id }}"
+NGINX_CONF_DIR="/etc/nginx/netipar-conf/{{ $site->domain }}"
 
 cat > "$NGINX_CONF_DIR/before/redirect.conf" << 'EOF'
 server {

@@ -11,7 +11,7 @@ echo "Configuring Nginx for {{ $domain }}..."
 # Create Nginx Configuration Directory
 #
 
-NGINX_CONF_DIR="/etc/nginx/netipar-conf/{{ $site->id }}"
+NGINX_CONF_DIR="/etc/nginx/netipar-conf/{{ $site->domain }}"
 mkdir -p "$NGINX_CONF_DIR"
 mkdir -p "$NGINX_CONF_DIR/before"
 mkdir -p "$NGINX_CONF_DIR/server"
