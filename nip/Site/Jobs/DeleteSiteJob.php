@@ -12,8 +12,6 @@ class DeleteSiteJob extends BaseProvisionJob
 {
     public function __construct(
         public Site $site,
-        public bool $deleteDatabase = false,
-        public bool $deleteDatabaseUser = false,
     ) {}
 
     protected function getResourceType(): string
@@ -62,25 +60,13 @@ class DeleteSiteJob extends BaseProvisionJob
             'domainRecords' => $this->site->domainRecords->pluck('name')->toArray(),
             'scheduledJobs' => $scheduledJobs,
             'backgroundProcesses' => $backgroundProcesses,
-            'deleteDatabase' => $this->deleteDatabase,
-            'deleteDatabaseUser' => $this->deleteDatabaseUser,
-            'databaseName' => $this->site->database?->name,
-            'databaseUserName' => $this->site->databaseUser?->username,
         ])->render();
     }
 
     protected function handleSuccess(ExecutionResult $result): void
     {
-        // Delete database record if it was deleted on the server
-        if ($this->deleteDatabase && $this->site->database) {
-            $this->site->database->delete();
-        }
-
-        // Delete database user record if it was deleted on the server
-        if ($this->deleteDatabaseUser && $this->site->databaseUser) {
-            $this->site->databaseUser->delete();
-        }
-
+        // Database and database user deletion is handled by separate jobs
+        // dispatched in the chain before this job
         $this->site->delete();
     }
 

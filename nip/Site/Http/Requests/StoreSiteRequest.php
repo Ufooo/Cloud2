@@ -71,6 +71,29 @@ class StoreSiteRequest extends FormRequest
             'branch' => ['nullable', 'string', 'max:100'],
             'install_composer' => ['nullable', 'boolean'],
             'create_database' => ['nullable', 'boolean'],
+            'database_name' => [
+                'nullable',
+                'required_if:create_database,1',
+                'string',
+                'max:64',
+                'regex:/^[a-zA-Z][a-zA-Z0-9_]*$/',
+                Rule::unique('databases', 'name')->where('server_id', $this->input('server_id')),
+            ],
+            'database_user' => [
+                'nullable',
+                'required_if:create_database,1',
+                'string',
+                'max:32',
+                'regex:/^[a-zA-Z][a-zA-Z0-9_]*$/',
+                Rule::unique('database_users', 'username')->where('server_id', $this->input('server_id')),
+            ],
+            'database_password' => [
+                'nullable',
+                'required_if:create_database,1',
+                'string',
+                'min:8',
+            ],
+            'zero_downtime' => ['nullable', 'boolean'],
         ];
     }
 
@@ -84,6 +107,14 @@ class StoreSiteRequest extends FormRequest
             'server_id.exists' => 'The selected server does not exist.',
             'database_id.exists' => 'The selected database does not exist on this server.',
             'database_user_id.exists' => 'The selected database user does not exist on this server.',
+            'database_name.required_if' => 'Database name is required when creating a new database.',
+            'database_name.regex' => 'Database name must start with a letter and contain only letters, numbers, and underscores.',
+            'database_name.unique' => 'This database name already exists on the selected server.',
+            'database_user.required_if' => 'Database user is required when creating a new database.',
+            'database_user.regex' => 'Database user must start with a letter and contain only letters, numbers, and underscores.',
+            'database_user.unique' => 'This database user already exists on the selected server.',
+            'database_password.required_if' => 'Database password is required when creating a new database.',
+            'database_password.min' => 'Database password must be at least 8 characters.',
         ]);
     }
 }

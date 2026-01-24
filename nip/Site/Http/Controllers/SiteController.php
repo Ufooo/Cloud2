@@ -10,6 +10,10 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Nip\Database\Enums\DatabaseStatus;
 use Nip\Database\Enums\DatabaseUserStatus;
+use Nip\Database\Jobs\CreateDatabaseJob;
+use Nip\Database\Jobs\SyncDatabaseUserJob;
+use Nip\Database\Models\Database;
+use Nip\Database\Models\DatabaseUser;
 use Nip\Deployment\Enums\DeploymentStatus;
 use Nip\Deployment\Http\Resources\DeploymentResource;
 use Nip\Deployment\Models\Deployment;
@@ -116,6 +120,7 @@ class SiteController extends Controller
                 'webDirectory' => $siteType->defaultWebDirectory(),
                 'buildCommand' => $siteType->defaultBuildCommand(),
                 'isPhpBased' => $siteType->isPhpBased(),
+                'supportsZeroDowntime' => $siteType->supportsZeroDowntime(),
             ],
             'servers' => $serverOptions,
             'sourceControls' => $sourceControls,
@@ -145,19 +150,64 @@ class SiteController extends Controller
             $data['deploy_script'] = $siteType->defaultDeployScript();
         }
 
-        // Extract installation options (not stored in DB, passed to job)
-        $installOptions = [
-            'install_composer' => $data['install_composer'] ?? true,
-            'create_database' => $data['create_database'] ?? false,
-        ];
-        unset($data['install_composer'], $data['create_database']);
+        // Extract database options before site creation
+        $createDatabase = $data['create_database'] ?? false;
+        $existingDatabaseId = $data['database_id'] ?? null;
+        $existingDatabaseUserId = $data['database_user_id'] ?? null;
 
+        // Remove installation option fields from data before creating site
+        unset(
+            $data['install_composer'],
+            $data['create_database'],
+            $data['database_name'],
+            $data['database_user'],
+            $data['database_password'],
+            $data['database_id'],
+            $data['database_user_id']
+        );
+
+        // Create site first
         $site = $server->sites()->create([
             ...$data,
+            'database_id' => $existingDatabaseId,
+            'database_user_id' => $existingDatabaseUserId,
             'status' => SiteStatus::Pending,
             'deploy_status' => DeployStatus::NeverDeployed,
             'deploy_hook_token' => bin2hex(random_bytes(32)),
         ]);
+
+        // Handle database creation if requested (after site exists)
+        if ($createDatabase) {
+            $validatedData = $request->validated();
+
+            // Create database linked to this site
+            $database = Database::create([
+                'server_id' => $server->id,
+                'site_id' => $site->id,
+                'name' => $validatedData['database_name'],
+                'status' => DatabaseStatus::Installing,
+            ]);
+            CreateDatabaseJob::dispatch($database);
+
+            // Create database user
+            $databaseUser = DatabaseUser::create([
+                'server_id' => $server->id,
+                'username' => $validatedData['database_user'],
+                'password' => $validatedData['database_password'],
+                'status' => DatabaseUserStatus::Installing,
+            ]);
+            $databaseUser->databases()->attach($database->id);
+            SyncDatabaseUserJob::dispatch($databaseUser);
+
+            // Link database to site
+            $site->update([
+                'database_id' => $database->id,
+                'database_user_id' => $databaseUser->id,
+            ]);
+        } elseif ($existingDatabaseId) {
+            // Link existing database to this site
+            Database::where('id', $existingDatabaseId)->update(['site_id' => $site->id]);
+        }
 
         // Create primary domain record
         $site->domainRecords()->create([
@@ -249,6 +299,10 @@ class SiteController extends Controller
     {
         Gate::authorize('update', $site->server);
 
+        // Refresh and load relationships to ensure we have latest data
+        $site->refresh();
+        $site->load(['database', 'databaseUser']);
+
         abort_if(
             $site->status === SiteStatus::Installing || $site->status === SiteStatus::Deleting,
             403,
@@ -260,7 +314,24 @@ class SiteController extends Controller
 
         $site->update(['status' => SiteStatus::Deleting]);
 
-        DeleteSiteJob::dispatch($site, $deleteDatabase, $deleteDatabaseUser);
+        // Build job chain: database deletion → user deletion → site deletion
+        $jobs = [];
+
+        if ($deleteDatabase && $site->database) {
+            $site->database->update(['status' => \Nip\Database\Enums\DatabaseStatus::Deleting]);
+            $jobs[] = new \Nip\Database\Jobs\DeleteDatabaseJob($site->database);
+        }
+
+        if ($deleteDatabaseUser && $site->databaseUser) {
+            $site->databaseUser->update(['status' => \Nip\Database\Enums\DatabaseUserStatus::Deleting]);
+            $jobs[] = new \Nip\Database\Jobs\DeleteDatabaseUserJob($site->databaseUser);
+        }
+
+        $jobs[] = new DeleteSiteJob($site);
+
+        \Illuminate\Support\Facades\Bus::chain($jobs)
+            ->onQueue('provisioning')
+            ->dispatch();
 
         return redirect()
             ->route('sites.index')->with('success', 'Site is being deleted.');

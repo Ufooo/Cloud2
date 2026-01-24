@@ -49,6 +49,7 @@ interface SiteTypeData {
     webDirectory: string;
     buildCommand: string | null;
     isPhpBased: boolean;
+    supportsZeroDowntime: boolean;
 }
 
 interface SelectOption {
@@ -121,9 +122,13 @@ const allowWildcard = ref(false);
 const domainValue = ref('');
 const showDomainModal = ref(false);
 const installComposer = ref(true);
+const zeroDowntime = ref(false);
 const createDatabase = ref(false);
 const selectedDatabase = ref<string | undefined>(undefined);
 const selectedDatabaseUser = ref<string | undefined>(undefined);
+const databaseName = ref('');
+const databaseUser = ref('');
+const databasePassword = ref('');
 
 const selectedSourceControl = ref<string>('');
 const selectedRepository = ref<string>('');
@@ -288,6 +293,15 @@ const selectedWwwRedirectLabel = computed(() => {
     return 'No redirects.';
 });
 
+function generatePassword(): void {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let password = '';
+    for (let i = 0; i < 20; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    databasePassword.value = password;
+}
+
 function navigateToSites() {
     router.visit(index.url());
 }
@@ -334,6 +348,24 @@ function navigateToSites() {
                             type="hidden"
                             name="allow_wildcard"
                             :value="allowWildcard ? '1' : '0'"
+                        />
+                        <input
+                            v-if="createDatabase"
+                            type="hidden"
+                            name="database_name"
+                            :value="databaseName"
+                        />
+                        <input
+                            v-if="createDatabase"
+                            type="hidden"
+                            name="database_user"
+                            :value="databaseUser"
+                        />
+                        <input
+                            v-if="createDatabase"
+                            type="hidden"
+                            name="database_password"
+                            :value="databasePassword"
                         />
 
                         <!-- Domain first - most important -->
@@ -690,6 +722,25 @@ function navigateToSites() {
                             />
                         </div>
 
+                        <div
+                            v-if="siteType.supportsZeroDowntime"
+                            class="flex items-center justify-between"
+                        >
+                            <input
+                                type="hidden"
+                                name="zero_downtime"
+                                :value="zeroDowntime ? '1' : '0'"
+                            />
+                            <div class="space-y-0.5">
+                                <Label for="zero_downtime">Zero downtime deployment</Label>
+                                <p class="text-xs text-muted-foreground">
+                                    Uses releases directory with symlink for
+                                    instant switchover during deployments
+                                </p>
+                            </div>
+                            <Switch id="zero_downtime" v-model="zeroDowntime" />
+                        </div>
+
                         <div class="space-y-4">
                             <div class="flex items-center justify-between">
                                 <input
@@ -709,6 +760,52 @@ function navigateToSites() {
                                     id="create_database"
                                     v-model="createDatabase"
                                 />
+                            </div>
+
+                            <!-- Database creation inputs (when creating a new database) -->
+                            <div
+                                v-if="createDatabase"
+                                class="grid gap-4 rounded-lg border border-dashed p-4"
+                            >
+                                <div class="space-y-2">
+                                    <Label for="database_name">Database name</Label>
+                                    <Input
+                                        id="database_name"
+                                        v-model="databaseName"
+                                        placeholder="my_database"
+                                        required
+                                    />
+                                    <InputError :message="errors.database_name" />
+                                </div>
+
+                                <div class="space-y-2">
+                                    <Label for="database_user">Database user</Label>
+                                    <Input
+                                        id="database_user"
+                                        v-model="databaseUser"
+                                        placeholder="db_user"
+                                        required
+                                    />
+                                    <InputError :message="errors.database_user" />
+                                </div>
+
+                                <div class="space-y-2">
+                                    <Label for="database_password">Database password</Label>
+                                    <div class="flex gap-2">
+                                        <Input
+                                            id="database_password"
+                                            v-model="databasePassword"
+                                            type="text"
+                                            placeholder="Enter or generate password"
+                                            required
+                                            class="flex-1"
+                                        />
+                                        <Button type="button" variant="outline" @click="generatePassword">
+                                            Generate
+                                        </Button>
+                                    </div>
+                                    <InputError :message="errors.database_password" />
+                                </div>
                             </div>
 
                             <!-- Database selection (when not creating a new one) -->
