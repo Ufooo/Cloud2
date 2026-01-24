@@ -23,6 +23,10 @@ class SshKeyController extends Controller
 {
     use LoadsServerPermissions;
 
+    public function __construct(
+        private CreateSshKey $createSshKey,
+    ) {}
+
     public function index(Server $server): Response
     {
         Gate::authorize('view', $server);
@@ -53,7 +57,7 @@ class SshKeyController extends Controller
 
         abort_unless($unixUser->server_id === $server->id, 403, 'Unix user does not belong to this server.');
 
-        $sshKey = (new CreateSshKey)->handle(
+        $sshKey = $this->createSshKey->handle(
             $server,
             $unixUser,
             $request->validated('name'),

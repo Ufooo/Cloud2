@@ -24,6 +24,7 @@ use Nip\Server\Enums\ServerStatus;
 use Nip\Server\Models\Server;
 use Nip\Site\Data\PhpVersionOptionData;
 use Nip\Site\Data\ServerSiteCreationData;
+use Nip\Site\Data\SiteCreationData;
 use Nip\Site\Data\SiteData;
 use Nip\Site\Enums\DeployStatus;
 use Nip\Site\Enums\DetectedPackage;
@@ -131,60 +132,34 @@ class SiteController extends Controller
 
     public function store(StoreSiteRequest $request): RedirectResponse
     {
-        $data = $request->validated();
+        $siteData = SiteCreationData::from($request->validated());
 
-        $server = Server::findOrFail($data['server_id']);
+        $server = Server::findOrFail($siteData->server_id);
         Gate::authorize('update', $server);
 
-        $siteType = SiteType::from($data['type']);
+        $siteType = SiteType::from($siteData->type);
 
-        if (! isset($data['web_directory'])) {
-            $data['web_directory'] = $siteType->defaultWebDirectory();
-        }
+        // Apply defaults if not set
+        $siteDataArray = $siteData->getSiteData();
+        $siteDataArray['web_directory'] ??= $siteType->defaultWebDirectory();
+        $siteDataArray['build_command'] ??= $siteType->defaultBuildCommand();
+        $siteDataArray['deploy_script'] ??= $siteType->defaultDeployScript();
 
-        if (! isset($data['build_command'])) {
-            $data['build_command'] = $siteType->defaultBuildCommand();
-        }
-
-        if (! isset($data['deploy_script'])) {
-            $data['deploy_script'] = $siteType->defaultDeployScript();
-        }
-
-        // Extract database options before site creation
-        $createDatabase = $data['create_database'] ?? false;
-        $existingDatabaseId = $data['database_id'] ?? null;
-        $existingDatabaseUserId = $data['database_user_id'] ?? null;
-
-        // Remove installation option fields from data before creating site
-        unset(
-            $data['install_composer'],
-            $data['create_database'],
-            $data['database_name'],
-            $data['database_user'],
-            $data['database_password'],
-            $data['database_id'],
-            $data['database_user_id']
-        );
-
-        // Create site first
+        // Create site
         $site = $server->sites()->create([
-            ...$data,
-            'database_id' => $existingDatabaseId,
-            'database_user_id' => $existingDatabaseUserId,
+            ...$siteDataArray,
             'status' => SiteStatus::Pending,
             'deploy_status' => DeployStatus::NeverDeployed,
             'deploy_hook_token' => bin2hex(random_bytes(32)),
         ]);
 
-        // Handle database creation if requested (after site exists)
-        if ($createDatabase) {
-            $validatedData = $request->validated();
-
+        // Handle database creation if requested
+        if ($siteData->hasDatabaseCreation()) {
             // Create database linked to this site
             $database = Database::create([
                 'server_id' => $server->id,
                 'site_id' => $site->id,
-                'name' => $validatedData['database_name'],
+                'name' => $siteData->getDatabaseName(),
                 'status' => DatabaseStatus::Installing,
             ]);
             CreateDatabaseJob::dispatch($database);
@@ -192,8 +167,8 @@ class SiteController extends Controller
             // Create database user
             $databaseUser = DatabaseUser::create([
                 'server_id' => $server->id,
-                'username' => $validatedData['database_user'],
-                'password' => $validatedData['database_password'],
+                'username' => $siteData->getDatabaseUser(),
+                'password' => $siteData->getDatabasePassword(),
                 'status' => DatabaseUserStatus::Installing,
             ]);
             $databaseUser->databases()->attach($database->id);
@@ -204,9 +179,9 @@ class SiteController extends Controller
                 'database_id' => $database->id,
                 'database_user_id' => $databaseUser->id,
             ]);
-        } elseif ($existingDatabaseId) {
+        } elseif ($siteData->hasExistingDatabase()) {
             // Link existing database to this site
-            Database::where('id', $existingDatabaseId)->update(['site_id' => $site->id]);
+            Database::where('id', $siteData->database_id)->update(['site_id' => $site->id]);
         }
 
         // Create primary domain record

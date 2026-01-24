@@ -10,9 +10,9 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
-use Nip\Php\Actions\CreatePhpVersion;
-use Nip\Php\Enums\PhpVersion;
-use Nip\Php\Enums\PhpVersionStatus;
+use Nip\Server\Actions\CreateDefaultUnixUsers;
+use Nip\Server\Actions\CreatePhpVersionForServer;
+use Nip\Server\Actions\CreateSshKeysFromRequest;
 use Nip\Server\Actions\GenerateServerSshKey;
 use Nip\Server\Actions\RefreshServerMetrics;
 use Nip\Server\Data\ServerData;
@@ -28,16 +28,19 @@ use Nip\Server\Http\Requests\StoreServerRequest;
 use Nip\Server\Http\Requests\UpdateServerSettingsRequest;
 use Nip\Server\Http\Resources\ServerListResource;
 use Nip\Server\Models\Server;
-use Nip\SshKey\Actions\CreateSshKey;
 use Nip\SshKey\Http\Resources\UserSshKeyResource;
 use Nip\SshKey\Models\UserSshKey;
-use Nip\UnixUser\Actions\CreateUnixUser;
-use Nip\UnixUser\Enums\UserStatus;
-use Nip\UnixUser\Models\UnixUser;
 
 class ServerController extends Controller
 {
     use LoadsServerPermissions;
+
+    public function __construct(
+        private GenerateServerSshKey $generateServerSshKey,
+        private CreateDefaultUnixUsers $createDefaultUnixUsers,
+        private CreatePhpVersionForServer $createPhpVersionForServer,
+        private CreateSshKeysFromRequest $createSshKeysFromRequest,
+    ) {}
 
     public function index(): Response
     {
@@ -89,10 +92,10 @@ class ServerController extends Controller
             'provisioning_token' => Str::random(64),
         ]);
 
-        $this->generateServerSshKey($server);
-        [, $netiparUser] = $this->createDefaultUnixUsers($server);
-        $this->createPhpVersionIfNeeded($server);
-        $this->createSshKeysFromRequest($request, $server, $netiparUser);
+        $this->generateServerSshKey->handle($server);
+        [, $netiparUser] = $this->createDefaultUnixUsers->handle($server);
+        $this->createPhpVersionForServer->handle($server);
+        $this->createSshKeysFromRequest->handle($request, $server, $netiparUser);
 
         return redirect()
             ->route('servers.show', $server)->with('success', 'Server created successfully.');
@@ -166,71 +169,5 @@ class ServerController extends Controller
         if ($server->status === ServerStatus::Provisioning) {
             $server->provisioning_steps = $server->getProvisioningSteps();
         }
-    }
-
-    /**
-     * @return array{UnixUser, UnixUser}
-     */
-    private function createDefaultUnixUsers(Server $server): array
-    {
-        $createUnixUser = new CreateUnixUser;
-
-        return [
-            $createUnixUser->handle($server, 'root', UserStatus::Installing),
-            $createUnixUser->handle($server, 'netipar', UserStatus::Installing),
-        ];
-    }
-
-    private function createPhpVersionIfNeeded(Server $server): void
-    {
-        if (! in_array($server->type, [ServerType::App, ServerType::Web, ServerType::Worker])) {
-            return;
-        }
-
-        $phpVersion = $server->php_version instanceof PhpVersion
-            ? $server->php_version
-            : PhpVersion::tryFrom($server->php_version);
-
-        $version = $phpVersion?->version() ?? '8.4';
-
-        (new CreatePhpVersion)->handle(
-            $server,
-            $version,
-            PhpVersionStatus::Installing,
-            isCliDefault: true,
-            isSiteDefault: true,
-        );
-    }
-
-    private function createSshKeysFromRequest(
-        StoreServerRequest $request,
-        Server $server,
-        UnixUser $netiparUser,
-    ): void {
-        if (! $request->filled('ssh_key_ids')) {
-            return;
-        }
-
-        $userSshKeys = UserSshKey::query()
-            ->whereIn('id', $request->input('ssh_key_ids'))
-            ->where('user_id', auth()->id())
-            ->get();
-
-        $createSshKey = new CreateSshKey;
-
-        foreach ($userSshKeys as $userSshKey) {
-            $createSshKey->handle(
-                $server,
-                $netiparUser,
-                $userSshKey->name,
-                $userSshKey->public_key,
-                $userSshKey->fingerprint,
-            );
-        }
-    }
-
-    private function generateServerSshKey(Server $server): void
-    {
-        (new GenerateServerSshKey)->handle($server);
     }
 }

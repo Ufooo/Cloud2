@@ -23,6 +23,10 @@ class UnixUserController extends Controller
 {
     use LoadsServerPermissions;
 
+    public function __construct(
+        private CreateUnixUser $createUnixUser,
+    ) {}
+
     public function index(Server $server): Response
     {
         Gate::authorize('view', $server);
@@ -41,7 +45,7 @@ class UnixUserController extends Controller
 
     public function store(StoreUnixUserRequest $request, Server $server): RedirectResponse
     {
-        $unixUser = (new CreateUnixUser)->handle(
+        $unixUser = $this->createUnixUser->handle(
             $server,
             $request->validated('username'),
             UserStatus::Installing,
@@ -63,11 +67,12 @@ class UnixUserController extends Controller
         abort_if($user->status === UserStatus::Installing, 403, 'Cannot delete a user while installation is in progress.');
         abort_if($user->status === UserStatus::Deleting, 403, 'User deletion is already in progress.');
 
-        $sitesCount = Site::where('server_id', $server->id)
+        $hasSites = Site::query()
+            ->where('server_id', $server->id)
             ->where('user', $user->username)
-            ->count();
+            ->exists();
 
-        abort_if($sitesCount > 0, 403, "Cannot delete user. {$sitesCount} site(s) are using this user. Delete the sites first.");
+        abort_if($hasSites, 403, 'Cannot delete user. Sites are using this user. Delete the sites first.');
 
         $user->update(['status' => UserStatus::Deleting]);
 

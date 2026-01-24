@@ -29,6 +29,10 @@ class PhpController extends Controller
 {
     use LoadsServerPermissions;
 
+    public function __construct(
+        private CreatePhpVersion $createPhpVersion,
+    ) {}
+
     public function index(Server $server): Response
     {
         Gate::authorize('view', $server);
@@ -85,7 +89,7 @@ class PhpController extends Controller
                 ->withErrors(['version' => 'This PHP version is already installed on this server.']);
         }
 
-        $phpVersion = (new CreatePhpVersion)->handle($server, $version, PhpVersionStatus::Installing);
+        $phpVersion = $this->createPhpVersion->handle($server, $version, PhpVersionStatus::Installing);
 
         InstallPhpVersionJob::dispatch($phpVersion);
 
