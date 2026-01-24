@@ -18,7 +18,9 @@ AUTHJSONEOF
 # Set proper permissions
 chmod 600 "$AUTH_FILE"
 
-# Link to project directory
-ln -sf "$AUTH_FILE" "$APPLICATION_PATH/auth.json"
+# Link to project directory (only if paths are different)
+if [ "$APPLICATION_PATH" != "$SITE_ROOT" ]; then
+    ln -sf "$AUTH_FILE" "$APPLICATION_PATH/auth.json"
+fi
 
 echo "Composer auth.json synced successfully!"

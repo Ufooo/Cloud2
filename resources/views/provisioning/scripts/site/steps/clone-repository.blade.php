@@ -9,6 +9,9 @@ echo -e '\e[32m=> Cloning repository for {{ $site->domain }}\e[0m'
 
 SITE_ROOT="{{ $siteRoot }}"
 ROOT_DIR="{{ $rootDirectory }}"
+
+@if($site->zero_downtime)
+# Zero-downtime deployment: use releases directory
 RELEASE_TIMESTAMP=$(date +%Y%m%d%H%M%S)
 CLONE_DIR="$SITE_ROOT/releases/$RELEASE_TIMESTAMP"
 
@@ -63,6 +66,49 @@ echo -e '\e[32m=> Activating release\e[0m'
 ln -s "$PROJECT_DIR" "$SITE_ROOT/current-temp" && mv -Tf "$SITE_ROOT/current-temp" "$SITE_ROOT/current"
 
 chmod -R 775 "$SITE_ROOT/storage"
+@else
+# Non zero-downtime: clone directly to site root
+@if($rootDirectory !== '/')
+PROJECT_DIR="$SITE_ROOT{{ $rootDirectory }}"
+@else
+PROJECT_DIR="$SITE_ROOT"
+@endif
+
+# Save .env if it exists before clearing directory
+if [ -f "$SITE_ROOT/.env" ]; then
+    cp "$SITE_ROOT/.env" /tmp/.env.backup.$$
+fi
+
+# Clear directory for fresh clone (remove default index.html etc)
+echo -e '\e[32m=> Preparing directory for clone\e[0m'
+rm -rf "$SITE_ROOT"
+mkdir -p "$SITE_ROOT"
+
+echo -e '\e[32m=> Downloading code repository\e[0m'
+git clone --branch {{ $branch }} --depth 1 '{{ $repository }}' "$SITE_ROOT"
+
+# Restore .env if it was backed up
+if [ -f /tmp/.env.backup.$$ ]; then
+    mv /tmp/.env.backup.$$ "$SITE_ROOT/.env"
+fi
+
+if [ -f "$PROJECT_DIR/composer.json" ]; then
+    echo -e '\e[32m=> Setting up Composer auth.json\e[0m'
+
+    if [ ! -f "$SITE_ROOT/auth.json" ]; then
+        echo '{ "http-basic": {} }' > "$SITE_ROOT/auth.json"
+    fi
+
+    if [ "$PROJECT_DIR" != "$SITE_ROOT" ]; then
+        ln -sf "$SITE_ROOT/auth.json" "$PROJECT_DIR/auth.json"
+    fi
+fi
+
+if [ -d "$PROJECT_DIR/storage" ]; then
+    echo -e '\e[32m=> Setting storage permissions\e[0m'
+    chmod -R 775 "$PROJECT_DIR/storage"
+fi
+@endif
 
 echo -e '\e[32m=> Repository cloned successfully!\e[0m'
 @endif

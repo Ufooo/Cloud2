@@ -23,8 +23,8 @@ cd "$APPLICATION_PATH"
 if [ -f "composer.json" ]; then
     echo "Installing Composer dependencies..."
 
-    # Link auth.json if exists
-    if [ -f "$SITE_ROOT/auth.json" ]; then
+    # Link auth.json if exists and paths are different
+    if [ -f "$SITE_ROOT/auth.json" ] && [ "$APPLICATION_PATH" != "$SITE_ROOT" ]; then
         ln -sf "$SITE_ROOT/auth.json" "$APPLICATION_PATH/auth.json"
     fi
 

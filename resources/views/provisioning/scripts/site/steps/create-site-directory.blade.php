@@ -12,7 +12,7 @@ fi
 echo -e '\e[32m=> Creating site directory at $SITE_ROOT\e[0m'
 mkdir -p "$SITE_ROOT"
 
-@if($siteType->supportsZeroDowntime())
+@if($site->zero_downtime)
 mkdir -p "$SITE_ROOT/releases"
 
 # Initial release clone directory
