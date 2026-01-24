@@ -3,10 +3,6 @@ import {
     index,
     store,
 } from '@/actions/Nip/Site/Http/Controllers/SiteController';
-import {
-    branches as fetchBranches,
-    repositories as fetchRepositories,
-} from '@/actions/Nip/SourceControl/Http/Controllers/SourceControlController';
 import SiteTypeIcon from '@/components/icons/SiteTypeIcon.vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
@@ -36,271 +32,81 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { useSiteCreationForm } from '@/composables/useSiteCreationForm';
 import AppLayout from '@/layouts/AppLayout.vue';
+import type {
+    ServerOption,
+    SiteTypeData,
+    SourceControlOption,
+    WwwRedirectTypeOption,
+} from '@/types/site-creation';
+import type { SelectOptionData } from '@/types/generated';
 import { Form, Head, router } from '@inertiajs/vue3';
-import axios from 'axios';
 import { Check, ChevronDown, GitBranch, Loader2 } from 'lucide-vue-next';
-import { computed, ref, watch } from 'vue';
+import { computed, toRef } from 'vue';
 import ConfigureDomainModal from './partials/ConfigureDomainModal.vue';
-
-interface SiteTypeData {
-    value: string;
-    label: string;
-    webDirectory: string;
-    buildCommand: string | null;
-    isPhpBased: boolean;
-    supportsZeroDowntime: boolean;
-}
-
-interface SelectOption {
-    value: string;
-    label: string;
-}
-
-interface SourceControlOption {
-    id: number;
-    provider: string;
-    providerLabel: string;
-    name: string;
-}
-
-interface Repository {
-    id: number;
-    full_name: string;
-    name: string;
-    private: boolean;
-    default_branch: string;
-}
-
-interface NumericSelectOption {
-    value: number;
-    label: string;
-}
-
-interface DatabaseOption {
-    value: number;
-    label: string;
-    userIds: number[];
-}
-
-interface WwwRedirectTypeOption extends SelectOption {
-    description: string;
-    isDefault: boolean;
-}
-
-interface PhpVersionOption extends SelectOption {
-    isDefault: boolean;
-}
-
-interface ServerOption {
-    id: number;
-    slug: string;
-    name: string;
-    phpVersions: PhpVersionOption[];
-    unixUsers: SelectOption[];
-    databases: DatabaseOption[];
-    databaseUsers: NumericSelectOption[];
-}
 
 interface Props {
     siteType: SiteTypeData;
     servers: ServerOption[];
     sourceControls: SourceControlOption[];
-    packageManagers: SelectOption[];
+    packageManagers: SelectOptionData[];
     wwwRedirectTypes: WwwRedirectTypeOption[];
 }
 
 const props = defineProps<Props>();
 
-const selectedServer = ref<string>(props.servers[0]?.id.toString() || '');
-const selectedPhpVersion = ref<string>('');
-const selectedUser = ref<string>('');
-const selectedWwwRedirect = ref<string>(
-    props.wwwRedirectTypes.find((t) => t.isDefault)?.value || 'from_www',
-);
-const allowWildcard = ref(false);
-const domainValue = ref('');
-const showDomainModal = ref(false);
-const installComposer = ref(true);
-const zeroDowntime = ref(false);
-const createDatabase = ref(false);
-const selectedDatabase = ref<string | undefined>(undefined);
-const selectedDatabaseUser = ref<string | undefined>(undefined);
-const databaseName = ref('');
-const databaseUser = ref('');
-const databasePassword = ref('');
-
-const selectedSourceControl = ref<string>('');
-const selectedRepository = ref<string>('');
-const selectedBranch = ref<string>('');
-const repositories = ref<Repository[]>([]);
-const branches = ref<string[]>([]);
-const loadingRepositories = ref(false);
-const loadingBranches = ref(false);
-const repositorySearchQuery = ref<string>('');
-const repositoryComboboxOpen = ref(false);
-
-const currentServer = computed(() => {
-    return props.servers.find((s) => s.id.toString() === selectedServer.value);
-});
-
-const availablePhpVersions = computed(() => {
-    return currentServer.value?.phpVersions || [];
-});
-
-const availableUnixUsers = computed(() => {
-    return currentServer.value?.unixUsers || [];
-});
-
-const availableDatabases = computed(() => {
-    return currentServer.value?.databases || [];
-});
-
-const selectedDatabaseObject = computed(() => {
-    if (!selectedDatabase.value) return null;
-    return (
-        availableDatabases.value.find(
-            (db) => db.value.toString() === selectedDatabase.value,
-        ) || null
-    );
-});
-
-const availableDatabaseUsers = computed(() => {
-    if (!selectedDatabaseObject.value) return [];
-    const allowedUserIds = selectedDatabaseObject.value.userIds;
-    return (currentServer.value?.databaseUsers || []).filter((dbu) =>
-        allowedUserIds.includes(dbu.value),
-    );
-});
-
-const defaultPhpVersion = computed(() => {
-    const defaultVersion = availablePhpVersions.value.find((v) => v.isDefault);
-    return defaultVersion?.value || availablePhpVersions.value[0]?.value || '';
-});
-
-const defaultUnixUser = computed(() => {
-    return availableUnixUsers.value[0]?.value || '';
-});
-
-const filteredRepositories = computed(() => {
-    if (!repositorySearchQuery.value) {
-        return repositories.value;
-    }
-    const query = repositorySearchQuery.value.toLowerCase();
-    return repositories.value.filter(
-        (repo) =>
-            repo.full_name.toLowerCase().includes(query) ||
-            repo.name.toLowerCase().includes(query),
-    );
-});
-
-const selectedRepositoryDisplay = computed(() => {
-    const repo = repositories.value.find(
-        (r) => r.full_name === selectedRepository.value,
-    );
-    return repo?.full_name || '';
-});
-
-// Update selected values when server changes
-watch(
+// Use the composable for form state management
+const {
+    // Server selection
     selectedServer,
-    () => {
-        selectedPhpVersion.value = defaultPhpVersion.value;
-        selectedUser.value = defaultUnixUser.value;
-        selectedDatabase.value = undefined;
-        selectedDatabaseUser.value = undefined;
-    },
-    { immediate: true },
-);
+    selectedPhpVersion,
+    selectedUser,
+    availablePhpVersions,
+    availableUnixUsers,
 
-// Reset database user when database changes
-watch(selectedDatabase, () => {
-    selectedDatabaseUser.value = undefined;
-});
+    // Domain configuration
+    selectedWwwRedirect,
+    allowWildcard,
+    domainValue,
+    showDomainModal,
+    selectedWwwRedirectLabel,
 
-// Load repositories when source control changes
-watch(selectedSourceControl, async (newValue) => {
-    selectedRepository.value = '';
-    selectedBranch.value = '';
-    repositories.value = [];
-    branches.value = [];
-    repositorySearchQuery.value = '';
+    // Site options
+    installComposer,
+    zeroDowntime,
 
-    if (!newValue) return;
+    // Database
+    createDatabase,
+    selectedDatabase,
+    selectedDatabaseUser,
+    databaseName,
+    databaseUser,
+    databasePassword,
+    availableDatabases,
+    availableDatabaseUsers,
+    generatePassword,
 
-    loadingRepositories.value = true;
-    try {
-        const response = await axios.get(
-            fetchRepositories.url({ sourceControl: parseInt(newValue) }),
-        );
-        repositories.value = response.data;
-    } catch (error) {
-        console.error('Failed to load repositories:', error);
-    } finally {
-        loadingRepositories.value = false;
-    }
-});
-
-// Load branches when repository changes
-watch(selectedRepository, async (newValue) => {
-    selectedBranch.value = '';
-    branches.value = [];
-
-    if (!newValue || !selectedSourceControl.value) return;
-
-    loadingBranches.value = true;
-    try {
-        const response = await axios.get(
-            fetchBranches.url({
-                sourceControl: parseInt(selectedSourceControl.value),
-                repository: newValue,
-            }),
-        );
-        branches.value = response.data;
-
-        // Auto-select default branch if available
-        const selectedRepo = repositories.value.find(
-            (r) => r.full_name === newValue,
-        );
-        if (
-            selectedRepo &&
-            branches.value.includes(selectedRepo.default_branch)
-        ) {
-            selectedBranch.value = selectedRepo.default_branch;
-        } else if (branches.value.length > 0) {
-            selectedBranch.value = branches.value[0];
-        }
-    } catch (error) {
-        console.error('Failed to load branches:', error);
-    } finally {
-        loadingBranches.value = false;
-    }
+    // Source control
+    selectedSourceControl,
+    selectedRepository,
+    selectedBranch,
+    branches,
+    loadingRepositories,
+    loadingBranches,
+    repositorySearchQuery,
+    repositoryComboboxOpen,
+    filteredRepositories,
+    selectedRepositoryDisplay,
+} = useSiteCreationForm({
+    servers: toRef(props, 'servers'),
+    wwwRedirectTypes: toRef(props, 'wwwRedirectTypes'),
 });
 
 // Use server-provided defaults from SiteType enum
 const defaultWebDirectory = computed(() => props.siteType.webDirectory);
 const defaultBuildCommand = computed(() => props.siteType.buildCommand || '');
 const isPhpType = computed(() => props.siteType.isPhpBased);
-
-const selectedWwwRedirectLabel = computed(() => {
-    const type = props.wwwRedirectTypes.find(
-        (t) => t.value === selectedWwwRedirect.value,
-    );
-    if (!type) return '';
-
-    if (type.value === 'from_www') return 'Will redirect from www.';
-    if (type.value === 'to_www') return 'Will redirect to www.';
-    return 'No redirects.';
-});
-
-function generatePassword(): void {
-    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let password = '';
-    for (let i = 0; i < 20; i++) {
-        password += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    databasePassword.value = password;
-}
 
 function navigateToSites() {
     router.visit(index.url());
@@ -855,6 +661,7 @@ function navigateToSites() {
                                         v-model="selectedDatabaseUser"
                                         :disabled="
                                             !selectedDatabase ||
+                                            !availableDatabaseUsers ||
                                             availableDatabaseUsers.length === 0
                                         "
                                     >
@@ -863,8 +670,9 @@ function navigateToSites() {
                                                 :placeholder="
                                                     !selectedDatabase
                                                         ? 'Select database first'
-                                                        : availableDatabaseUsers.length ===
-                                                            0
+                                                        : !availableDatabaseUsers ||
+                                                            availableDatabaseUsers.length ===
+                                                                0
                                                           ? 'No users available'
                                                           : 'Select a user'
                                                 "
