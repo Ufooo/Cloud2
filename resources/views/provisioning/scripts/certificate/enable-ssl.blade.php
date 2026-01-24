@@ -51,12 +51,20 @@ MIN_VERSION=$(echo "1.26.0" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4)
 
 echo "Updating Nginx configuration..."
 
-@foreach($domains as $domain)
+@php
+    // Filter out wildcard entries (*.domain.hu) - only process base domains
+    $baseDomains = collect($domains)->reject(fn($d) => str_starts_with($d, '*.'))->values()->all();
+@endphp
+@foreach($baseDomains as $domain)
+@php
+    // Check if this domain has a wildcard counterpart in the certificate
+    $hasWildcard = in_array('*.' . $domain, $domains);
+@endphp
 NGINX_CONF="/etc/nginx/sites-available/{{ $domain }}"
 DOMAIN_CONF_DIR="$SITE_CONF_DIR/{{ $domain }}"
 
 if [ -f "$NGINX_CONF" ]; then
-    echo "Enabling SSL for {{ $domain }}..."
+    echo "Enabling SSL for {{ $domain }}{{ $hasWildcard ? ' (with wildcard)' : '' }}..."
 
     # Update listen directives: remove port 80, add port 443 with SSL
     if [ $VERSION_NUM -ge $MIN_VERSION ]; then
@@ -85,7 +93,11 @@ server {
     listen 80;
     listen [::]:80;
     server_tokens off;
+@if($hasWildcard)
+    server_name .{{ $domain }};
+@else
     server_name {{ $domain }};
+@endif
 
     location / {
         return 301 https://$host$request_uri;
