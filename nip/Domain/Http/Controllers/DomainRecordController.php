@@ -59,12 +59,14 @@ class DomainRecordController extends Controller
             ->values()
             ->all();
 
+        // Store in request for DomainRecordResource to access
+        request()->attributes->set('allCertificateDomains', $allCertificateDomains);
+
         $canUpdate = request()->user()?->can('update', $site->server);
 
         return Inertia::render('sites/domains/Index', [
             'site' => SiteData::fromModel($site->load('server')),
-            'domainRecords' => DomainRecordResource::collection($domainRecords)
-                ->additional(['allCertificateDomains' => $allCertificateDomains]),
+            'domainRecords' => DomainRecordResource::collection($domainRecords),
             'certificates' => \Nip\Domain\Http\Resources\CertificateResource::collection($certificates),
             'wwwRedirectTypes' => WwwRedirectType::options(),
             'certificateTypes' => \Nip\Domain\Enums\CertificateType::options(),
