@@ -13,7 +13,7 @@ withDefaults(
 </script>
 
 <template>
-    <header v-if="breadcrumbs && breadcrumbs.length > 0" class="mt-6 mx-6">
+    <header v-if="breadcrumbs && breadcrumbs.length > 0" class="mx-6 mt-6">
         <Breadcrumbs :breadcrumbs="breadcrumbs" />
     </header>
 </template>

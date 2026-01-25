@@ -6,6 +6,7 @@ import { index as sitesIndex } from '@/actions/Nip/Site/Http/Controllers/SiteCon
 import { index as sourceControlIndex } from '@/actions/Nip/SourceControl/Http/Controllers/SourceControlController';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
+import NotificationsPanel from '@/components/NotificationsPanel.vue';
 import {
     Sidebar,
     SidebarContent,
@@ -18,7 +19,6 @@ import {
 import { dashboard } from '@/routes';
 import type { AppPageProps, NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
 import {
     Bug,
     Database,
@@ -29,8 +29,8 @@ import {
     Server,
     Settings,
 } from 'lucide-vue-next';
+import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
-import NotificationsPanel from '@/components/NotificationsPanel.vue';
 
 const page = usePage<AppPageProps>();
 const counts = computed(() => page.props.counts);
@@ -94,7 +94,11 @@ const mainNavItems = computed<NavItem[]>(() => [
         </SidebarHeader>
 
         <SidebarContent>
-            <NavMain :items="mainNavItems" label="Platform" :label-icon="Layers" />
+            <NavMain
+                :items="mainNavItems"
+                label="Platform"
+                :label-icon="Layers"
+            />
         </SidebarContent>
 
         <SidebarFooter>

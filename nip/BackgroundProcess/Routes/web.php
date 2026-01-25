@@ -24,6 +24,9 @@ Route::middleware(['web', 'auth'])->group(function () {
             Route::post('/{process}/restart', [SiteBackgroundProcessController::class, 'restart'])->name('sites.background-processes.restart');
             Route::post('/{process}/start', [SiteBackgroundProcessController::class, 'start'])->name('sites.background-processes.start');
             Route::post('/{process}/stop', [SiteBackgroundProcessController::class, 'stop'])->name('sites.background-processes.stop');
+            Route::get('/{process}/logs', [SiteBackgroundProcessController::class, 'viewLogs'])->name('sites.background-processes.logs');
+            Route::delete('/{process}/logs', [SiteBackgroundProcessController::class, 'clearLogs'])->name('sites.background-processes.logs.clear');
+            Route::get('/{process}/status', [SiteBackgroundProcessController::class, 'viewStatus'])->name('sites.background-processes.status');
         });
     });
 });

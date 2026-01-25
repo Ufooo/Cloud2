@@ -10,8 +10,6 @@ import AppLogoIcon from '@/components/AppLogoIcon.vue';
     </div>
     <div class="flex flex-col">
         <span class="font-semibold text-gray-900">NETipar Cloud</span>
-        <span class="text-xs text-gray-500">
-            Server Management
-        </span>
+        <span class="text-xs text-gray-500"> Server Management </span>
     </div>
 </template>

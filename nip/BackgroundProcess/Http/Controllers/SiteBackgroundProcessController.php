@@ -3,6 +3,7 @@
 namespace Nip\BackgroundProcess\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -18,6 +19,7 @@ use Nip\BackgroundProcess\Jobs\StartBackgroundProcessJob;
 use Nip\BackgroundProcess\Jobs\StopBackgroundProcessJob;
 use Nip\BackgroundProcess\Jobs\SyncBackgroundProcessJob;
 use Nip\BackgroundProcess\Models\BackgroundProcess;
+use Nip\Server\Services\SSH\SSHService;
 use Nip\Site\Data\SiteData;
 use Nip\Site\Models\Site;
 
@@ -38,11 +40,23 @@ class SiteBackgroundProcessController extends Controller
             ->pluck('username')
             ->toArray();
 
+        $phpVersions = $site->server->phpVersions()
+            ->where('status', \Nip\Php\Enums\PhpVersionStatus::Installed)
+            ->orderBy('version', 'desc')
+            ->get()
+            ->map(fn ($v) => [
+                'version' => $v->version,
+                'binary' => "php{$v->version}",
+            ])
+            ->values()
+            ->all();
+
         return Inertia::render('sites/BackgroundProcesses', [
             'site' => SiteData::fromModel($site),
             'processes' => BackgroundProcessResource::collection($processes),
             'users' => $users,
             'stopSignals' => StopSignal::options(),
+            'phpVersions' => $phpVersions,
         ]);
     }
 
@@ -136,5 +150,78 @@ class SiteBackgroundProcessController extends Controller
 
         return redirect()
             ->route('sites.background-processes', $site)->with('success', 'Background process stop initiated.');
+    }
+
+    public function viewLogs(Site $site, BackgroundProcess $process, SSHService $ssh): JsonResponse
+    {
+        Gate::authorize('view', $site->server);
+
+        abort_unless($process->site_id === $site->id, 403);
+
+        $logPath = "/home/{$process->user}/.forge/{$process->name}.log";
+
+        try {
+            $ssh->connect($site->server);
+            $logContent = $ssh->getFileContent($logPath) ?? '';
+        } catch (\Exception $e) {
+            return response()->json([
+                'content' => '',
+                'error' => 'Failed to read log file: '.$e->getMessage(),
+            ], 500);
+        } finally {
+            $ssh->disconnect();
+        }
+
+        return response()->json([
+            'content' => $logContent,
+        ]);
+    }
+
+    public function viewStatus(Site $site, BackgroundProcess $process, SSHService $ssh): JsonResponse
+    {
+        Gate::authorize('view', $site->server);
+
+        abort_unless($process->site_id === $site->id, 403);
+
+        try {
+            $ssh->connect($site->server);
+            $result = $ssh->exec("supervisorctl status {$process->name}");
+            $statusOutput = $result->output;
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => '',
+                'error' => 'Failed to get process status: '.$e->getMessage(),
+            ], 500);
+        } finally {
+            $ssh->disconnect();
+        }
+
+        return response()->json([
+            'status' => $statusOutput,
+        ]);
+    }
+
+    public function clearLogs(Site $site, BackgroundProcess $process, SSHService $ssh): RedirectResponse
+    {
+        Gate::authorize('update', $site->server);
+
+        abort_unless($process->site_id === $site->id, 403);
+
+        $logPath = "/home/{$process->user}/.forge/{$process->name}.log";
+
+        try {
+            $ssh->connect($site->server);
+            $ssh->exec("truncate -s 0 {$logPath}");
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('sites.background-processes', $site)
+                ->with('error', 'Failed to clear log file: '.$e->getMessage());
+        } finally {
+            $ssh->disconnect();
+        }
+
+        return redirect()
+            ->route('sites.background-processes', $site)
+            ->with('success', 'Background process logs cleared successfully.');
     }
 }

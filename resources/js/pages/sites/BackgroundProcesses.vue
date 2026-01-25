@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import {
+    clearLogs,
     destroy,
     restart,
     start,
     stop,
     store,
     update,
+    viewLogs,
+    viewStatus,
 } from '@/actions/Nip/BackgroundProcess/Http/Controllers/SiteBackgroundProcessController';
+import axios from 'axios';
 import InputError from '@/components/InputError.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -41,6 +45,13 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import {
+    Tabs,
+    TabsContent,
+    TabsList,
+    TabsTrigger,
+} from '@/components/ui/tabs';
 import { useConfirmation } from '@/composables/useConfirmation';
 import { useResourceStatusUpdates } from '@/composables/useResourceStatusUpdates';
 import SiteLayout from '@/layouts/SiteLayout.vue';
@@ -49,6 +60,7 @@ import type { PaginatedResponse } from '@/types/pagination';
 import { Form, Head, router } from '@inertiajs/vue3';
 import {
     Activity,
+    FileText,
     MoreHorizontal,
     Pause,
     Pencil,
@@ -98,11 +110,17 @@ interface BackgroundProcess {
     };
 }
 
+interface PhpVersion {
+    version: string;
+    binary: string;
+}
+
 interface Props {
     site: Site;
     processes: PaginatedResponse<BackgroundProcess>;
     users: string[];
     stopSignals: StopSignalOption[];
+    phpVersions: PhpVersion[];
 }
 
 const props = defineProps<Props>();
@@ -121,9 +139,68 @@ const showAddDialog = ref(false);
 const showEditDialog = ref(false);
 const editingProcess = ref<BackgroundProcess | null>(null);
 const showAdvanced = ref(false);
+const activeTab = ref<'queue' | 'custom'>('queue');
+
+// Logs modal
+const showLogsDialog = ref(false);
+const logsProcess = ref<BackgroundProcess | null>(null);
+const logsContent = ref<string>('');
+const logsLoading = ref(false);
+
+// Status modal
+const showStatusDialog = ref(false);
+const statusProcess = ref<BackgroundProcess | null>(null);
+const statusContent = ref<string>('');
+const statusLoading = ref(false);
+
+// Get default PHP binary from site's configured PHP version
+// site.phpVersion is already in format like "php84", phpVersions[].binary is like "php8.4"
+const getDefaultPhpBinary = () => {
+    if (props.site.phpVersion) {
+        // Convert "php84" to "php8.4" format to match phpVersions[].binary
+        const version = props.site.phpVersion.replace('php', '');
+        const formattedVersion = version.length === 2
+            ? `${version[0]}.${version[1]}`
+            : version;
+        return `php${formattedVersion}`;
+    }
+    return props.phpVersions[0]?.binary || 'php';
+};
+
+// Queue Worker form
+const queueForm = ref({
+    phpVersion: getDefaultPhpBinary(),
+    connection: 'redis',
+    processes: 1,
+    queue: '',
+    backoff: 0,
+    sleep: 3,
+    rest: 0,
+    timeout: 60,
+    tries: 1,
+    memory: 128,
+    env: '',
+    force: false,
+});
 
 function openAddDialog() {
     showAdvanced.value = false;
+    activeTab.value = 'queue';
+    // Reset queue form
+    queueForm.value = {
+        phpVersion: getDefaultPhpBinary(),
+        connection: 'redis',
+        processes: 1,
+        queue: '',
+        backoff: 0,
+        sleep: 3,
+        rest: 0,
+        timeout: 60,
+        tries: 1,
+        memory: 128,
+        env: '',
+        force: false,
+    };
     showAddDialog.value = true;
 }
 
@@ -131,6 +208,64 @@ function openEditDialog(process: BackgroundProcess) {
     editingProcess.value = process;
     showAdvanced.value = false;
     showEditDialog.value = true;
+}
+
+async function openLogsDialog(process: BackgroundProcess) {
+    logsProcess.value = process;
+    logsContent.value = '';
+    logsLoading.value = true;
+    showLogsDialog.value = true;
+
+    try {
+        const response = await axios.get(
+            viewLogs.url({ site: props.site, process: process.id }),
+        );
+        logsContent.value = response.data.content || '';
+    } catch {
+        logsContent.value = 'Failed to fetch logs.';
+    } finally {
+        logsLoading.value = false;
+    }
+}
+
+async function openStatusDialog(process: BackgroundProcess) {
+    statusProcess.value = process;
+    statusContent.value = '';
+    statusLoading.value = true;
+    showStatusDialog.value = true;
+
+    try {
+        const response = await axios.get(
+            viewStatus.url({ site: props.site, process: process.id }),
+        );
+        statusContent.value = response.data.status || '';
+    } catch {
+        statusContent.value = 'Failed to fetch status.';
+    } finally {
+        statusLoading.value = false;
+    }
+}
+
+async function handleClearLogs() {
+    const confirmed = await confirmButton({
+        title: 'Clear Logs',
+        description: `Are you sure you want to clear logs for "${logsProcess.value?.name}"?`,
+        confirmText: 'Clear',
+    });
+
+    if (!confirmed || !logsProcess.value) {
+        return;
+    }
+
+    router.delete(
+        clearLogs.url({ site: props.site, process: logsProcess.value.id }),
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                logsContent.value = '';
+            },
+        },
+    );
 }
 
 function onSuccess() {
@@ -192,6 +327,33 @@ function getStatusBadge(process: BackgroundProcess): {
 function pluralize(count: number, singular: string, plural: string): string {
     return count === 1 ? `${count} ${singular}` : `${count} ${plural}`;
 }
+
+const queueCommandPreview = computed(() => {
+    const parts = [queueForm.value.phpVersion, 'artisan queue:work'];
+    if (queueForm.value.connection) {
+        parts.push(queueForm.value.connection);
+    }
+    if (queueForm.value.queue) {
+        parts.push(`--queue="${queueForm.value.queue}"`);
+    }
+    if (queueForm.value.backoff > 0) {
+        parts.push(`--backoff=${queueForm.value.backoff}`);
+    }
+    parts.push(`--sleep=${queueForm.value.sleep}`);
+    if (queueForm.value.rest > 0) {
+        parts.push(`--rest=${queueForm.value.rest}`);
+    }
+    parts.push(`--timeout=${queueForm.value.timeout}`);
+    parts.push(`--tries=${queueForm.value.tries}`);
+    parts.push(`--memory=${queueForm.value.memory}`);
+    if (queueForm.value.env) {
+        parts.push(`--env=${queueForm.value.env}`);
+    }
+    if (queueForm.value.force) {
+        parts.push('--force');
+    }
+    return parts.join(' ');
+});
 </script>
 
 <template>
@@ -297,6 +459,19 @@ function pluralize(count: number, singular: string, plural: string): string {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuItem
+                                            @click="openLogsDialog(process)"
+                                        >
+                                            <FileText class="mr-2 size-4" />
+                                            View logs
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            @click="openStatusDialog(process)"
+                                        >
+                                            <Activity class="mr-2 size-4" />
+                                            View status
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
                                             v-if="process.can.restart"
                                             @click="restartProcess(process)"
                                         >
@@ -351,9 +526,9 @@ function pluralize(count: number, singular: string, plural: string): string {
             </Card>
         </div>
 
-        <!-- Add Process Dialog -->
+        <!-- Add Process Dialog with Tabs -->
         <Dialog v-model:open="showAddDialog">
-            <DialogContent class="max-w-lg">
+            <DialogContent class="sm:max-w-lg max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>New background process</DialogTitle>
                     <DialogDescription>
@@ -361,212 +536,424 @@ function pluralize(count: number, singular: string, plural: string): string {
                     </DialogDescription>
                 </DialogHeader>
 
-                <Form
-                    v-bind="store.form(site)"
-                    class="space-y-4"
-                    :on-success="onSuccess"
-                    reset-on-success
-                    v-slot="{ errors, processing }"
-                >
-                    <div class="space-y-2">
-                        <Label for="name">Name</Label>
-                        <Input
-                            id="name"
-                            name="name"
-                            placeholder="e.g., Queue Worker"
-                        />
-                        <p class="text-xs text-muted-foreground">
-                            Add a custom display name for the background
-                            process.
-                        </p>
-                        <InputError :message="errors.name" />
-                    </div>
+                <Tabs v-model="activeTab" class="w-full">
+                    <TabsList class="grid w-full grid-cols-2">
+                        <TabsTrigger value="queue">Queue Worker</TabsTrigger>
+                        <TabsTrigger value="custom">Custom</TabsTrigger>
+                    </TabsList>
 
-                    <div class="space-y-2">
-                        <Label for="command">Command</Label>
-                        <Input
-                            id="command"
-                            name="command"
-                            class="font-mono text-sm"
-                            placeholder="e.g., php artisan queue:work"
-                        />
-                        <p class="text-xs text-muted-foreground">
-                            The command that should run for this background
-                            process.
-                        </p>
-                        <InputError :message="errors.command" />
-                    </div>
-
-                    <div class="space-y-2">
-                        <Label for="directory">Working Directory</Label>
-                        <Input
-                            id="directory"
-                            name="directory"
-                            :default-value="`/home/${users[0] || 'netipar'}`"
-                            placeholder="/home/netipar/app"
-                        />
-                        <p class="text-xs text-muted-foreground">
-                            The directory where the background process should be
-                            started.
-                        </p>
-                        <InputError :message="errors.directory" />
-                    </div>
-
-                    <div class="space-y-2">
-                        <Label for="user">Unix user</Label>
-                        <Select
-                            name="user"
-                            :default-value="users[0] || 'netipar'"
+                    <!-- Queue Worker Tab -->
+                    <TabsContent value="queue" class="mt-4">
+                        <Form
+                            v-bind="store.form(site)"
+                            class="space-y-3"
+                            :on-success="onSuccess"
+                            reset-on-success
+                            v-slot="{ processing }"
                         >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a unix user" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem
-                                    v-for="user in users"
-                                    :key="user"
-                                    :value="user"
-                                >
-                                    {{ user }}
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <InputError :message="errors.user" />
-                    </div>
-
-                    <!-- Advanced Settings -->
-                    <div class="rounded-lg border bg-muted/30 p-4">
-                        <div
-                            class="flex w-full items-center justify-between text-sm font-medium"
-                        >
-                            <span>Advanced settings</span>
-                            <button
-                                type="button"
-                                class="text-primary hover:underline"
-                                @click="showAdvanced = !showAdvanced"
-                            >
-                                {{ showAdvanced ? 'Hide' : 'Edit' }}
-                            </button>
-                        </div>
-
-                        <!-- Hidden defaults when advanced is collapsed -->
-                        <template v-if="!showAdvanced">
-                            <input type="hidden" name="processes" value="1" />
-                            <input type="hidden" name="startsecs" value="1" />
+                            <!-- Hidden command field with generated queue command -->
                             <input
                                 type="hidden"
-                                name="stopwaitsecs"
-                                value="15"
+                                name="command"
+                                :value="queueCommandPreview"
                             />
-                            <input
-                                type="hidden"
-                                name="stopsignal"
-                                value="TERM"
-                            />
-                        </template>
 
-                        <div v-if="showAdvanced" class="mt-4 space-y-4">
-                            <div class="space-y-2">
-                                <Label for="processes">Processes</Label>
-                                <Input
-                                    id="processes"
-                                    name="processes"
-                                    type="number"
-                                    min="1"
-                                    max="100"
-                                    default-value="1"
-                                />
-                                <InputError :message="errors.processes" />
-                            </div>
-
-                            <div class="space-y-2">
-                                <Label for="startsecs">Start (seconds)</Label>
-                                <Input
-                                    id="startsecs"
-                                    name="startsecs"
-                                    type="number"
-                                    min="0"
-                                    default-value="1"
-                                />
-                                <InputError :message="errors.startsecs" />
-                            </div>
-
-                            <div class="space-y-2">
-                                <Label for="stopwaitsecs"
-                                    >Stop wait (seconds)</Label
-                                >
-                                <Input
-                                    id="stopwaitsecs"
-                                    name="stopwaitsecs"
-                                    type="number"
-                                    min="0"
-                                    default-value="15"
-                                />
-                                <InputError :message="errors.stopwaitsecs" />
-                            </div>
-
-                            <div class="space-y-2">
-                                <Label for="stopsignal">Stop signal</Label>
-                                <Select name="stopsignal" default-value="TERM">
-                                    <SelectTrigger>
-                                        <SelectValue
-                                            placeholder="Select a signal"
-                                        />
+                            <!-- Forge-style horizontal rows -->
+                            <div class="flex items-center gap-4">
+                                <Label for="php-version" class="w-28 shrink-0 text-muted-foreground">php</Label>
+                                <Select v-model="queueForm.phpVersion" name="php_version">
+                                    <SelectTrigger class="flex-1">
+                                        <SelectValue placeholder="Select PHP version" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem
-                                            v-for="signal in stopSignals"
-                                            :key="signal.value"
-                                            :value="signal.value"
+                                            v-for="phpVer in phpVersions"
+                                            :key="phpVer.version"
+                                            :value="phpVer.binary"
                                         >
-                                            {{ signal.label }}
+                                            PHP {{ phpVer.version }}
                                         </SelectItem>
                                     </SelectContent>
                                 </Select>
-                                <InputError :message="errors.stopsignal" />
                             </div>
-                        </div>
 
-                        <div
-                            v-if="!showAdvanced"
-                            class="mt-3 space-y-1 text-xs text-muted-foreground"
-                        >
-                            <div class="flex justify-between">
-                                <span>Processes:</span>
-                                <span>1</span>
+                            <div class="flex items-center gap-4">
+                                <Label for="connection" class="w-28 shrink-0 text-muted-foreground">connection</Label>
+                                <Input
+                                    id="connection"
+                                    v-model="queueForm.connection"
+                                    placeholder=""
+                                    class="flex-1"
+                                />
                             </div>
-                            <div class="flex justify-between">
-                                <span>Start:</span>
-                                <span>1 second</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span>Stop:</span>
-                                <span>15 seconds</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span>Stop signal:</span>
-                                <span>SIGTERM</span>
-                            </div>
-                        </div>
-                    </div>
 
-                    <DialogFooter>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            @click="showAddDialog = false"
+                            <div class="flex items-center gap-4">
+                                <Label for="processes-count" class="w-28 shrink-0 text-muted-foreground">processes</Label>
+                                <Input
+                                    id="processes-count"
+                                    v-model.number="queueForm.processes"
+                                    type="number"
+                                    min="1"
+                                    max="100"
+                                    class="flex-1"
+                                />
+                            </div>
+
+                            <div class="flex items-center gap-4">
+                                <Label for="queue-name-field" class="w-28 shrink-0 text-muted-foreground">--queue</Label>
+                                <Input
+                                    id="queue-name-field"
+                                    v-model="queueForm.queue"
+                                    placeholder=""
+                                    class="flex-1"
+                                />
+                            </div>
+
+                            <div class="flex items-center gap-4">
+                                <Label for="backoff" class="w-28 shrink-0 text-muted-foreground">--backoff</Label>
+                                <div class="flex flex-1 items-center gap-2">
+                                    <Input
+                                        id="backoff"
+                                        v-model.number="queueForm.backoff"
+                                        type="number"
+                                        min="0"
+                                        class="flex-1"
+                                    />
+                                    <span class="text-sm text-muted-foreground">seconds</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-4">
+                                <Label for="sleep" class="w-28 shrink-0 text-muted-foreground">--sleep</Label>
+                                <div class="flex flex-1 items-center gap-2">
+                                    <Input
+                                        id="sleep"
+                                        v-model.number="queueForm.sleep"
+                                        type="number"
+                                        min="0"
+                                        class="flex-1"
+                                    />
+                                    <span class="text-sm text-muted-foreground">seconds</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-4">
+                                <Label for="rest" class="w-28 shrink-0 text-muted-foreground">--rest</Label>
+                                <div class="flex flex-1 items-center gap-2">
+                                    <Input
+                                        id="rest"
+                                        v-model.number="queueForm.rest"
+                                        type="number"
+                                        min="0"
+                                        class="flex-1"
+                                    />
+                                    <span class="text-sm text-muted-foreground">seconds</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-4">
+                                <Label for="timeout" class="w-28 shrink-0 text-muted-foreground">--timeout</Label>
+                                <div class="flex flex-1 items-center gap-2">
+                                    <Input
+                                        id="timeout"
+                                        v-model.number="queueForm.timeout"
+                                        type="number"
+                                        min="0"
+                                        class="flex-1"
+                                    />
+                                    <span class="text-sm text-muted-foreground">seconds</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-4">
+                                <Label for="tries" class="w-28 shrink-0 text-muted-foreground">--tries</Label>
+                                <div class="flex flex-1 items-center gap-2">
+                                    <Input
+                                        id="tries"
+                                        v-model.number="queueForm.tries"
+                                        type="number"
+                                        min="1"
+                                        class="flex-1"
+                                    />
+                                    <span class="text-sm text-muted-foreground">tries</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-4">
+                                <Label for="memory" class="w-28 shrink-0 text-muted-foreground">--memory</Label>
+                                <div class="flex flex-1 items-center gap-2">
+                                    <Input
+                                        id="memory"
+                                        v-model.number="queueForm.memory"
+                                        type="number"
+                                        min="0"
+                                        class="flex-1"
+                                    />
+                                    <span class="text-sm text-muted-foreground">MB</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-4">
+                                <Label for="env" class="w-28 shrink-0 text-muted-foreground">--env</Label>
+                                <Input
+                                    id="env"
+                                    v-model="queueForm.env"
+                                    placeholder=""
+                                    class="flex-1"
+                                />
+                            </div>
+
+                            <div class="flex items-center gap-4">
+                                <Label for="force" class="w-28 shrink-0 text-muted-foreground">--force</Label>
+                                <Switch
+                                    id="force"
+                                    v-model="queueForm.force"
+                                />
+                            </div>
+
+                            <!-- Command Preview -->
+                            <div class="mt-4 rounded-lg border bg-muted/30 p-3">
+                                <code class="font-mono text-xs text-primary">{{ queueCommandPreview }}</code>
+                            </div>
+
+                            <!-- Hidden fields -->
+                            <input type="hidden" name="name" value="Queue Worker" />
+                            <input type="hidden" name="directory" :value="`/home/${users[0] || 'netipar'}`" />
+                            <input type="hidden" name="user" :value="users[0] || 'netipar'" />
+                            <input type="hidden" name="processes" :value="queueForm.processes" />
+                            <input type="hidden" name="startsecs" value="1" />
+                            <input type="hidden" name="stopwaitsecs" value="15" />
+                            <input type="hidden" name="stopsignal" value="TERM" />
+
+                            <DialogFooter class="mt-4">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    @click="showAddDialog = false"
+                                >
+                                    Cancel
+                                </Button>
+                                <Button type="submit" :disabled="processing">
+                                    {{
+                                        processing
+                                            ? 'Creating...'
+                                            : 'Create queue worker'
+                                    }}
+                                </Button>
+                            </DialogFooter>
+                        </Form>
+                    </TabsContent>
+
+                    <!-- Custom Tab -->
+                    <TabsContent value="custom" class="space-y-4 mt-4">
+                        <Form
+                            v-bind="store.form(site)"
+                            class="space-y-4"
+                            :on-success="onSuccess"
+                            reset-on-success
+                            v-slot="{ errors, processing }"
                         >
-                            Cancel
-                        </Button>
-                        <Button type="submit" :disabled="processing">
-                            {{
-                                processing
-                                    ? 'Creating...'
-                                    : 'Create background process'
-                            }}
-                        </Button>
-                    </DialogFooter>
-                </Form>
+                            <div class="space-y-2">
+                                <Label for="name">Name</Label>
+                                <Input
+                                    id="name"
+                                    name="name"
+                                    placeholder="e.g., Queue Worker"
+                                />
+                                <p class="text-xs text-muted-foreground">
+                                    Add a custom display name for the background
+                                    process.
+                                </p>
+                                <InputError :message="errors.name" />
+                            </div>
+
+                            <div class="space-y-2">
+                                <Label for="command">Command</Label>
+                                <Input
+                                    id="command"
+                                    name="command"
+                                    class="font-mono text-sm"
+                                    placeholder="e.g., php artisan queue:work"
+                                />
+                                <p class="text-xs text-muted-foreground">
+                                    The command that should run for this background
+                                    process.
+                                </p>
+                                <InputError :message="errors.command" />
+                            </div>
+
+                            <div class="space-y-2">
+                                <Label for="directory">Working Directory</Label>
+                                <Input
+                                    id="directory"
+                                    name="directory"
+                                    :default-value="`/home/${users[0] || 'netipar'}`"
+                                    placeholder="/home/netipar/app"
+                                />
+                                <p class="text-xs text-muted-foreground">
+                                    The directory where the background process should be
+                                    started.
+                                </p>
+                                <InputError :message="errors.directory" />
+                            </div>
+
+                            <div class="space-y-2">
+                                <Label for="user">Unix user</Label>
+                                <Select
+                                    name="user"
+                                    :default-value="users[0] || 'netipar'"
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a unix user" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem
+                                            v-for="user in users"
+                                            :key="user"
+                                            :value="user"
+                                        >
+                                            {{ user }}
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <InputError :message="errors.user" />
+                            </div>
+
+                            <!-- Advanced Settings -->
+                            <div class="rounded-lg border bg-muted/30 p-4">
+                                <div
+                                    class="flex w-full items-center justify-between text-sm font-medium"
+                                >
+                                    <span>Advanced settings</span>
+                                    <button
+                                        type="button"
+                                        class="text-primary hover:underline"
+                                        @click="showAdvanced = !showAdvanced"
+                                    >
+                                        {{ showAdvanced ? 'Hide' : 'Edit' }}
+                                    </button>
+                                </div>
+
+                                <!-- Hidden defaults when advanced is collapsed -->
+                                <template v-if="!showAdvanced">
+                                    <input type="hidden" name="processes" value="1" />
+                                    <input type="hidden" name="startsecs" value="1" />
+                                    <input
+                                        type="hidden"
+                                        name="stopwaitsecs"
+                                        value="15"
+                                    />
+                                    <input
+                                        type="hidden"
+                                        name="stopsignal"
+                                        value="TERM"
+                                    />
+                                </template>
+
+                                <div v-if="showAdvanced" class="mt-4 space-y-4">
+                                    <div class="space-y-2">
+                                        <Label for="processes">Processes</Label>
+                                        <Input
+                                            id="processes"
+                                            name="processes"
+                                            type="number"
+                                            min="1"
+                                            max="100"
+                                            default-value="1"
+                                        />
+                                        <InputError :message="errors.processes" />
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <Label for="startsecs">Start (seconds)</Label>
+                                        <Input
+                                            id="startsecs"
+                                            name="startsecs"
+                                            type="number"
+                                            min="0"
+                                            default-value="1"
+                                        />
+                                        <InputError :message="errors.startsecs" />
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <Label for="stopwaitsecs"
+                                            >Stop wait (seconds)</Label
+                                        >
+                                        <Input
+                                            id="stopwaitsecs"
+                                            name="stopwaitsecs"
+                                            type="number"
+                                            min="0"
+                                            default-value="15"
+                                        />
+                                        <InputError :message="errors.stopwaitsecs" />
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <Label for="stopsignal">Stop signal</Label>
+                                        <Select name="stopsignal" default-value="TERM">
+                                            <SelectTrigger>
+                                                <SelectValue
+                                                    placeholder="Select a signal"
+                                                />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem
+                                                    v-for="signal in stopSignals"
+                                                    :key="signal.value"
+                                                    :value="signal.value"
+                                                >
+                                                    {{ signal.label }}
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <InputError :message="errors.stopsignal" />
+                                    </div>
+                                </div>
+
+                                <div
+                                    v-if="!showAdvanced"
+                                    class="mt-3 space-y-1 text-xs text-muted-foreground"
+                                >
+                                    <div class="flex justify-between">
+                                        <span>Processes:</span>
+                                        <span>1</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Start:</span>
+                                        <span>1 second</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Stop:</span>
+                                        <span>15 seconds</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Stop signal:</span>
+                                        <span>SIGTERM</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <DialogFooter>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    @click="showAddDialog = false"
+                                >
+                                    Cancel
+                                </Button>
+                                <Button type="submit" :disabled="processing">
+                                    {{
+                                        processing
+                                            ? 'Creating...'
+                                            : 'Create background process'
+                                    }}
+                                </Button>
+                            </DialogFooter>
+                        </Form>
+                    </TabsContent>
+                </Tabs>
             </DialogContent>
         </Dialog>
 
@@ -720,6 +1107,81 @@ function pluralize(count: number, singular: string, plural: string): string {
                         </Button>
                     </DialogFooter>
                 </Form>
+            </DialogContent>
+        </Dialog>
+
+        <!-- View Logs Dialog -->
+        <Dialog v-model:open="showLogsDialog">
+            <DialogContent v-if="logsProcess" class="max-w-4xl max-h-[80vh]">
+                <DialogHeader>
+                    <DialogTitle>View {{ logsProcess.name }} logs</DialogTitle>
+                    <DialogDescription>
+                        Background process log output
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div class="space-y-4">
+                    <div class="rounded-lg border bg-muted/30 p-4 max-h-96 overflow-y-auto">
+                        <div v-if="logsLoading" class="text-center text-muted-foreground">
+                            Loading logs...
+                        </div>
+                        <pre
+                            v-else-if="logsContent"
+                            class="font-mono text-xs whitespace-pre-wrap break-words"
+                        >{{ logsContent }}</pre>
+                        <div v-else class="text-center text-muted-foreground">
+                            No logs found.
+                        </div>
+                    </div>
+                </div>
+
+                <DialogFooter class="flex justify-between sm:justify-between">
+                    <Button
+                        variant="destructive"
+                        @click="handleClearLogs"
+                        :disabled="logsLoading || !logsContent"
+                    >
+                        Delete contents
+                    </Button>
+                    <div class="flex gap-2">
+                        <Button variant="outline" @click="showLogsDialog = false">
+                            Close
+                        </Button>
+                    </div>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        <!-- View Status Dialog -->
+        <Dialog v-model:open="showStatusDialog">
+            <DialogContent v-if="statusProcess" class="max-w-4xl max-h-[80vh]">
+                <DialogHeader>
+                    <DialogTitle>View {{ statusProcess.name }} status</DialogTitle>
+                    <DialogDescription>
+                        Background process status information
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div class="space-y-4">
+                    <div class="rounded-lg border bg-muted/30 p-4 max-h-96 overflow-y-auto">
+                        <div v-if="statusLoading" class="text-center text-muted-foreground">
+                            Loading status...
+                        </div>
+                        <pre
+                            v-else-if="statusContent"
+                            class="font-mono text-xs whitespace-pre-wrap break-words"
+                        >{{ statusContent }}</pre>
+                        <div v-else class="text-center text-muted-foreground">
+                            No status available.
+                        </div>
+                    </div>
+                </div>
+
+                <DialogFooter>
+                    <Button variant="outline" @click="showStatusDialog = false">
+                        Close
+                    </Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     </SiteLayout>
