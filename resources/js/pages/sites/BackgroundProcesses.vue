@@ -716,10 +716,20 @@ const queueCommandPreview = computed(() => {
                                 <code class="font-mono text-xs text-primary">{{ queueCommandPreview }}</code>
                             </div>
 
+                            <!-- Working Directory -->
+                            <div class="flex items-center gap-4">
+                                <Label for="queue-directory" class="w-28 shrink-0 text-muted-foreground">directory</Label>
+                                <Input
+                                    id="queue-directory"
+                                    name="directory"
+                                    :default-value="site.applicationPath"
+                                    class="flex-1 font-mono text-xs"
+                                />
+                            </div>
+
                             <!-- Hidden fields -->
                             <input type="hidden" name="name" value="Queue Worker" />
-                            <input type="hidden" name="directory" :value="`/home/${users[0] || 'netipar'}`" />
-                            <input type="hidden" name="user" :value="users[0] || 'netipar'" />
+                            <input type="hidden" name="user" :value="site.user" />
                             <input type="hidden" name="processes" :value="queueForm.processes" />
                             <input type="hidden" name="startsecs" value="1" />
                             <input type="hidden" name="stopwaitsecs" value="15" />
@@ -787,12 +797,12 @@ const queueCommandPreview = computed(() => {
                                 <Input
                                     id="directory"
                                     name="directory"
-                                    :default-value="`/home/${users[0] || 'netipar'}`"
-                                    placeholder="/home/netipar/app"
+                                    :default-value="site.applicationPath"
+                                    class="font-mono text-sm"
                                 />
                                 <p class="text-xs text-muted-foreground">
                                     The directory where the background process should be
-                                    started.
+                                    started. Defaults to the site's application path.
                                 </p>
                                 <InputError :message="errors.directory" />
                             </div>
@@ -801,7 +811,7 @@ const queueCommandPreview = computed(() => {
                                 <Label for="user">Unix user</Label>
                                 <Select
                                     name="user"
-                                    :default-value="users[0] || 'netipar'"
+                                    :default-value="site.user"
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select a unix user" />
