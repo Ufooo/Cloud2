@@ -90,17 +90,6 @@ echo -e '\e[32m=> Executing deployment script\e[0m'
 {!! $processedDeployScript !!}
 @endif
 
-echo -e '\e[32m=> Setting permissions\e[0m'
-@if($useZeroDowntime)
-chmod -R 775 "{{ $siteRoot }}/storage"
-if [ -n "$NIP_RELEASE_DIRECTORY" ]; then
-    chmod -R 775 "$NIP_RELEASE_DIRECTORY/bootstrap/cache" 2>/dev/null || true
-fi
-@else
-chmod -R 775 "{{ $applicationPath }}/storage" 2>/dev/null || true
-chmod -R 775 "{{ $applicationPath }}/bootstrap/cache" 2>/dev/null || true
-@endif
-
 echo -e '\e[32m=> Deployment complete\e[0m'
 
 @if($callbackUrl)

@@ -6,18 +6,6 @@ echo -e '\e[32m=> Finalizing installation for {{ $domain }}\e[0m'
 SITE_ROOT="{{ $siteRoot }}"
 APPLICATION_PATH="{{ $applicationPath }}"
 
-echo -e '\e[32m=> Setting permissions\e[0m'
-
-chmod -R 755 "$SITE_ROOT"
-
-if [ -d "$SITE_ROOT/storage" ]; then
-    chmod -R 775 "$SITE_ROOT/storage"
-fi
-
-if [ -d "$APPLICATION_PATH/bootstrap/cache" ]; then
-    chmod -R 775 "$APPLICATION_PATH/bootstrap/cache"
-fi
-
 cd "$APPLICATION_PATH"
 
 if [ -f "artisan" ]; then

@@ -45,7 +45,6 @@ ln -sfn "$SITE_ROOT/storage" "$PROJECT_DIR/storage"
 # Symlink current to the project directory (including root_directory)
 ln -s "$PROJECT_DIR" "$SITE_ROOT/current-temp" && mv -Tf "$SITE_ROOT/current-temp" "$SITE_ROOT/current"
 
-chmod -R 775 "$SITE_ROOT/storage"
 chown -R {{ $user }}:{{ $user }} "$SITE_ROOT"
 @else
 # Non-ZD: project path includes root_directory

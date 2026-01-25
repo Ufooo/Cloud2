@@ -64,8 +64,6 @@ ln -sfn "$SITE_ROOT/.env" "$PROJECT_DIR/.env"
 echo -e '\e[32m=> Activating release\e[0m'
 # Symlink current points to the project directory (including root_directory)
 ln -s "$PROJECT_DIR" "$SITE_ROOT/current-temp" && mv -Tf "$SITE_ROOT/current-temp" "$SITE_ROOT/current"
-
-chmod -R 775 "$SITE_ROOT/storage"
 @else
 # Non zero-downtime: clone directly to site root
 @if($rootDirectory !== '/')
@@ -104,10 +102,6 @@ if [ -f "$PROJECT_DIR/composer.json" ]; then
     fi
 fi
 
-if [ -d "$PROJECT_DIR/storage" ]; then
-    echo -e '\e[32m=> Setting storage permissions\e[0m'
-    chmod -R 775 "$PROJECT_DIR/storage"
-fi
 @endif
 
 echo -e '\e[32m=> Repository cloned successfully!\e[0m'
