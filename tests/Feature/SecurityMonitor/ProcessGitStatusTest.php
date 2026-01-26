@@ -31,7 +31,7 @@ it('filters out storage symlink paths for zero downtime sites', function () {
     $gitOutput = json_encode([
         'sites' => [
             [
-                'path' => $site->getProjectPath(),
+                'path' => $site->getApplicationPath(),
                 'changes' => [
                     ['status' => '??', 'type' => 'untracked', 'file' => 'storage'],
                     ['status' => ' D', 'type' => 'deleted', 'file' => 'storage/app/.gitignore'],
@@ -76,7 +76,7 @@ it('does not filter storage paths for non-zero-downtime sites', function () {
     $gitOutput = json_encode([
         'sites' => [
             [
-                'path' => $site->getProjectPath(),
+                'path' => $site->getApplicationPath(),
                 'changes' => [
                     ['status' => '??', 'type' => 'untracked', 'file' => 'storage'],
                     ['status' => ' D', 'type' => 'deleted', 'file' => 'storage/app/.gitignore'],
@@ -114,7 +114,7 @@ it('filters bootstrap/cache paths for zero downtime sites', function () {
     $gitOutput = json_encode([
         'sites' => [
             [
-                'path' => $site->getProjectPath(),
+                'path' => $site->getApplicationPath(),
                 'changes' => [
                     ['status' => ' M', 'type' => 'modified', 'file' => 'bootstrap/cache/.gitignore'],
                     ['status' => ' D', 'type' => 'deleted', 'file' => 'bootstrap/cache/packages.php'],
@@ -149,7 +149,7 @@ it('returns clean scan when all changes are filtered for zero downtime', functio
     $gitOutput = json_encode([
         'sites' => [
             [
-                'path' => $site->getProjectPath(),
+                'path' => $site->getApplicationPath(),
                 'changes' => [
                     ['status' => '??', 'type' => 'untracked', 'file' => 'storage'],
                     ['status' => ' D', 'type' => 'deleted', 'file' => 'storage/app/.gitignore'],

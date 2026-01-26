@@ -82,7 +82,7 @@ class ScanSingleSiteJob implements ShouldQueue
     private function runGitScan(Site $site, SecurityScan $scan, SSHService $sshService, ProcessGitStatus $processor): void
     {
         try {
-            $path = $site->getProjectPath();
+            $path = $site->getApplicationPath();
 
             $script = view('provisioning.scripts.security.git-scan', [
                 'paths' => [$path],

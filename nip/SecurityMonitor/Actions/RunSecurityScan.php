@@ -61,7 +61,7 @@ class RunSecurityScan
     {
         // Build site data for git scan (path + user for each site)
         $siteData = $sites->map(fn ($site) => [
-            'path' => $site->getProjectPath(),
+            'path' => $site->getApplicationPath(),
             'user' => $site->user,
         ])->values()->toArray();
 

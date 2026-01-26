@@ -28,14 +28,14 @@ class ProcessGitStatus
     {
         $parsedData = $this->parser->parse($gitOutput);
 
-        $error = $this->parser->getSiteError($parsedData, $site->getProjectPath());
+        $error = $this->parser->getSiteError($parsedData, $site->getApplicationPath());
         if ($error) {
             $scan->update(['error_message' => "Git error: {$error}"]);
 
             return;
         }
 
-        $changes = $this->parser->getChangesForSite($parsedData, $site->getProjectPath());
+        $changes = $this->parser->getChangesForSite($parsedData, $site->getApplicationPath());
 
         if ($site->zero_downtime) {
             $changes = $this->filterZeroDowntimeSymlinks($changes);
