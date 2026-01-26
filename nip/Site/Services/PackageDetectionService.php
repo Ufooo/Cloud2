@@ -18,7 +18,7 @@ class PackageDetectionService
     /**
      * Detect packages from composer.lock on the remote server.
      *
-     * @return array<string>
+     * @return array<string, string> Package name => version
      */
     public function detectPackages(Site $site): array
     {

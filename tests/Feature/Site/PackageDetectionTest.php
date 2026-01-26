@@ -35,8 +35,9 @@ it('detects laravel framework from composer.lock', function () {
     $service = new PackageDetectionService($sshMock);
     $packages = $service->detectPackages($site);
 
-    expect($packages)->toContain(DetectedPackage::Laravel->value)
-        ->and($site->fresh()->detected_packages)->toContain(DetectedPackage::Laravel->value);
+    expect($packages)->toHaveKey(DetectedPackage::Laravel->value)
+        ->and($packages[DetectedPackage::Laravel->value])->toBe('v11.0.0')
+        ->and($site->fresh()->detected_packages)->toHaveKey(DetectedPackage::Laravel->value);
 });
 
 it('detects multiple laravel packages', function () {
@@ -64,10 +65,10 @@ it('detects multiple laravel packages', function () {
     $packages = $service->detectPackages($site);
 
     expect($packages)
-        ->toContain(DetectedPackage::Laravel->value)
-        ->toContain(DetectedPackage::Horizon->value)
-        ->toContain(DetectedPackage::Inertia->value)
-        ->toContain(DetectedPackage::Pulse->value);
+        ->toHaveKey(DetectedPackage::Laravel->value)
+        ->toHaveKey(DetectedPackage::Horizon->value)
+        ->toHaveKey(DetectedPackage::Inertia->value)
+        ->toHaveKey(DetectedPackage::Pulse->value);
 });
 
 it('detects packages from dev dependencies', function () {
@@ -95,8 +96,8 @@ it('detects packages from dev dependencies', function () {
     $packages = $service->detectPackages($site);
 
     expect($packages)
-        ->toContain(DetectedPackage::Laravel->value)
-        ->toContain(DetectedPackage::Telescope->value);
+        ->toHaveKey(DetectedPackage::Laravel->value)
+        ->toHaveKey(DetectedPackage::Telescope->value);
 });
 
 it('returns empty array when composer.lock is not found', function () {
@@ -177,8 +178,8 @@ it('can detect packages via api endpoint', function () {
 
     $response->assertOk()
         ->assertJsonPath('packages', [
-            DetectedPackage::Laravel->value,
-            DetectedPackage::Horizon->value,
+            DetectedPackage::Laravel->value => 'v11.0.0',
+            DetectedPackage::Horizon->value => 'v5.0.0',
         ])
         ->assertJsonStructure([
             'packages',
@@ -205,9 +206,9 @@ it('returns package details with metadata', function () {
         ->installed()
         ->create([
             'detected_packages' => [
-                DetectedPackage::Laravel->value,
-                DetectedPackage::Horizon->value,
-                DetectedPackage::Inertia->value,
+                DetectedPackage::Laravel->value => 'v11.0.0',
+                DetectedPackage::Horizon->value => 'v5.0.0',
+                DetectedPackage::Inertia->value => 'v1.0.0',
             ],
         ]);
 

@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use Nip\Php\Enums\PhpVersion;
 use Nip\Server\Actions\CreateDefaultUnixUsers;
 use Nip\Server\Actions\CreatePhpVersionForServer;
 use Nip\Server\Actions\CreateSshKeysFromRequest;
