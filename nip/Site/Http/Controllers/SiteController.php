@@ -10,18 +10,13 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Nip\Database\Enums\DatabaseStatus;
 use Nip\Database\Enums\DatabaseUserStatus;
-use Nip\Database\Jobs\CreateDatabaseJob;
-use Nip\Database\Jobs\SyncDatabaseUserJob;
-use Nip\Database\Models\Database;
-use Nip\Database\Models\DatabaseUser;
 use Nip\Deployment\Enums\DeploymentStatus;
 use Nip\Deployment\Http\Resources\DeploymentResource;
 use Nip\Deployment\Models\Deployment;
-use Nip\Domain\Enums\DomainRecordStatus;
-use Nip\Domain\Enums\DomainRecordType;
 use Nip\Server\Enums\IdentityColor;
 use Nip\Server\Enums\ServerStatus;
 use Nip\Server\Models\Server;
+use Nip\Site\Actions\CreateSiteAction;
 use Nip\Site\Data\PhpVersionOptionData;
 use Nip\Site\Data\ServerSiteCreationData;
 use Nip\Site\Data\SiteCreationData;
@@ -41,7 +36,6 @@ use Nip\Site\Models\Site;
 use Nip\Site\Services\InertiaSSRService;
 use Nip\Site\Services\PackageDetectionService;
 use Nip\Site\Services\SitePhpVersionService;
-use Nip\Site\Services\SiteProvisioningService;
 use Nip\SourceControl\Models\SourceControl;
 use Nip\SourceControl\Services\GitHubService;
 
@@ -130,71 +124,14 @@ class SiteController extends Controller
         ]);
     }
 
-    public function store(StoreSiteRequest $request): RedirectResponse
+    public function store(StoreSiteRequest $request, CreateSiteAction $createSite): RedirectResponse
     {
         $siteData = SiteCreationData::from($request->validated());
 
         $server = Server::findOrFail($siteData->server_id);
         Gate::authorize('update', $server);
 
-        $siteType = SiteType::from($siteData->type);
-
-        // Apply defaults if not set
-        $siteDataArray = $siteData->getSiteData();
-        $siteDataArray['web_directory'] ??= $siteType->defaultWebDirectory();
-        $siteDataArray['build_command'] ??= $siteType->defaultBuildCommand();
-        $siteDataArray['deploy_script'] ??= $siteType->defaultDeployScript();
-
-        // Create site
-        $site = $server->sites()->create([
-            ...$siteDataArray,
-            'status' => SiteStatus::Pending,
-            'deploy_status' => DeployStatus::NeverDeployed,
-            'deploy_hook_token' => bin2hex(random_bytes(32)),
-        ]);
-
-        // Handle database creation if requested
-        if ($siteData->hasDatabaseCreation()) {
-            // Create database linked to this site
-            $database = Database::create([
-                'server_id' => $server->id,
-                'site_id' => $site->id,
-                'name' => $siteData->getDatabaseName(),
-                'status' => DatabaseStatus::Installing,
-            ]);
-            CreateDatabaseJob::dispatch($database);
-
-            // Create database user
-            $databaseUser = DatabaseUser::create([
-                'server_id' => $server->id,
-                'username' => $siteData->getDatabaseUser(),
-                'password' => $siteData->getDatabasePassword(),
-                'status' => DatabaseUserStatus::Installing,
-            ]);
-            $databaseUser->databases()->attach($database->id);
-            SyncDatabaseUserJob::dispatch($databaseUser);
-
-            // Link database to site
-            $site->update([
-                'database_id' => $database->id,
-                'database_user_id' => $databaseUser->id,
-            ]);
-        } elseif ($siteData->hasExistingDatabase()) {
-            // Link existing database to this site
-            Database::where('id', $siteData->database_id)->update(['site_id' => $site->id]);
-        }
-
-        // Create primary domain record
-        $site->domainRecords()->create([
-            'name' => $site->domain,
-            'type' => DomainRecordType::Primary,
-            'status' => DomainRecordStatus::Pending,
-            'www_redirect_type' => $site->www_redirect_type,
-            'allow_wildcard' => $site->allow_wildcard,
-        ]);
-
-        // Dispatch site provisioning batch
-        app(SiteProvisioningService::class)->dispatch($site);
+        $site = $createSite->handle($siteData);
 
         return redirect()
             ->route('sites.show', $site)->with('success', 'Site is being installed.');
