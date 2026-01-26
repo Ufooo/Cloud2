@@ -2,7 +2,6 @@
 
 namespace Nip\Site\Models;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,7 +9,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Support\Facades\Gate;
 use Nip\BackgroundProcess\Models\BackgroundProcess;
 use Nip\Composer\Models\ComposerCredential;
 use Nip\Database\Models\Database;
@@ -27,7 +25,6 @@ use Nip\SecurityMonitor\Models\SecurityGitWhitelist;
 use Nip\SecurityMonitor\Models\SecurityScan;
 use Nip\Server\Enums\IdentityColor;
 use Nip\Server\Models\Server;
-use Nip\Site\Data\SitePermissionsData;
 use Nip\Site\Data\SiteProvisioningStepData;
 use Nip\Site\Database\Factories\SiteFactory;
 use Nip\Site\Enums\DeployStatus;
@@ -37,6 +34,7 @@ use Nip\Site\Enums\SiteStatus;
 use Nip\Site\Enums\SiteType;
 use Nip\Site\Enums\SslStatus;
 use Nip\Site\Enums\WwwRedirectType;
+use Nip\Site\Traits\HasSitePermissions;
 use Nip\SourceControl\Models\SourceControl;
 use Nip\SourceControl\Services\GitHubService;
 use Nip\UnixUser\Models\UnixUser;
@@ -46,7 +44,7 @@ use Spatie\Sluggable\SlugOptions;
 class Site extends Model
 {
     /** @use HasFactory<SiteFactory> */
-    use HasFactory, HasSlug;
+    use HasFactory, HasSitePermissions, HasSlug;
 
     protected static function newFactory(): SiteFactory
     {
@@ -356,54 +354,6 @@ class Site extends Model
         return $path;
     }
 
-    /**
-     * @deprecated Use getSiteRoot() instead
-     */
-    public function getBasePath(): string
-    {
-        return $this->getSiteRoot();
-    }
-
-    /**
-     * @deprecated Use getApplicationPath() instead
-     */
-    public function getProjectPath(): string
-    {
-        return $this->getApplicationPath();
-    }
-
-    /**
-     * @deprecated Use getDocumentRoot() instead
-     */
-    public function getWebPath(): string
-    {
-        return $this->getDocumentRoot();
-    }
-
-    /**
-     * @deprecated Use getSiteRoot() instead
-     */
-    public function getFullPath(): string
-    {
-        return $this->getSiteRoot();
-    }
-
-    /**
-     * @deprecated Use getApplicationPath() instead
-     */
-    public function getCurrentPath(): string
-    {
-        return $this->getApplicationPath();
-    }
-
-    /**
-     * @deprecated Use getDocumentRoot() instead
-     */
-    public function getRootPath(): string
-    {
-        return $this->getDocumentRoot();
-    }
-
     public function getPhpSocketPath(): ?string
     {
         $phpVersion = $this->php_version?->version();
@@ -466,30 +416,6 @@ class Site extends Model
     protected function provisioningSteps(): Attribute
     {
         return Attribute::get(fn () => $this->getProvisioningSteps());
-    }
-
-    public function canBeUpdated(?User $user = null): bool
-    {
-        return Gate::forUser($user ?? request()->user())->allows('update', $this);
-    }
-
-    public function canBeDeleted(?User $user = null): bool
-    {
-        return Gate::forUser($user ?? request()->user())->allows('delete', $this);
-    }
-
-    public function canBeDeployed(?User $user = null): bool
-    {
-        return Gate::forUser($user ?? request()->user())->allows('deploy', $this);
-    }
-
-    public function getPermissions(?User $user = null): SitePermissionsData
-    {
-        return new SitePermissionsData(
-            update: $this->canBeUpdated($user),
-            delete: $this->canBeDeleted($user),
-            deploy: $this->canBeDeployed($user),
-        );
     }
 
     /**
