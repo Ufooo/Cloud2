@@ -25,7 +25,7 @@ class InstallWordPressJob extends BaseSiteProvisionJob
             'siteRoot' => $this->site->getSiteRoot(),
             'applicationPath' => $this->site->getApplicationPath(),
             'webDirectory' => $this->site->web_directory,
-            'phpVersion' => $this->site->php_version,
+            'phpVersion' => $this->site->php_version?->version(),
             'user' => $this->site->user,
         ])->render();
     }

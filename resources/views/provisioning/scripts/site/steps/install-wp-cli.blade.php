@@ -3,7 +3,7 @@ set -e
 
 if [ -f /usr/local/bin/wp ]; then
     echo -e '\e[32m=> WP-CLI already installed\e[0m'
-    /usr/local/bin/wp --version
+    /usr/local/bin/wp --version --allow-root
     exit 0
 fi
 
@@ -13,4 +13,4 @@ chmod +x wp-cli.phar
 mv wp-cli.phar /usr/local/bin/wp
 
 echo -e '\e[32m=> WP-CLI installed successfully\e[0m'
-/usr/local/bin/wp --version
+/usr/local/bin/wp --version --allow-root
