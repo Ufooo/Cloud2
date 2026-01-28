@@ -104,7 +104,7 @@ class Certificate extends Model
 
     public function getCertPath(): string
     {
-        return "/etc/nginx/ssl/{$this->getBaseDomain()}";
+        return $this->path ?? "/etc/nginx/ssl/{$this->getBaseDomain()}";
     }
 
     public function getSiteConfDir(): string

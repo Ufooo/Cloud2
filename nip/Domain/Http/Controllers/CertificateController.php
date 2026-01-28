@@ -83,7 +83,7 @@ class CertificateController extends Controller
             $certificateData['csr_department'] = $data['csr_department'];
         }
 
-        // Clone specific
+        // Clone specific — references source certificate's files, no duplication
         if ($type === CertificateType::Clone) {
             $sourceCert = Certificate::findOrFail($data['source_certificate_id']);
 
@@ -91,9 +91,8 @@ class CertificateController extends Controller
             Gate::authorize('view', $sourceCert->site->server);
 
             $certificateData['source_certificate_id'] = $sourceCert->id;
-            $certificateData['certificate'] = $sourceCert->certificate;
-            $certificateData['private_key'] = $sourceCert->private_key;
-            $certificateData['status'] = CertificateStatus::Installing;
+            $certificateData['path'] = $sourceCert->path;
+            $certificateData['status'] = CertificateStatus::Installed;
         }
 
         $certificate = $site->certificates()->create($certificateData);
@@ -104,13 +103,18 @@ class CertificateController extends Controller
             ObtainCertificateJob::dispatch($certificate);
         }
 
+        // Clone: enable SSL using source certificate's files
+        if ($type === CertificateType::Clone) {
+            EnableSslJob::dispatch($certificate);
+        }
+
         $successMessage = match ($type) {
             CertificateType::LetsEncrypt => ($data['verification_method'] ?? 'http') === 'dns'
                 ? 'Certificate created. Please add the DNS records to verify domain ownership.'
                 : 'Certificate is being installed.',
             CertificateType::Existing => 'Certificate has been installed.',
             CertificateType::Csr => 'Certificate signing request has been created.',
-            CertificateType::Clone => 'Certificate is being cloned.',
+            CertificateType::Clone => 'Certificate is being activated from source.',
         };
 
         return redirect()->route('sites.domains.index', $site)->with('success', $successMessage);

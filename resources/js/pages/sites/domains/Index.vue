@@ -41,6 +41,7 @@ interface Props {
     site: Site;
     domainRecords: PaginatedResponse<DomainRecordData>;
     certificates: PaginatedResponse<CertificateData>;
+    cloneableCertificates: CertificateData[];
     wwwRedirectTypes: WwwRedirectTypeOption[];
     certificateTypes: CertificateTypeOption[];
     countries: CountryOption[];
@@ -216,6 +217,7 @@ function submitAddDomain() {
             :site="site"
             :domain-records="domainRecords.data"
             :certificates="certificates.data"
+            :cloneable-certificates="cloneableCertificates"
             :certificate-types="certificateTypes"
             :countries="countries"
         />

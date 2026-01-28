@@ -32,9 +32,7 @@ const availableDomains = computed(() => {
     );
 });
 
-const cloneableCertificates = computed(() => {
-    return props.certificates.filter((c) => c.status === 'installed');
-});
+const cloneableCertificates = computed(() => props.certificates);
 </script>
 
 <template>

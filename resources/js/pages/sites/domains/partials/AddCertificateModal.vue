@@ -29,6 +29,7 @@ interface Props {
     site: Site;
     domainRecords: DomainRecordData[];
     certificates: CertificateData[];
+    cloneableCertificates: CertificateData[];
     certificateTypes: CertificateTypeOption[];
     countries: Array<{ code: string; name: string }>;
 }
@@ -257,7 +258,7 @@ function close() {
                     <CloneCertificateForm
                         v-else-if="selectedType === 'clone'"
                         :domain-records="domainRecords"
-                        :certificates="certificates"
+                        :certificates="cloneableCertificates"
                         :form="form"
                     />
 

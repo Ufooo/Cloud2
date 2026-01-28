@@ -62,12 +62,24 @@ class DomainRecordController extends Controller
         // Store in request for DomainRecordResource to access
         request()->attributes->set('allCertificateDomains', $allCertificateDomains);
 
+        // Cloneable certificates: wildcard certs on the same server (only wildcards make sense to clone)
+        $cloneableCertificates = \Nip\Domain\Models\Certificate::query()
+            ->with('site')
+            ->whereHas('site', fn ($q) => $q->where('server_id', $site->server_id))
+            ->where('status', \Nip\Domain\Enums\CertificateStatus::Installed)
+            ->where('active', true)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->filter(fn ($cert) => $cert->isWildcard())
+            ->values();
+
         $canUpdate = request()->user()?->can('update', $site->server);
 
         return Inertia::render('sites/domains/Index', [
             'site' => SiteData::fromModel($site->load('server')),
             'domainRecords' => DomainRecordResource::collection($domainRecords),
             'certificates' => \Nip\Domain\Http\Resources\CertificateResource::collection($certificates),
+            'cloneableCertificates' => $cloneableCertificates->map(fn ($cert) => (new \Nip\Domain\Http\Resources\CertificateResource($cert))->resolve()),
             'wwwRedirectTypes' => WwwRedirectType::options(),
             'certificateTypes' => \Nip\Domain\Enums\CertificateType::options(),
             'countries' => $this->getCountries(),
