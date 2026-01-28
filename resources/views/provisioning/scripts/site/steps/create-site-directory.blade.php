@@ -30,6 +30,7 @@ mkdir -p "$PROJECT_DIR{{ $webDirectory }}"
 
 {!! $defaultIndexScript !!}
 
+@if(! $siteType->requiresAutoInstall())
 mkdir -p "$SITE_ROOT/storage"
 mkdir -p "$SITE_ROOT/storage/app/public"
 mkdir -p "$SITE_ROOT/storage/framework/cache"
@@ -41,6 +42,7 @@ touch "$SITE_ROOT/.env"
 
 ln -sfn "$SITE_ROOT/.env" "$PROJECT_DIR/.env"
 ln -sfn "$SITE_ROOT/storage" "$PROJECT_DIR/storage"
+@endif
 
 # Symlink current to the project directory (including root_directory)
 ln -s "$PROJECT_DIR" "$SITE_ROOT/current-temp" && mv -Tf "$SITE_ROOT/current-temp" "$SITE_ROOT/current"

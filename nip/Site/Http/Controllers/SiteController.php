@@ -98,6 +98,13 @@ class SiteController extends Controller
 
         $serverOptions = ServerSiteCreationData::fromCollection($servers);
 
+        // WordPress has a simplified creation form
+        if ($siteType === SiteType::WordPress) {
+            return Inertia::render('sites/CreateWordPress', [
+                'servers' => $serverOptions,
+            ]);
+        }
+
         $sourceControls = SourceControl::query()
             ->where('user_id', auth()->id())
             ->get()

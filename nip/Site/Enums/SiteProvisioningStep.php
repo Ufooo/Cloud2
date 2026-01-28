@@ -16,6 +16,7 @@ enum SiteProvisioningStep: int
     case CreatingPhpFpmPool = 5;
     case RestartingServices = 6;
     case CreatingLogrotateConfig = 7;
+    case InstallingWpCli = 8;
 
     // Application-level steps (user)
     case CreatingSiteDirectory = 10;
@@ -24,6 +25,7 @@ enum SiteProvisioningStep: int
     case InstallingComposerDependencies = 13;
     case BuildingFrontendAssets = 14;
     case RunningMigrations = 15;
+    case InstallingApplication = 16;
     case FinalizingSite = 99;
 
     public function label(): string
@@ -37,12 +39,14 @@ enum SiteProvisioningStep: int
             self::CreatingPhpFpmPool => 'Creating PHP-FPM pool',
             self::RestartingServices => 'Restarting services',
             self::CreatingLogrotateConfig => 'Creating logrotate config',
+            self::InstallingWpCli => 'Installing WP-CLI',
             self::CreatingSiteDirectory => 'Creating site directory',
             self::CloningRepository => 'Cloning repository',
             self::ConfiguringEnvironment => 'Configuring environment',
             self::InstallingComposerDependencies => 'Installing Composer dependencies',
             self::BuildingFrontendAssets => 'Building frontend assets',
             self::RunningMigrations => 'Running migrations',
+            self::InstallingApplication => 'Installing application',
             self::FinalizingSite => 'Finalizing site',
         };
     }
@@ -58,12 +62,14 @@ enum SiteProvisioningStep: int
             self::CreatingPhpFpmPool => 'Creating an isolated PHP-FPM pool for the site.',
             self::RestartingServices => 'Restarting Nginx and PHP-FPM services.',
             self::CreatingLogrotateConfig => 'Creating logrotate configuration for log files.',
+            self::InstallingWpCli => 'Installing WP-CLI for WordPress management.',
             self::CreatingSiteDirectory => 'Creating the site directory structure.',
             self::CloningRepository => 'Cloning your application code from the Git repository.',
             self::ConfiguringEnvironment => 'Creating the environment configuration file.',
             self::InstallingComposerDependencies => 'Installing Composer dependencies.',
             self::BuildingFrontendAssets => 'Building frontend assets for production.',
             self::RunningMigrations => 'Running database migrations.',
+            self::InstallingApplication => 'Downloading and installing the application.',
             self::FinalizingSite => 'Finalizing the installation and activating the site.',
         };
     }
