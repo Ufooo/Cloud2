@@ -55,7 +55,7 @@ const selectedPhpVersion = ref<string>('');
 const selectedUser = ref<string>('');
 
 // Database
-const createDatabase = ref(true);
+const createDatabase = ref(false);
 const selectedDatabase = ref<string | undefined>(undefined);
 const selectedDatabaseUser = ref<string | undefined>(undefined);
 const databaseName = ref('');
