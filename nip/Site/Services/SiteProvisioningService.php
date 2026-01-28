@@ -83,8 +83,10 @@ class SiteProvisioningService
         // Step 4: Enable Nginx site
         $jobs[] = new EnableNginxSiteJob($site);
 
-        // Step 5: Create PHP-FPM pool
-        $jobs[] = new CreatePhpFpmPoolJob($site);
+        // Step 5: Create PHP-FPM pool (PHP-based sites only)
+        if ($site->type->isPhpBased()) {
+            $jobs[] = new CreatePhpFpmPoolJob($site);
+        }
 
         // Step 6: Restart services
         $jobs[] = new RestartServicesJob($site);

@@ -107,6 +107,7 @@ const {
 const defaultWebDirectory = computed(() => props.siteType.webDirectory);
 const defaultBuildCommand = computed(() => props.siteType.buildCommand || '');
 const isPhpType = computed(() => props.siteType.isPhpBased);
+const isHtmlType = computed(() => props.siteType.value === 'html');
 
 function navigateToSites() {
     router.visit(index.url());
@@ -547,7 +548,7 @@ function navigateToSites() {
                             <Switch id="zero_downtime" v-model="zeroDowntime" />
                         </div>
 
-                        <div class="space-y-4">
+                        <div v-if="!isHtmlType" class="space-y-4">
                             <div class="flex items-center justify-between">
                                 <input
                                     type="hidden"
@@ -696,7 +697,7 @@ function navigateToSites() {
                         </div>
 
                         <!-- Package manager and Build command -->
-                        <div class="grid grid-cols-3 gap-4">
+                        <div v-if="!isHtmlType" class="grid grid-cols-3 gap-4">
                             <div class="space-y-2">
                                 <Label for="package_manager"
                                     >Package manager</Label
