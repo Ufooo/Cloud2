@@ -3,6 +3,7 @@
 namespace Nip\Domain\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Bus;
 use Nip\Domain\Enums\CertificateStatus;
 use Nip\Domain\Enums\CertificateType;
 use Nip\Domain\Jobs\RenewCertificateJob;
@@ -36,6 +37,8 @@ class RenewExpiringCertificatesCommand extends Command
 
         $this->info("Found {$certificates->count()} certificate(s) expiring within {$days} days.");
 
+        $jobs = [];
+
         foreach ($certificates as $certificate) {
             $daysUntilExpiry = (int) now()->diffInDays($certificate->expires_at);
 
@@ -43,10 +46,21 @@ class RenewExpiringCertificatesCommand extends Command
 
             $certificate->update(['status' => CertificateStatus::Renewing]);
 
-            RenewCertificateJob::dispatch($certificate);
+            $jobs[] = new RenewCertificateJob($certificate);
         }
 
-        $this->info('Renewal jobs dispatched.');
+        Bus::chain($jobs)
+            ->onQueue('provisioning')
+            ->catch(function (\Throwable $e) {
+                // Reset any remaining "renewing" certificates back to installed
+                // so they can be retried on the next scheduled run
+                Certificate::query()
+                    ->where('status', CertificateStatus::Renewing)
+                    ->update(['status' => CertificateStatus::Installed->value]);
+            })
+            ->dispatch();
+
+        $this->info('Renewal chain dispatched.');
 
         return self::SUCCESS;
     }

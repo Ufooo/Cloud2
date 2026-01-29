@@ -23,11 +23,11 @@ echo "Creating isolated PHP-FPM pool for {{ $user }} (PHP {{ $phpVersion }})..."
 cp "$WWW_CONF" "$POOL_CONF"
 
 # Pool name
-sed -i "s/\[www\]/[{{ $user }}]/" "$POOL_CONF"
+sed -i "s/^\[.*\]/[{{ $user }}]/" "$POOL_CONF"
 
 # User and group
-sed -i "s/^user = www-data/user = {{ $user }}/" "$POOL_CONF"
-sed -i "s/^group = www-data/group = {{ $user }}/" "$POOL_CONF"
+sed -i "s/^user = .*/user = {{ $user }}/" "$POOL_CONF"
+sed -i "s/^group = .*/group = {{ $user }}/" "$POOL_CONF"
 
 # Socket path
 sed -i "s|^listen = .*|listen = /var/run/php/php{{ $phpVersion }}-fpm-{{ $user }}.sock|" "$POOL_CONF"
