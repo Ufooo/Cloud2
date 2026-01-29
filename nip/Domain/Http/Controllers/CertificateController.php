@@ -46,8 +46,13 @@ class CertificateController extends Controller
                 $certificateData['status'] = CertificateStatus::PendingVerification;
                 $certificateData['acme_subdomains'] = $acmeSubdomains;
                 $certificateData['verification_records'] = $this->generateVerificationRecordsFromSubdomains($acmeSubdomains);
-                // Use all domains from acme_subdomains (includes www if redirect is set)
-                $certificateData['domains'] = array_keys($acmeSubdomains);
+                // Build domains list: include wildcard if domain record allows it
+                $domains = array_keys($acmeSubdomains);
+                $domainRecord = $site->domainRecords()->where('name', $data['domain'])->first();
+                if ($domainRecord?->allow_wildcard) {
+                    array_unshift($domains, "*.{$data['domain']}");
+                }
+                $certificateData['domains'] = array_unique($domains);
             } else {
                 // HTTP-01 only verifies the main domain
                 $certificateData['domains'] = [$data['domain']];
