@@ -16,7 +16,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import PackageBadges from '@/pages/sites/partials/PackageBadges.vue';
 import SiteStatusBadge from '@/pages/sites/partials/SiteStatusBadge.vue';
 import type { BreadcrumbItem, ProvisionScriptData, Site } from '@/types';
-import { SiteStatus, SslStatus } from '@/types';
+import { SiteStatus, SiteType, SslStatus } from '@/types';
 import { Link, router } from '@inertiajs/vue3';
 import { useEcho } from '@laravel/echo-vue';
 import {
@@ -73,70 +73,82 @@ interface NavItem {
     badgeClass?: string;
 }
 
-const navItems = computed<NavItem[]>(() => [
-    {
-        title: 'Overview',
-        href: `/sites/${props.site.slug}`,
-        icon: LayoutDashboard,
-    },
-    {
-        title: 'Deployments',
-        href: `/sites/${props.site.slug}/deployments`,
-        icon: Rocket,
-    },
-    {
-        title: 'Databases',
-        href: databasesIndex.url(props.site),
-        icon: Database,
-    },
-    {
-        title: 'Composer',
-        href: composerIndex.url(props.site),
-        icon: Package,
-    },
-    {
-        title: 'Scheduler',
-        href: `/sites/${props.site.slug}/scheduler`,
-        icon: Clock,
-    },
-    {
-        title: 'Background Processes',
-        href: `/sites/${props.site.slug}/background-processes`,
-        icon: Activity,
-    },
-    {
-        title: 'Security',
-        href: `/sites/${props.site.slug}/security`,
-        icon: Lock,
-    },
-    {
-        title: 'Security Monitor',
-        href: securityMonitorShow.url(props.site),
-        icon: Bug,
-        badge: props.site.securityIssuesCount || undefined,
-        badgeClass: 'bg-orange-100 text-orange-600 border border-orange-200',
-    },
-    {
-        title: 'Redirects',
-        href: `/sites/${props.site.slug}/redirects`,
-        icon: Share2,
-    },
-    {
-        title: 'Domains',
-        href: `/sites/${props.site.slug}/domains`,
-        icon: Globe,
-    },
-    {
-        title: 'Notifications',
-        href: `/sites/${props.site.slug}/notifications`,
-        icon: Bell,
-    },
-    {
-        title: 'Settings',
-        href: `/sites/${props.site.slug}/settings`,
-        icon: Settings,
-    },
-]);
+const isWordPress = computed(
+    () => props.site.type === SiteType.WordPress,
+);
+const isHtml = computed(() => props.site.type === SiteType.Html);
+
+const navItems = computed<NavItem[]>(() =>
+    [
+        {
+            title: 'Overview',
+            href: `/sites/${props.site.slug}`,
+            icon: LayoutDashboard,
+        },
+        {
+            title: 'Deployments',
+            href: `/sites/${props.site.slug}/deployments`,
+            icon: Rocket,
+        },
+        {
+            title: 'Databases',
+            href: databasesIndex.url(props.site),
+            icon: Database,
+        },
+        !isWordPress.value && !isHtml.value
+            ? {
+                  title: 'Composer',
+                  href: composerIndex.url(props.site),
+                  icon: Package,
+              }
+            : null,
+        {
+            title: 'Scheduler',
+            href: `/sites/${props.site.slug}/scheduler`,
+            icon: Clock,
+        },
+        !isWordPress.value && !isHtml.value
+            ? {
+                  title: 'Background Processes',
+                  href: `/sites/${props.site.slug}/background-processes`,
+                  icon: Activity,
+              }
+            : null,
+        {
+            title: 'Security',
+            href: `/sites/${props.site.slug}/security`,
+            icon: Lock,
+        },
+        {
+            title: 'Security Monitor',
+            href: securityMonitorShow.url(props.site),
+            icon: Bug,
+            badge: props.site.securityIssuesCount || undefined,
+            badgeClass:
+                'bg-orange-100 text-orange-600 border border-orange-200',
+        },
+        {
+            title: 'Redirects',
+            href: `/sites/${props.site.slug}/redirects`,
+            icon: Share2,
+        },
+        {
+            title: 'Domains',
+            href: `/sites/${props.site.slug}/domains`,
+            icon: Globe,
+        },
+        {
+            title: 'Notifications',
+            href: `/sites/${props.site.slug}/notifications`,
+            icon: Bell,
+        },
+        {
+            title: 'Settings',
+            href: `/sites/${props.site.slug}/settings`,
+            icon: Settings,
+        },
+    ].filter((item): item is NavItem => item !== null),
+);
 
 function isActive(item: NavItem): boolean {
     const pathname = window.location.pathname;
