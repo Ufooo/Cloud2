@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Middleware;
 use Nip\SecurityMonitor\Models\SecurityScan;
+use Nip\Server\Enums\ProvisionScriptStatus;
+use Nip\Server\Models\ProvisionScript;
 use Nip\Site\Models\Site;
 use Nip\Support\CacheKeys;
 
@@ -46,6 +48,21 @@ class HandleInertiaRequests extends Middleware
                         ->count()
                 ),
             ],
+            'failedScripts' => fn () => ProvisionScript::query()
+                ->with('server:id,name,slug')
+                ->where('status', ProvisionScriptStatus::Failed)
+                ->orderByDesc('created_at')
+                ->limit(10)
+                ->get()
+                ->map(fn (ProvisionScript $script) => [
+                    'id' => $script->id,
+                    'displayableName' => $script->displayable_name,
+                    'serverName' => $script->server?->name,
+                    'serverSlug' => $script->server?->slug,
+                    'errorMessage' => $script->error_message,
+                    'createdAt' => $script->created_at->toISOString(),
+                    'createdAtHuman' => $script->created_at->diffForHumans(),
+                ]),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),

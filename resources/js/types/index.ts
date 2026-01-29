@@ -26,6 +26,16 @@ export interface SidebarCounts {
     securityIssues: number;
 }
 
+export interface FailedScript {
+    id: number;
+    displayableName: string | null;
+    serverName: string | null;
+    serverSlug: string | null;
+    errorMessage: string | null;
+    createdAt: string;
+    createdAtHuman: string;
+}
+
 export type AppPageProps<
     T extends Record<string, unknown> = Record<string, unknown>,
 > = T & {
@@ -34,6 +44,7 @@ export type AppPageProps<
     auth: Auth;
     sidebarOpen: boolean;
     counts: SidebarCounts;
+    failedScripts: FailedScript[];
 };
 
 export interface User {
