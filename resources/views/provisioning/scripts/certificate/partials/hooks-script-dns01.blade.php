@@ -63,6 +63,18 @@ deploy_challenge() {
     echo "Deploying DNS-01 challenge for domain: $DOMAIN"
     echo "Creating TXT record at ${ACME_SUBDOMAIN}.${ACME_DNS_DOMAIN}"
 
+    # Delete any existing TXT records for this subdomain (from previous attempts or same-name authorizations)
+    EXISTING=$(curl -s -X GET "${CF_API_URL}/zones/${CF_ZONE_ID}/dns_records?type=TXT&name=${ACME_SUBDOMAIN}.${ACME_DNS_DOMAIN}" \
+        -H "Authorization: Bearer ${CF_API_TOKEN}" \
+        -H "Content-Type: application/json")
+
+    for EXISTING_ID in $(echo "$EXISTING" | grep -o '"id":"[^"]*"' | cut -d'"' -f4); do
+        echo "Removing existing TXT record: $EXISTING_ID"
+        curl -s -X DELETE "${CF_API_URL}/zones/${CF_ZONE_ID}/dns_records/${EXISTING_ID}" \
+            -H "Authorization: Bearer ${CF_API_TOKEN}" \
+            -H "Content-Type: application/json" > /dev/null
+    done
+
     # Create TXT record via Cloudflare API
     RESPONSE=$(curl -s -X POST "${CF_API_URL}/zones/${CF_ZONE_ID}/dns_records" \
         -H "Authorization: Bearer ${CF_API_TOKEN}" \
