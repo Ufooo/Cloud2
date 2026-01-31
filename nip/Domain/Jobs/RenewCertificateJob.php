@@ -13,11 +13,11 @@ class RenewCertificateJob extends BaseProvisionJob
 {
     use HandlesCertificateProvision;
 
-    public string $queue = 'provisioning';
-
     public function __construct(
         public Certificate $certificate,
-    ) {}
+    ) {
+        $this->queue = 'provisioning';
+    }
 
     /**
      * @return array<int, object>
