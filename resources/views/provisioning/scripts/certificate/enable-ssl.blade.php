@@ -59,6 +59,13 @@ echo "Updating Nginx configuration..."
 @php
     // Check if this domain has a wildcard counterpart in the certificate
     $hasWildcard = in_array('*.' . $domain, $domains);
+
+    // Collect certificate domains that share this nginx config (no own config file)
+    // e.g. www.csaboch.hu is in the cert but served by csaboch.hu's nginx config
+    $redirectDomains = collect($baseDomains)
+        ->filter(fn($d) => $d !== $domain && str_ends_with($d, '.' . $domain))
+        ->values()
+        ->all();
 @endphp
 NGINX_CONF="/etc/nginx/sites-available/{{ $domain }}"
 DOMAIN_CONF_DIR="$SITE_CONF_DIR/{{ $domain }}"
@@ -96,7 +103,7 @@ server {
 @if($hasWildcard)
     server_name .{{ $domain }};
 @else
-    server_name {{ $domain }};
+    server_name {{ $domain }}{{ !empty($redirectDomains) ? ' ' . implode(' ', $redirectDomains) : '' }};
 @endif
 
     location / {
@@ -106,7 +113,7 @@ server {
     # Allow Let's Encrypt renewals via HTTP
     location ^~ /.well-known/acme-challenge/ {
         default_type "text/plain";
-        root {{ $wellknown }};
+        alias {{ $wellknown }}/;
     }
 }
 REDIRECTEOF

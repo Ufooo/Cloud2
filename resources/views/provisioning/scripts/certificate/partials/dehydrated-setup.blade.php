@@ -4,6 +4,9 @@
 
 TIMESTAMP=$(date +%s)
 LE_DIR="/root/letsencrypt${TIMESTAMP}"
+
+# Clean up on exit (success or failure)
+trap 'rm -rf "$LE_DIR"' EXIT
 CERT_PATH="{{ $certPath }}"
 SITE_CONF_DIR="{{ $siteConfDir }}"
 WELLKNOWN="{{ $wellknown }}"
