@@ -4,13 +4,13 @@ import {
     show,
 } from '@/actions/Nip/Server/Http/Controllers/ServerController';
 import { Card } from '@/components/ui/card';
-import { useDashboardUpdates } from '@/composables/useDashboardUpdates';
 import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useDashboardUpdates } from '@/composables/useDashboardUpdates';
 import { Check, Copy, Loader2, Monitor } from 'lucide-vue-next';
 import { reactive, ref } from 'vue';
 
@@ -92,18 +92,22 @@ function isRefreshing(serverId: number): boolean {
 async function handleRefresh(server: ServerWidget) {
     if (refreshingIds.value.has(server.id)) return;
 
-    refreshingIds.value.add(server.id);
+    refreshingIds.value = new Set([...refreshingIds.value, server.id]);
 
     try {
-        const response = await fetch(refreshMetrics.url({ server: server.slug }), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN':
-                    document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
-                        ?.content ?? '',
+        const response = await fetch(
+            refreshMetrics.url({ server: server.slug }),
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN':
+                        document.querySelector<HTMLMetaElement>(
+                            'meta[name="csrf-token"]',
+                        )?.content ?? '',
+                },
             },
-        });
+        );
 
         const data = await response.json();
 
@@ -123,7 +127,9 @@ async function handleRefresh(server: ServerWidget) {
             lastMetricsAt: data.lastMetricsAt,
         };
     } finally {
-        refreshingIds.value.delete(server.id);
+        const next = new Set(refreshingIds.value);
+        next.delete(server.id);
+        refreshingIds.value = next;
     }
 }
 </script>
@@ -153,9 +159,17 @@ async function handleRefresh(server: ServerWidget) {
                     <span
                         v-else
                         class="font-semibold"
-                        :class="getServerData(server).isConnected ? 'text-green-600' : 'text-red-600'"
+                        :class="
+                            getServerData(server).isConnected
+                                ? 'text-green-600'
+                                : 'text-red-600'
+                        "
                     >
-                        {{ getServerData(server).isConnected ? 'Connected' : 'Disconnected' }}
+                        {{
+                            getServerData(server).isConnected
+                                ? 'Connected'
+                                : 'Disconnected'
+                        }}
                     </span>
                     <button
                         class="hover:text-primary disabled:opacity-50"
@@ -176,23 +190,36 @@ async function handleRefresh(server: ServerWidget) {
                 <!-- Left Column -->
                 <div class="shrink-0 space-y-1.5">
                     <div class="flex items-center gap-4">
-                        <span class="w-16 shrink-0 text-muted-foreground">IP</span>
+                        <span class="w-16 shrink-0 text-muted-foreground"
+                            >IP</span
+                        >
                         <button
                             class="flex items-center gap-1 font-mono hover:text-primary"
                             @click="copyIp(server)"
                         >
                             {{ server.ipAddress }}
-                            <Copy v-if="copiedId !== server.id" class="size-2.5" />
+                            <Copy
+                                v-if="copiedId !== server.id"
+                                class="size-2.5"
+                            />
                             <Check v-else class="size-2.5 text-green-500" />
                         </button>
                     </div>
                     <div class="flex items-center gap-4">
-                        <span class="w-16 shrink-0 text-muted-foreground">Uptime</span>
-                        <span>{{ getServerData(server).uptimeFormatted ?? '-' }}</span>
+                        <span class="w-16 shrink-0 text-muted-foreground"
+                            >Uptime</span
+                        >
+                        <span>{{
+                            getServerData(server).uptimeFormatted ?? '-'
+                        }}</span>
                     </div>
                     <div class="flex items-center gap-4">
-                        <span class="w-16 shrink-0 text-muted-foreground">Load Avg</span>
-                        <span class="font-mono">{{ getServerData(server).loadAvgFormatted ?? '-' }}</span>
+                        <span class="w-16 shrink-0 text-muted-foreground"
+                            >Load Avg</span
+                        >
+                        <span class="font-mono">{{
+                            getServerData(server).loadAvgFormatted ?? '-'
+                        }}</span>
                     </div>
                 </div>
 
@@ -203,16 +230,36 @@ async function handleRefresh(server: ServerWidget) {
                             <span class="w-8 text-muted-foreground">Disk</span>
                             <Tooltip>
                                 <TooltipTrigger as-child>
-                                    <div class="h-4 flex-1 cursor-default overflow-hidden bg-gray-100 dark:bg-gray-700 mx-2">
+                                    <div
+                                        class="mx-2 h-4 flex-1 cursor-default overflow-hidden bg-gray-100 dark:bg-gray-700"
+                                    >
                                         <div
                                             class="h-full transition-all"
-                                            :class="getBarColor(getServerData(server).diskPercent)"
-                                            :style="{ width: `${getServerData(server).diskPercent}%` }"
+                                            :class="
+                                                getBarColor(
+                                                    getServerData(server)
+                                                        .diskPercent,
+                                                )
+                                            "
+                                            :style="{
+                                                width: `${getServerData(server).diskPercent}%`,
+                                            }"
                                         />
                                     </div>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                    {{ formatBytes(getServerData(server).diskUsedBytes) }} / {{ formatBytes(getServerData(server).diskTotalBytes) }}
+                                    {{
+                                        formatBytes(
+                                            getServerData(server).diskUsedBytes,
+                                        )
+                                    }}
+                                    /
+                                    {{
+                                        formatBytes(
+                                            getServerData(server)
+                                                .diskTotalBytes,
+                                        )
+                                    }}
                                 </TooltipContent>
                             </Tooltip>
                         </div>
@@ -220,11 +267,20 @@ async function handleRefresh(server: ServerWidget) {
                             <span class="w-8 text-muted-foreground">CPU</span>
                             <Tooltip>
                                 <TooltipTrigger as-child>
-                                    <div class="h-4 flex-1 cursor-default overflow-hidden bg-gray-100 dark:bg-gray-700 mx-2">
+                                    <div
+                                        class="mx-2 h-4 flex-1 cursor-default overflow-hidden bg-gray-100 dark:bg-gray-700"
+                                    >
                                         <div
                                             class="h-full transition-all"
-                                            :class="getBarColor(getServerData(server).cpuPercent)"
-                                            :style="{ width: `${getServerData(server).cpuPercent}%` }"
+                                            :class="
+                                                getBarColor(
+                                                    getServerData(server)
+                                                        .cpuPercent,
+                                                )
+                                            "
+                                            :style="{
+                                                width: `${getServerData(server).cpuPercent}%`,
+                                            }"
                                         />
                                     </div>
                                 </TooltipTrigger>
@@ -237,33 +293,60 @@ async function handleRefresh(server: ServerWidget) {
                             <span class="w-8 text-muted-foreground">RAM</span>
                             <Tooltip>
                                 <TooltipTrigger as-child>
-                                    <div class="h-4 flex-1 cursor-default overflow-hidden bg-gray-100 dark:bg-gray-700 mx-2">
+                                    <div
+                                        class="mx-2 h-4 flex-1 cursor-default overflow-hidden bg-gray-100 dark:bg-gray-700"
+                                    >
                                         <div
                                             class="h-full transition-all"
-                                            :class="getBarColor(getServerData(server).ramPercent)"
-                                            :style="{ width: `${getServerData(server).ramPercent}%` }"
+                                            :class="
+                                                getBarColor(
+                                                    getServerData(server)
+                                                        .ramPercent,
+                                                )
+                                            "
+                                            :style="{
+                                                width: `${getServerData(server).ramPercent}%`,
+                                            }"
                                         />
                                     </div>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                    {{ formatBytes(getServerData(server).ramUsedBytes) }} / {{ formatBytes(getServerData(server).ramTotalBytes) }}
+                                    {{
+                                        formatBytes(
+                                            getServerData(server).ramUsedBytes,
+                                        )
+                                    }}
+                                    /
+                                    {{
+                                        formatBytes(
+                                            getServerData(server).ramTotalBytes,
+                                        )
+                                    }}
                                 </TooltipContent>
                             </Tooltip>
                         </div>
                         <!-- Scale -->
                         <div class="flex">
                             <span class="w-8"></span>
-                            <div class="flex flex-1 justify-between text-xxs text-muted-foreground/60 ml-1">
+                            <div
+                                class="ml-1 flex flex-1 justify-between text-xxs text-muted-foreground/60"
+                            >
                                 <div class="flex flex-col items-center">
-                                    <div class="h-1 w-px bg-muted-foreground/40"></div>
+                                    <div
+                                        class="h-1 w-px bg-muted-foreground/40"
+                                    ></div>
                                     <span>%</span>
                                 </div>
                                 <div class="flex flex-col items-center">
-                                    <div class="h-1 w-px bg-muted-foreground/40"></div>
+                                    <div
+                                        class="h-1 w-px bg-muted-foreground/40"
+                                    ></div>
                                     <span>50</span>
                                 </div>
                                 <div class="flex flex-col items-center">
-                                    <div class="h-1 w-px bg-muted-foreground/40"></div>
+                                    <div
+                                        class="h-1 w-px bg-muted-foreground/40"
+                                    ></div>
                                     <span>100</span>
                                 </div>
                             </div>

@@ -35,18 +35,28 @@ const renewingIds = ref<Set<number>>(new Set());
 const hasCertificates = computed(() => props.certificates.length > 0);
 
 function getUrgencyClass(days: number): string {
-    if (days <= 3) return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
-    if (days <= 7) return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
+    if (days <= 3)
+        return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+    if (days <= 7)
+        return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
     return 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
 }
 
 function handleRenew(cert: ExpiringCertificate) {
     if (!cert.canRenew || renewingIds.value.has(cert.id)) return;
-    renewingIds.value.add(cert.id);
-    router.post(renew.url({ site: cert.siteSlug, certificate: cert.id }), {}, {
-        preserveScroll: true,
-        onFinish: () => renewingIds.value.delete(cert.id),
-    });
+    renewingIds.value = new Set([...renewingIds.value, cert.id]);
+    router.post(
+        renew.url({ site: cert.siteSlug, certificate: cert.id }),
+        {},
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                const next = new Set(renewingIds.value);
+                next.delete(cert.id);
+                renewingIds.value = next;
+            },
+        },
+    );
 }
 
 function isRenewing(cert: ExpiringCertificate): boolean {
@@ -59,7 +69,11 @@ function isRenewing(cert: ExpiringCertificate): boolean {
         <div class="border-b px-3 py-2.5">
             <div class="flex items-center justify-between">
                 <span class="text-sm font-semibold">Expiring Certificates</span>
-                <Badge v-if="hasCertificates" variant="secondary" class="text-xs">
+                <Badge
+                    v-if="hasCertificates"
+                    variant="secondary"
+                    class="text-xs"
+                >
                     {{ certificates.length }}
                 </Badge>
             </div>
@@ -79,14 +93,24 @@ function isRenewing(cert: ExpiringCertificate): boolean {
                         >
                             {{ cert.siteDomain }}
                         </a>
-                        <span class="block truncate text-xs text-muted-foreground">
+                        <span
+                            class="block truncate text-xs text-muted-foreground"
+                        >
                             {{ cert.domainsFormatted }}
                         </span>
                     </div>
-                    <Badge variant="secondary" :class="getUrgencyClass(cert.daysUntilExpiry)" class="shrink-0 text-xs">
+                    <Badge
+                        variant="secondary"
+                        :class="getUrgencyClass(cert.daysUntilExpiry)"
+                        class="shrink-0 text-xs"
+                    >
                         {{ cert.daysUntilExpiry }}d
                     </Badge>
-                    <Badge v-if="isRenewing(cert)" variant="secondary" class="shrink-0 bg-blue-100 text-xs text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                    <Badge
+                        v-if="isRenewing(cert)"
+                        variant="secondary"
+                        class="shrink-0 bg-blue-100 text-xs text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                    >
                         <RefreshCw class="mr-1 size-3 animate-spin" />
                         Renewing
                     </Badge>
@@ -103,7 +127,9 @@ function isRenewing(cert: ExpiringCertificate): boolean {
             </div>
         </div>
         <div v-else class="flex items-center justify-center p-4">
-            <span class="text-xs text-muted-foreground">No expiring certificates</span>
+            <span class="text-xs text-muted-foreground"
+                >No expiring certificates</span
+            >
         </div>
     </Card>
 </template>
