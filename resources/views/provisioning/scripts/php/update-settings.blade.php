@@ -47,18 +47,16 @@ if [ -f "$FPM_INI" ]; then
     # Max execution time
     sed -i "s/max_execution_time = .*/max_execution_time = {{ $maxExecutionTime }}/" "$FPM_INI"
 
-    # OPcache
+    # OPcache - patterns handle both "key=val" and "key = val" formats
 @if($opcacheEnabled)
-    sed -i "s/;\?opcache\.enable=.*/opcache.enable = 1/" "$FPM_INI"
-    sed -i "s/;\?opcache\.enable =.*/opcache.enable = 1/" "$FPM_INI"
-    sed -i "s/;\?opcache\.memory_consumption.*/opcache.memory_consumption = 512/" "$FPM_INI"
-    sed -i "s/;\?opcache\.interned_strings_buffer.*/opcache.interned_strings_buffer = 64/" "$FPM_INI"
-    sed -i "s/;\?opcache\.max_accelerated_files.*/opcache.max_accelerated_files = 30000/" "$FPM_INI"
-    sed -i "s/;\?opcache\.validate_timestamps.*/opcache.validate_timestamps = 0/" "$FPM_INI"
-    sed -i "s/;\?opcache\.save_comments.*/opcache.save_comments = 1/" "$FPM_INI"
+    sed -i "s/^;\?\s*opcache\.enable\s*=.*/opcache.enable = 1/" "$FPM_INI"
+    sed -i "s/^;\?\s*opcache\.memory_consumption\s*=.*/opcache.memory_consumption = 512/" "$FPM_INI"
+    sed -i "s/^;\?\s*opcache\.interned_strings_buffer\s*=.*/opcache.interned_strings_buffer = 64/" "$FPM_INI"
+    sed -i "s/^;\?\s*opcache\.max_accelerated_files\s*=.*/opcache.max_accelerated_files = 30000/" "$FPM_INI"
+    sed -i "s/^;\?\s*opcache\.validate_timestamps\s*=.*/opcache.validate_timestamps = 0/" "$FPM_INI"
+    sed -i "s/^;\?\s*opcache\.save_comments\s*=.*/opcache.save_comments = 1/" "$FPM_INI"
 @else
-    sed -i "s/;\?opcache\.enable=.*/opcache.enable = 0/" "$FPM_INI"
-    sed -i "s/;\?opcache\.enable =.*/opcache.enable = 0/" "$FPM_INI"
+    sed -i "s/^;\?\s*opcache\.enable\s*=.*/opcache.enable = 0/" "$FPM_INI"
 @endif
 
     echo "PHP ${PHP_VERSION} FPM configured"
