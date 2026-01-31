@@ -20,6 +20,7 @@ class ProvisionScriptController extends Controller
         $query = ProvisionScript::query()
             ->with('server')
             ->where('status', ProvisionScriptStatus::Failed)
+            ->whereNull('dismissed_at')
             ->orderBy('created_at', 'desc')
             ->limit(10);
 
@@ -38,6 +39,7 @@ class ProvisionScriptController extends Controller
         $query = ProvisionScript::query()
             ->where('server_id', $server->id)
             ->where('status', ProvisionScriptStatus::Failed)
+            ->whereNull('dismissed_at')
             ->orderBy('created_at', 'desc')
             ->limit(10);
 
@@ -57,6 +59,7 @@ class ProvisionScriptController extends Controller
             ->where('resource_type', 'site')
             ->where('resource_id', $site->id)
             ->where('status', ProvisionScriptStatus::Failed)
+            ->whereNull('dismissed_at')
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
@@ -76,7 +79,7 @@ class ProvisionScriptController extends Controller
         Gate::authorize('view', $provisionScript->server);
 
         $provisionScript->update([
-            'status' => ProvisionScriptStatus::Completed,
+            'dismissed_at' => now(),
         ]);
 
         return back();

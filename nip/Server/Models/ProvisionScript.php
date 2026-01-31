@@ -24,6 +24,7 @@ class ProvisionScript extends Model
         'output',
         'exit_code',
         'status',
+        'dismissed_at',
         'executed_at',
     ];
 
@@ -37,6 +38,7 @@ class ProvisionScript extends Model
         return [
             'exit_code' => 'integer',
             'status' => ProvisionScriptStatus::class,
+            'dismissed_at' => 'datetime',
             'executed_at' => 'datetime',
         ];
     }

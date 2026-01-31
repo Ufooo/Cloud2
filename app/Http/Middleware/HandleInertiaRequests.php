@@ -51,6 +51,7 @@ class HandleInertiaRequests extends Middleware
             'failedScripts' => fn () => ProvisionScript::query()
                 ->with('server:id,name,slug')
                 ->where('status', ProvisionScriptStatus::Failed)
+                ->whereNull('dismissed_at')
                 ->orderByDesc('created_at')
                 ->limit(10)
                 ->get()

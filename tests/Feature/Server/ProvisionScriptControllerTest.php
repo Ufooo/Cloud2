@@ -100,7 +100,9 @@ it('can dismiss a failed provision script', function () {
 
     $response->assertRedirect();
 
-    expect($script->fresh()->status)->toBe(ProvisionScriptStatus::Completed);
+    expect($script->fresh())
+        ->status->toBe(ProvisionScriptStatus::Failed)
+        ->dismissed_at->not->toBeNull();
 });
 
 it('can fetch failed scripts for a site', function () {
