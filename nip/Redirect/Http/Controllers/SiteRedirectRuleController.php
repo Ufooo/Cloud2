@@ -11,6 +11,9 @@ use Nip\Redirect\Enums\RedirectRuleStatus;
 use Nip\Redirect\Http\Requests\StoreRedirectRuleRequest;
 use Nip\Redirect\Http\Requests\UpdateRedirectRuleRequest;
 use Nip\Redirect\Http\Resources\RedirectRuleResource;
+use Nip\Redirect\Jobs\AddRedirectRuleJob;
+use Nip\Redirect\Jobs\RemoveRedirectRuleJob;
+use Nip\Redirect\Jobs\UpdateRedirectRuleJob;
 use Nip\Redirect\Models\RedirectRule;
 use Nip\Site\Data\SiteData;
 use Nip\Site\Models\Site;
@@ -37,15 +40,17 @@ class SiteRedirectRuleController extends Controller
     {
         $data = $request->validated();
 
-        $site->redirectRules()->create([
+        $rule = $site->redirectRules()->create([
             'from' => $data['from'],
             'to' => $data['to'],
             'type' => $data['type'] ?? 'permanent',
-            'status' => RedirectRuleStatus::Pending,
+            'status' => RedirectRuleStatus::Installing,
         ]);
 
+        AddRedirectRuleJob::dispatch($rule);
+
         return redirect()
-            ->route('sites.redirects', $site)->with('success', 'Redirect rule created successfully.');
+            ->route('sites.redirects', $site)->with('success', 'Redirect rule created and is being installed.');
     }
 
     public function update(UpdateRedirectRuleRequest $request, Site $site, RedirectRule $rule): RedirectResponse
@@ -58,10 +63,13 @@ class SiteRedirectRuleController extends Controller
             'from' => $data['from'] ?? $rule->from,
             'to' => $data['to'] ?? $rule->to,
             'type' => $data['type'] ?? $rule->type,
+            'status' => RedirectRuleStatus::Updating,
         ]);
 
+        UpdateRedirectRuleJob::dispatch($rule);
+
         return redirect()
-            ->route('sites.redirects', $site)->with('success', 'Redirect rule updated successfully.');
+            ->route('sites.redirects', $site)->with('success', 'Redirect rule is being updated.');
     }
 
     public function destroy(Site $site, RedirectRule $rule): RedirectResponse
@@ -75,9 +83,11 @@ class SiteRedirectRuleController extends Controller
             'Cannot delete a rule while installation is in progress.'
         );
 
-        $rule->delete();
+        $rule->update(['status' => RedirectRuleStatus::Removing]);
+
+        RemoveRedirectRuleJob::dispatch($rule);
 
         return redirect()
-            ->route('sites.redirects', $site)->with('success', 'Redirect rule deleted successfully.');
+            ->route('sites.redirects', $site)->with('success', 'Redirect rule is being removed.');
     }
 }
