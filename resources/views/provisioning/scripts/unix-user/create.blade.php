@@ -40,7 +40,7 @@ chown -R "{{ $username }}:{{ $username }}" "{{ $homeDir }}/.ssh"
 echo "Configuring sudoers for {{ $username }}..."
 
 # Allow PHP-FPM reload without password
-grep -q "^{{ $username }} " /etc/sudoers.d/php-fpm 2>/dev/null || echo "{{ $username }} ALL=NOPASSWD: /usr/sbin/service php*-fpm reload" >> /etc/sudoers.d/php-fpm
+grep -q "^{{ $username }} .*php\*-fpm" /etc/sudoers.d/php-fpm 2>/dev/null || echo "{{ $username }} ALL=NOPASSWD: /usr/sbin/service php*-fpm reload" >> /etc/sudoers.d/php-fpm
 
 # Allow Supervisor control without password
 grep -q "^{{ $username }} " /etc/sudoers.d/supervisor 2>/dev/null || echo "{{ $username }} ALL=NOPASSWD: /usr/bin/supervisorctl *" >> /etc/sudoers.d/supervisor

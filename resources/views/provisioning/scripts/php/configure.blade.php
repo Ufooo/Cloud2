@@ -67,10 +67,9 @@ sed -i "s/^pm.max_children.*=.*/pm.max_children = 20/" /etc/php/{{ $version }}/f
 # Sudoers for PHP-FPM reload (all unix users)
 #
 
-LINE="ALL=NOPASSWD: /usr/sbin/service php{{ $version }}-fpm reload"
 FILE="/etc/sudoers.d/php-fpm"
 @foreach($unixUsers as $username)
-grep -q -- "^{{ $username }} $LINE" "$FILE" 2>/dev/null || echo "{{ $username }} $LINE" >> "$FILE"
+grep -q "^{{ $username }} .*php\*-fpm" "$FILE" 2>/dev/null || echo "{{ $username }} ALL=NOPASSWD: /usr/sbin/service php*-fpm reload" >> "$FILE"
 @endforeach
 
 #
