@@ -33,7 +33,10 @@ class RenewCertificateJob extends BaseProvisionJob
 
     protected function generateScript(): string
     {
-        $scriptView = $this->certificate->verification_method === 'dns'
+        $usesDns = $this->certificate->verification_method === 'dns'
+            || $this->certificate->isWildcard();
+
+        $scriptView = $usesDns
             ? 'provisioning.scripts.certificate.renew-letsencrypt-dns01'
             : 'provisioning.scripts.certificate.renew-letsencrypt';
 
