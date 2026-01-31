@@ -8,7 +8,14 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Database, MoreHorizontal, Pencil, Server, Trash2, User } from 'lucide-vue-next';
+import {
+    Database,
+    MoreHorizontal,
+    Pencil,
+    Server,
+    Trash2,
+    User,
+} from 'lucide-vue-next';
 import { computed } from 'vue';
 
 type BadgeVariant =

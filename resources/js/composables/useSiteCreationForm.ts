@@ -88,7 +88,9 @@ export function useSiteCreationForm(options: UseSiteCreationFormOptions) {
 
     // Computed properties for server-dependent data
     const currentServer = computed(() => {
-        return servers.value.find((s) => s.id.toString() === selectedServer.value);
+        return servers.value.find(
+            (s) => s.id.toString() === selectedServer.value,
+        );
     });
 
     const availablePhpVersions = computed(() => {
@@ -114,15 +116,21 @@ export function useSiteCreationForm(options: UseSiteCreationFormOptions) {
 
     const availableDatabaseUsers = computed(() => {
         if (!selectedDatabaseObject.value) return null;
-        const allowedUserIds = Object.values(selectedDatabaseObject.value.userIds);
+        const allowedUserIds = Object.values(
+            selectedDatabaseObject.value.userIds,
+        );
         return (currentServer.value?.databaseUsers || []).filter((dbu) =>
             allowedUserIds.includes(dbu.value as number),
         );
     });
 
     const defaultPhpVersion = computed(() => {
-        const defaultVersion = availablePhpVersions.value.find((v) => v.isDefault);
-        return defaultVersion?.value || availablePhpVersions.value[0]?.value || '';
+        const defaultVersion = availablePhpVersions.value.find(
+            (v) => v.isDefault,
+        );
+        return (
+            defaultVersion?.value || availablePhpVersions.value[0]?.value || ''
+        );
     });
 
     const defaultUnixUser = computed(() => {

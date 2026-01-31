@@ -26,7 +26,14 @@ import type {
 } from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
 import { Deferred, Head, router } from '@inertiajs/vue3';
-import { Database, Loader2, Plus, RefreshCw, Search, User } from 'lucide-vue-next';
+import {
+    Database,
+    Loader2,
+    Plus,
+    RefreshCw,
+    Search,
+    User,
+} from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import CreateDatabaseDialog from './partials/CreateDatabaseDialog.vue';
 import CreateDatabaseUserDialog from './partials/CreateDatabaseUserDialog.vue';
@@ -387,7 +394,10 @@ async function handleRefreshSizes() {
         </div>
 
         <!-- Dialogs -->
-        <CreateDatabaseDialog v-model:open="showDatabaseDialog" :server="server" />
+        <CreateDatabaseDialog
+            v-model:open="showDatabaseDialog"
+            :server="server"
+        />
 
         <CreateDatabaseUserDialog
             v-model:open="showUserDialog"
@@ -413,12 +423,12 @@ async function handleRefreshSizes() {
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-2xl font-semibold">Databases</h1>
-                    <p class="text-gray-500">
-                        Manage your databases and users
-                    </p>
+                    <p class="text-gray-500">Manage your databases and users</p>
                 </div>
                 <div class="relative">
-                    <Search class="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <Search
+                        class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                    />
                     <Input
                         v-model="searchQuery"
                         type="text"
@@ -465,7 +475,10 @@ async function handleRefreshSizes() {
                         />
                     </div>
                 </Card>
-                <p v-else-if="isSearching" class="text-sm text-muted-foreground">
+                <p
+                    v-else-if="isSearching"
+                    class="text-sm text-muted-foreground"
+                >
                     No databases match your search.
                 </p>
 
@@ -503,7 +516,10 @@ async function handleRefreshSizes() {
                             </Card>
                         </template>
 
-                        <Card v-if="hasDatabaseUsers" class="overflow-hidden bg-white py-0">
+                        <Card
+                            v-if="hasDatabaseUsers"
+                            class="overflow-hidden bg-white py-0"
+                        >
                             <div class="divide-y">
                                 <DatabaseUserCardListItem
                                     v-for="user in databaseUsers"

@@ -1,12 +1,7 @@
 <script setup lang="ts">
 import { show as showDeployment } from '@/actions/Nip/Deployment/Http/Controllers/SiteDeploymentController';
 import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     Tooltip,
     TooltipContent,
@@ -92,7 +87,9 @@ async function copyToClipboard(text: string, key: string) {
                             :key="key"
                             class="group flex items-center justify-between rounded-lg border bg-muted/30 px-3 py-2"
                         >
-                            <div class="flex items-center gap-3 overflow-hidden">
+                            <div
+                                class="flex items-center gap-3 overflow-hidden"
+                            >
                                 <component
                                     :is="path.icon"
                                     class="size-4 shrink-0 text-muted-foreground"
@@ -150,10 +147,7 @@ async function copyToClipboard(text: string, key: string) {
             </Card>
 
             <!-- Recent Deployments -->
-            <Card
-                v-if="recentDeployments?.data?.length"
-                class="bg-white"
-            >
+            <Card v-if="recentDeployments?.data?.length" class="bg-white">
                 <CardHeader class="pb-3">
                     <CardTitle class="flex items-center gap-2 text-base">
                         <Rocket class="size-4" />
@@ -215,7 +209,10 @@ async function copyToClipboard(text: string, key: string) {
             </Card>
 
             <!-- Laravel Packages -->
-            <LaravelPackages v-if="site.type === SiteType.Laravel" :site="site" />
+            <LaravelPackages
+                v-if="site.type === SiteType.Laravel"
+                :site="site"
+            />
         </div>
     </SiteLayout>
 </template>

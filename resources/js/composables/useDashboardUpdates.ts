@@ -20,9 +20,13 @@ interface ServerMetricsPayload {
 export function useDashboardUpdates(
     onServerMetricsUpdated: (payload: ServerMetricsPayload) => void,
 ) {
-    useEcho('dashboard', '.ServerMetricsUpdated', (event: ServerMetricsPayload) => {
-        onServerMetricsUpdated(event);
-    });
+    useEcho(
+        'dashboard',
+        '.ServerMetricsUpdated',
+        (event: ServerMetricsPayload) => {
+            onServerMetricsUpdated(event);
+        },
+    );
 }
 
 export type { ServerMetricsPayload };

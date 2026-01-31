@@ -1,4 +1,4 @@
-import { IdentityColor } from '@/types'
+import { IdentityColor } from '@/types';
 
 /**
  * Identity color mapping for simple background classes
@@ -13,7 +13,7 @@ export const IDENTITY_COLOR_MAP: Record<IdentityColor, string> = {
     [IdentityColor.Yellow]: 'bg-yellow-500',
     [IdentityColor.Cyan]: 'bg-cyan-500',
     [IdentityColor.Gray]: 'bg-gray-500',
-}
+};
 
 /**
  * Composable for working with Identity colors
@@ -23,11 +23,13 @@ export function useIdentityColor() {
      * Get the Tailwind background class for a given identity color
      */
     function getColorClass(color: IdentityColor | null): string {
-        return color ? IDENTITY_COLOR_MAP[color] : IDENTITY_COLOR_MAP[IdentityColor.Gray]
+        return color
+            ? IDENTITY_COLOR_MAP[color]
+            : IDENTITY_COLOR_MAP[IdentityColor.Gray];
     }
 
     return {
         IDENTITY_COLOR_MAP,
         getColorClass,
-    }
+    };
 }

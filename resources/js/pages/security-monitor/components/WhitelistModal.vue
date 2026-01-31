@@ -69,7 +69,10 @@ function handleClose() {
         <DialogContent>
             <DialogHeader>
                 <DialogTitle>Whitelist Git Change</DialogTitle>
-                <DialogDescription>This file change will be ignored in future scans.</DialogDescription>
+                <DialogDescription
+                    >This file change will be ignored in future
+                    scans.</DialogDescription
+                >
             </DialogHeader>
 
             <form @submit.prevent="handleSubmit" class="space-y-4">
@@ -124,7 +127,11 @@ function handleClose() {
                 <InputError :message="form.errors.change_type" />
 
                 <DialogFooter>
-                    <Button type="button" variant="outline" @click="handleClose">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        @click="handleClose"
+                    >
                         Cancel
                     </Button>
                     <Button type="submit" :disabled="form.processing">

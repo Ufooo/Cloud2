@@ -97,6 +97,6 @@ export {
     type ServerPermissionsData,
     type ServerProviderOptionData,
     type ServerTypeOptionData,
-    type SiteData,
     type SiteData as Site,
+    type SiteData,
 } from './generated';

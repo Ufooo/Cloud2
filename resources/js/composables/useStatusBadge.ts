@@ -7,12 +7,20 @@ export interface StatusBadgeConfig {
     pulse: boolean;
 }
 
-export type StatusType = 'success' | 'progress' | 'warning' | 'error' | 'neutral';
+export type StatusType =
+    | 'success'
+    | 'progress'
+    | 'warning'
+    | 'error'
+    | 'neutral';
 
 const statusColors: Record<StatusType, string> = {
-    success: 'bg-green-500/10 text-green-600 border-green-500/20 dark:bg-green-500/20 dark:text-green-400',
-    progress: 'bg-blue-500/10 text-blue-600 border-blue-500/20 dark:bg-blue-500/20 dark:text-blue-400',
-    warning: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20 dark:bg-yellow-500/20 dark:text-yellow-400',
+    success:
+        'bg-green-500/10 text-green-600 border-green-500/20 dark:bg-green-500/20 dark:text-green-400',
+    progress:
+        'bg-blue-500/10 text-blue-600 border-blue-500/20 dark:bg-blue-500/20 dark:text-blue-400',
+    warning:
+        'bg-yellow-500/10 text-yellow-600 border-yellow-500/20 dark:bg-yellow-500/20 dark:text-yellow-400',
     error: 'bg-red-500/10 text-red-600 border-red-500/20 dark:bg-red-500/20 dark:text-red-400',
     neutral: '',
 };
@@ -42,13 +50,14 @@ export function useStatusBadge<T extends string>(
             return {
                 variant: 'secondary' as const,
                 class: '',
-                label: fallbackLabel?.(currentStatus) ?? capitalize(currentStatus),
+                label:
+                    fallbackLabel?.(currentStatus) ?? capitalize(currentStatus),
                 pulse: false,
             };
         }
 
         const colorClass = definition.color
-            ? additionalColors[definition.color] ?? ''
+            ? (additionalColors[definition.color] ?? '')
             : statusColors[definition.type];
 
         return {

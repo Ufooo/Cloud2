@@ -2,9 +2,21 @@
 import { update } from '@/actions/Nip/SecurityMonitor/Http/Controllers/SecuritySettingsController';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import type { SecuritySettingsData, Site } from '@/types';
 import { useForm } from '@inertiajs/vue3';
@@ -18,8 +30,12 @@ const props = defineProps<Props>();
 
 const form = useForm({
     git_monitor_enabled: props.settings.gitMonitorEnabled,
-    security_scan_interval_minutes: String(props.settings.securityScanIntervalMinutes),
-    security_scan_retention_days: String(props.settings.securityScanRetentionDays),
+    security_scan_interval_minutes: String(
+        props.settings.securityScanIntervalMinutes,
+    ),
+    security_scan_retention_days: String(
+        props.settings.securityScanRetentionDays,
+    ),
 });
 
 const intervalOptions = [
@@ -43,7 +59,9 @@ const retentionOptions = [
 function handleSubmit() {
     form.transform((data) => ({
         ...data,
-        security_scan_interval_minutes: Number(data.security_scan_interval_minutes),
+        security_scan_interval_minutes: Number(
+            data.security_scan_interval_minutes,
+        ),
         security_scan_retention_days: Number(data.security_scan_retention_days),
     })).patch(update.url(props.site), {
         preserveScroll: true,
@@ -93,7 +111,9 @@ function handleSubmit() {
                             </SelectItem>
                         </SelectContent>
                     </Select>
-                    <InputError :message="form.errors.security_scan_interval_minutes" />
+                    <InputError
+                        :message="form.errors.security_scan_interval_minutes"
+                    />
                 </div>
 
                 <!-- Retention -->
@@ -113,15 +133,14 @@ function handleSubmit() {
                             </SelectItem>
                         </SelectContent>
                     </Select>
-                    <InputError :message="form.errors.security_scan_retention_days" />
+                    <InputError
+                        :message="form.errors.security_scan_retention_days"
+                    />
                 </div>
 
                 <!-- Submit Button -->
                 <div class="flex justify-end">
-                    <Button
-                        type="submit"
-                        :disabled="form.processing"
-                    >
+                    <Button type="submit" :disabled="form.processing">
                         {{ form.processing ? 'Saving...' : 'Save Settings' }}
                     </Button>
                 </div>

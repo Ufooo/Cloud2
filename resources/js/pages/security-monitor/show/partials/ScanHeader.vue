@@ -64,25 +64,41 @@ const scanTime = computed(() => {
                         </Badge>
                     </div>
 
-                    <div class="text-sm text-muted-foreground space-y-1">
+                    <div class="space-y-1 text-sm text-muted-foreground">
                         <p v-if="scanTime">
                             Completed: {{ scanTime }}
-                            <span v-if="scan.completedAtHuman">({{ scan.completedAtHuman }})</span>
+                            <span v-if="scan.completedAtHuman"
+                                >({{ scan.completedAtHuman }})</span
+                            >
                         </p>
 
-                        <div v-if="scan.status === ScanStatus.IssuesDetected" class="space-y-1">
+                        <div
+                            v-if="scan.status === ScanStatus.IssuesDetected"
+                            class="space-y-1"
+                        >
                             <p v-if="scan.gitNewCount > 0">
                                 <span class="font-medium text-yellow-600">
                                     {{ scan.gitNewCount }}
                                 </span>
-                                new git change{{ scan.gitNewCount !== 1 ? 's' : '' }}
-                                <span v-if="scan.gitWhitelistedCount > 0" class="text-muted-foreground">
+                                new git change{{
+                                    scan.gitNewCount !== 1 ? 's' : ''
+                                }}
+                                <span
+                                    v-if="scan.gitWhitelistedCount > 0"
+                                    class="text-muted-foreground"
+                                >
                                     ({{ scan.gitWhitelistedCount }} whitelisted)
                                 </span>
                             </p>
                         </div>
 
-                        <p v-if="scan.status === ScanStatus.Error && scan.errorMessage" class="text-red-600">
+                        <p
+                            v-if="
+                                scan.status === ScanStatus.Error &&
+                                scan.errorMessage
+                            "
+                            class="text-red-600"
+                        >
                             Error: {{ scan.errorMessage }}
                         </p>
 

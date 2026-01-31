@@ -73,9 +73,7 @@ interface NavItem {
     badgeClass?: string;
 }
 
-const isWordPress = computed(
-    () => props.site.type === SiteType.WordPress,
-);
+const isWordPress = computed(() => props.site.type === SiteType.WordPress);
 const isHtml = computed(() => props.site.type === SiteType.Html);
 
 const navItems = computed<NavItem[]>(() =>
@@ -157,9 +155,11 @@ function isActive(item: NavItem): boolean {
         return pathname === item.href;
     }
 
-    return pathname === item.href ||
-           pathname.startsWith(item.href + '/') ||
-           pathname.startsWith(item.href + '?');
+    return (
+        pathname === item.href ||
+        pathname.startsWith(item.href + '/') ||
+        pathname.startsWith(item.href + '?')
+    );
 }
 
 const scriptOutputModal = ref<InstanceType<typeof ScriptOutputModal> | null>(

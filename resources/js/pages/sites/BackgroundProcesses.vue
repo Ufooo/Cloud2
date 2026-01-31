@@ -10,7 +10,6 @@ import {
     viewLogs,
     viewStatus,
 } from '@/actions/Nip/BackgroundProcess/Http/Controllers/SiteBackgroundProcessController';
-import axios from 'axios';
 import InputError from '@/components/InputError.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -46,18 +45,14 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import {
-    Tabs,
-    TabsContent,
-    TabsList,
-    TabsTrigger,
-} from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useConfirmation } from '@/composables/useConfirmation';
 import { useResourceStatusUpdates } from '@/composables/useResourceStatusUpdates';
 import SiteLayout from '@/layouts/SiteLayout.vue';
 import type { Site } from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
 import { Form, Head, router } from '@inertiajs/vue3';
+import axios from 'axios';
 import {
     Activity,
     FileText,
@@ -159,9 +154,8 @@ const getDefaultPhpBinary = () => {
     if (props.site.phpVersion) {
         // Convert "php84" to "php8.4" format to match phpVersions[].binary
         const version = props.site.phpVersion.replace('php', '');
-        const formattedVersion = version.length === 2
-            ? `${version[0]}.${version[1]}`
-            : version;
+        const formattedVersion =
+            version.length === 2 ? `${version[0]}.${version[1]}` : version;
         return `php${formattedVersion}`;
     }
     return props.phpVersions[0]?.binary || 'php';
@@ -528,7 +522,7 @@ const queueCommandPreview = computed(() => {
 
         <!-- Add Process Dialog with Tabs -->
         <Dialog v-model:open="showAddDialog">
-            <DialogContent class="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogContent class="max-h-[90vh] overflow-y-auto sm:max-w-lg">
                 <DialogHeader>
                     <DialogTitle>New background process</DialogTitle>
                     <DialogDescription>
@@ -560,10 +554,19 @@ const queueCommandPreview = computed(() => {
 
                             <!-- Forge-style horizontal rows -->
                             <div class="flex items-center gap-4">
-                                <Label for="php-version" class="w-28 shrink-0 text-muted-foreground">php</Label>
-                                <Select v-model="queueForm.phpVersion" name="php_version">
+                                <Label
+                                    for="php-version"
+                                    class="w-28 shrink-0 text-muted-foreground"
+                                    >php</Label
+                                >
+                                <Select
+                                    v-model="queueForm.phpVersion"
+                                    name="php_version"
+                                >
                                     <SelectTrigger class="flex-1">
-                                        <SelectValue placeholder="Select PHP version" />
+                                        <SelectValue
+                                            placeholder="Select PHP version"
+                                        />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem
@@ -578,7 +581,11 @@ const queueCommandPreview = computed(() => {
                             </div>
 
                             <div class="flex items-center gap-4">
-                                <Label for="connection" class="w-28 shrink-0 text-muted-foreground">connection</Label>
+                                <Label
+                                    for="connection"
+                                    class="w-28 shrink-0 text-muted-foreground"
+                                    >connection</Label
+                                >
                                 <Input
                                     id="connection"
                                     v-model="queueForm.connection"
@@ -588,7 +595,11 @@ const queueCommandPreview = computed(() => {
                             </div>
 
                             <div class="flex items-center gap-4">
-                                <Label for="processes-count" class="w-28 shrink-0 text-muted-foreground">processes</Label>
+                                <Label
+                                    for="processes-count"
+                                    class="w-28 shrink-0 text-muted-foreground"
+                                    >processes</Label
+                                >
                                 <Input
                                     id="processes-count"
                                     v-model.number="queueForm.processes"
@@ -600,7 +611,11 @@ const queueCommandPreview = computed(() => {
                             </div>
 
                             <div class="flex items-center gap-4">
-                                <Label for="queue-name-field" class="w-28 shrink-0 text-muted-foreground">--queue</Label>
+                                <Label
+                                    for="queue-name-field"
+                                    class="w-28 shrink-0 text-muted-foreground"
+                                    >--queue</Label
+                                >
                                 <Input
                                     id="queue-name-field"
                                     v-model="queueForm.queue"
@@ -610,7 +625,11 @@ const queueCommandPreview = computed(() => {
                             </div>
 
                             <div class="flex items-center gap-4">
-                                <Label for="backoff" class="w-28 shrink-0 text-muted-foreground">--backoff</Label>
+                                <Label
+                                    for="backoff"
+                                    class="w-28 shrink-0 text-muted-foreground"
+                                    >--backoff</Label
+                                >
                                 <div class="flex flex-1 items-center gap-2">
                                     <Input
                                         id="backoff"
@@ -619,12 +638,18 @@ const queueCommandPreview = computed(() => {
                                         min="0"
                                         class="flex-1"
                                     />
-                                    <span class="text-sm text-muted-foreground">seconds</span>
+                                    <span class="text-sm text-muted-foreground"
+                                        >seconds</span
+                                    >
                                 </div>
                             </div>
 
                             <div class="flex items-center gap-4">
-                                <Label for="sleep" class="w-28 shrink-0 text-muted-foreground">--sleep</Label>
+                                <Label
+                                    for="sleep"
+                                    class="w-28 shrink-0 text-muted-foreground"
+                                    >--sleep</Label
+                                >
                                 <div class="flex flex-1 items-center gap-2">
                                     <Input
                                         id="sleep"
@@ -633,12 +658,18 @@ const queueCommandPreview = computed(() => {
                                         min="0"
                                         class="flex-1"
                                     />
-                                    <span class="text-sm text-muted-foreground">seconds</span>
+                                    <span class="text-sm text-muted-foreground"
+                                        >seconds</span
+                                    >
                                 </div>
                             </div>
 
                             <div class="flex items-center gap-4">
-                                <Label for="rest" class="w-28 shrink-0 text-muted-foreground">--rest</Label>
+                                <Label
+                                    for="rest"
+                                    class="w-28 shrink-0 text-muted-foreground"
+                                    >--rest</Label
+                                >
                                 <div class="flex flex-1 items-center gap-2">
                                     <Input
                                         id="rest"
@@ -647,12 +678,18 @@ const queueCommandPreview = computed(() => {
                                         min="0"
                                         class="flex-1"
                                     />
-                                    <span class="text-sm text-muted-foreground">seconds</span>
+                                    <span class="text-sm text-muted-foreground"
+                                        >seconds</span
+                                    >
                                 </div>
                             </div>
 
                             <div class="flex items-center gap-4">
-                                <Label for="timeout" class="w-28 shrink-0 text-muted-foreground">--timeout</Label>
+                                <Label
+                                    for="timeout"
+                                    class="w-28 shrink-0 text-muted-foreground"
+                                    >--timeout</Label
+                                >
                                 <div class="flex flex-1 items-center gap-2">
                                     <Input
                                         id="timeout"
@@ -661,12 +698,18 @@ const queueCommandPreview = computed(() => {
                                         min="0"
                                         class="flex-1"
                                     />
-                                    <span class="text-sm text-muted-foreground">seconds</span>
+                                    <span class="text-sm text-muted-foreground"
+                                        >seconds</span
+                                    >
                                 </div>
                             </div>
 
                             <div class="flex items-center gap-4">
-                                <Label for="tries" class="w-28 shrink-0 text-muted-foreground">--tries</Label>
+                                <Label
+                                    for="tries"
+                                    class="w-28 shrink-0 text-muted-foreground"
+                                    >--tries</Label
+                                >
                                 <div class="flex flex-1 items-center gap-2">
                                     <Input
                                         id="tries"
@@ -675,12 +718,18 @@ const queueCommandPreview = computed(() => {
                                         min="1"
                                         class="flex-1"
                                     />
-                                    <span class="text-sm text-muted-foreground">tries</span>
+                                    <span class="text-sm text-muted-foreground"
+                                        >tries</span
+                                    >
                                 </div>
                             </div>
 
                             <div class="flex items-center gap-4">
-                                <Label for="memory" class="w-28 shrink-0 text-muted-foreground">--memory</Label>
+                                <Label
+                                    for="memory"
+                                    class="w-28 shrink-0 text-muted-foreground"
+                                    >--memory</Label
+                                >
                                 <div class="flex flex-1 items-center gap-2">
                                     <Input
                                         id="memory"
@@ -689,12 +738,18 @@ const queueCommandPreview = computed(() => {
                                         min="0"
                                         class="flex-1"
                                     />
-                                    <span class="text-sm text-muted-foreground">MB</span>
+                                    <span class="text-sm text-muted-foreground"
+                                        >MB</span
+                                    >
                                 </div>
                             </div>
 
                             <div class="flex items-center gap-4">
-                                <Label for="env" class="w-28 shrink-0 text-muted-foreground">--env</Label>
+                                <Label
+                                    for="env"
+                                    class="w-28 shrink-0 text-muted-foreground"
+                                    >--env</Label
+                                >
                                 <Input
                                     id="env"
                                     v-model="queueForm.env"
@@ -704,21 +759,28 @@ const queueCommandPreview = computed(() => {
                             </div>
 
                             <div class="flex items-center gap-4">
-                                <Label for="force" class="w-28 shrink-0 text-muted-foreground">--force</Label>
-                                <Switch
-                                    id="force"
-                                    v-model="queueForm.force"
-                                />
+                                <Label
+                                    for="force"
+                                    class="w-28 shrink-0 text-muted-foreground"
+                                    >--force</Label
+                                >
+                                <Switch id="force" v-model="queueForm.force" />
                             </div>
 
                             <!-- Command Preview -->
                             <div class="mt-4 rounded-lg border bg-muted/30 p-3">
-                                <code class="font-mono text-xs text-primary">{{ queueCommandPreview }}</code>
+                                <code class="font-mono text-xs text-primary">{{
+                                    queueCommandPreview
+                                }}</code>
                             </div>
 
                             <!-- Working Directory -->
                             <div class="flex items-center gap-4">
-                                <Label for="queue-directory" class="w-28 shrink-0 text-muted-foreground">directory</Label>
+                                <Label
+                                    for="queue-directory"
+                                    class="w-28 shrink-0 text-muted-foreground"
+                                    >directory</Label
+                                >
                                 <Input
                                     id="queue-directory"
                                     name="directory"
@@ -728,12 +790,32 @@ const queueCommandPreview = computed(() => {
                             </div>
 
                             <!-- Hidden fields -->
-                            <input type="hidden" name="name" value="Queue Worker" />
-                            <input type="hidden" name="user" :value="site.user" />
-                            <input type="hidden" name="processes" :value="queueForm.processes" />
+                            <input
+                                type="hidden"
+                                name="name"
+                                value="Queue Worker"
+                            />
+                            <input
+                                type="hidden"
+                                name="user"
+                                :value="site.user"
+                            />
+                            <input
+                                type="hidden"
+                                name="processes"
+                                :value="queueForm.processes"
+                            />
                             <input type="hidden" name="startsecs" value="1" />
-                            <input type="hidden" name="stopwaitsecs" value="15" />
-                            <input type="hidden" name="stopsignal" value="TERM" />
+                            <input
+                                type="hidden"
+                                name="stopwaitsecs"
+                                value="15"
+                            />
+                            <input
+                                type="hidden"
+                                name="stopsignal"
+                                value="TERM"
+                            />
 
                             <DialogFooter class="mt-4">
                                 <Button
@@ -755,7 +837,7 @@ const queueCommandPreview = computed(() => {
                     </TabsContent>
 
                     <!-- Custom Tab -->
-                    <TabsContent value="custom" class="space-y-4 mt-4">
+                    <TabsContent value="custom" class="mt-4 space-y-4">
                         <Form
                             v-bind="store.form(site)"
                             class="space-y-4"
@@ -786,8 +868,8 @@ const queueCommandPreview = computed(() => {
                                     placeholder="e.g., php artisan queue:work"
                                 />
                                 <p class="text-xs text-muted-foreground">
-                                    The command that should run for this background
-                                    process.
+                                    The command that should run for this
+                                    background process.
                                 </p>
                                 <InputError :message="errors.command" />
                             </div>
@@ -801,20 +883,20 @@ const queueCommandPreview = computed(() => {
                                     class="font-mono text-sm"
                                 />
                                 <p class="text-xs text-muted-foreground">
-                                    The directory where the background process should be
-                                    started. Defaults to the site's application path.
+                                    The directory where the background process
+                                    should be started. Defaults to the site's
+                                    application path.
                                 </p>
                                 <InputError :message="errors.directory" />
                             </div>
 
                             <div class="space-y-2">
                                 <Label for="user">Unix user</Label>
-                                <Select
-                                    name="user"
-                                    :default-value="site.user"
-                                >
+                                <Select name="user" :default-value="site.user">
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select a unix user" />
+                                        <SelectValue
+                                            placeholder="Select a unix user"
+                                        />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem
@@ -846,8 +928,16 @@ const queueCommandPreview = computed(() => {
 
                                 <!-- Hidden defaults when advanced is collapsed -->
                                 <template v-if="!showAdvanced">
-                                    <input type="hidden" name="processes" value="1" />
-                                    <input type="hidden" name="startsecs" value="1" />
+                                    <input
+                                        type="hidden"
+                                        name="processes"
+                                        value="1"
+                                    />
+                                    <input
+                                        type="hidden"
+                                        name="startsecs"
+                                        value="1"
+                                    />
                                     <input
                                         type="hidden"
                                         name="stopwaitsecs"
@@ -871,11 +961,15 @@ const queueCommandPreview = computed(() => {
                                             max="100"
                                             default-value="1"
                                         />
-                                        <InputError :message="errors.processes" />
+                                        <InputError
+                                            :message="errors.processes"
+                                        />
                                     </div>
 
                                     <div class="space-y-2">
-                                        <Label for="startsecs">Start (seconds)</Label>
+                                        <Label for="startsecs"
+                                            >Start (seconds)</Label
+                                        >
                                         <Input
                                             id="startsecs"
                                             name="startsecs"
@@ -883,7 +977,9 @@ const queueCommandPreview = computed(() => {
                                             min="0"
                                             default-value="1"
                                         />
-                                        <InputError :message="errors.startsecs" />
+                                        <InputError
+                                            :message="errors.startsecs"
+                                        />
                                     </div>
 
                                     <div class="space-y-2">
@@ -897,12 +993,19 @@ const queueCommandPreview = computed(() => {
                                             min="0"
                                             default-value="15"
                                         />
-                                        <InputError :message="errors.stopwaitsecs" />
+                                        <InputError
+                                            :message="errors.stopwaitsecs"
+                                        />
                                     </div>
 
                                     <div class="space-y-2">
-                                        <Label for="stopsignal">Stop signal</Label>
-                                        <Select name="stopsignal" default-value="TERM">
+                                        <Label for="stopsignal"
+                                            >Stop signal</Label
+                                        >
+                                        <Select
+                                            name="stopsignal"
+                                            default-value="TERM"
+                                        >
                                             <SelectTrigger>
                                                 <SelectValue
                                                     placeholder="Select a signal"
@@ -918,7 +1021,9 @@ const queueCommandPreview = computed(() => {
                                                 </SelectItem>
                                             </SelectContent>
                                         </Select>
-                                        <InputError :message="errors.stopsignal" />
+                                        <InputError
+                                            :message="errors.stopsignal"
+                                        />
                                     </div>
                                 </div>
 
@@ -1122,7 +1227,7 @@ const queueCommandPreview = computed(() => {
 
         <!-- View Logs Dialog -->
         <Dialog v-model:open="showLogsDialog">
-            <DialogContent v-if="logsProcess" class="max-w-4xl max-h-[80vh]">
+            <DialogContent v-if="logsProcess" class="max-h-[80vh] max-w-4xl">
                 <DialogHeader>
                     <DialogTitle>View {{ logsProcess.name }} logs</DialogTitle>
                     <DialogDescription>
@@ -1131,14 +1236,20 @@ const queueCommandPreview = computed(() => {
                 </DialogHeader>
 
                 <div class="space-y-4">
-                    <div class="rounded-lg border bg-muted/30 p-4 max-h-96 overflow-y-auto">
-                        <div v-if="logsLoading" class="text-center text-muted-foreground">
+                    <div
+                        class="max-h-96 overflow-y-auto rounded-lg border bg-muted/30 p-4"
+                    >
+                        <div
+                            v-if="logsLoading"
+                            class="text-center text-muted-foreground"
+                        >
                             Loading logs...
                         </div>
                         <pre
                             v-else-if="logsContent"
-                            class="font-mono text-xs whitespace-pre-wrap break-words"
-                        >{{ logsContent }}</pre>
+                            class="font-mono text-xs break-words whitespace-pre-wrap"
+                            >{{ logsContent }}</pre
+                        >
                         <div v-else class="text-center text-muted-foreground">
                             No logs found.
                         </div>
@@ -1154,7 +1265,10 @@ const queueCommandPreview = computed(() => {
                         Delete contents
                     </Button>
                     <div class="flex gap-2">
-                        <Button variant="outline" @click="showLogsDialog = false">
+                        <Button
+                            variant="outline"
+                            @click="showLogsDialog = false"
+                        >
                             Close
                         </Button>
                     </div>
@@ -1164,23 +1278,31 @@ const queueCommandPreview = computed(() => {
 
         <!-- View Status Dialog -->
         <Dialog v-model:open="showStatusDialog">
-            <DialogContent v-if="statusProcess" class="max-w-4xl max-h-[80vh]">
+            <DialogContent v-if="statusProcess" class="max-h-[80vh] max-w-4xl">
                 <DialogHeader>
-                    <DialogTitle>View {{ statusProcess.name }} status</DialogTitle>
+                    <DialogTitle
+                        >View {{ statusProcess.name }} status</DialogTitle
+                    >
                     <DialogDescription>
                         Background process status information
                     </DialogDescription>
                 </DialogHeader>
 
                 <div class="space-y-4">
-                    <div class="rounded-lg border bg-muted/30 p-4 max-h-96 overflow-y-auto">
-                        <div v-if="statusLoading" class="text-center text-muted-foreground">
+                    <div
+                        class="max-h-96 overflow-y-auto rounded-lg border bg-muted/30 p-4"
+                    >
+                        <div
+                            v-if="statusLoading"
+                            class="text-center text-muted-foreground"
+                        >
                             Loading status...
                         </div>
                         <pre
                             v-else-if="statusContent"
-                            class="font-mono text-xs whitespace-pre-wrap break-words"
-                        >{{ statusContent }}</pre>
+                            class="font-mono text-xs break-words whitespace-pre-wrap"
+                            >{{ statusContent }}</pre
+                        >
                         <div v-else class="text-center text-muted-foreground">
                             No status available.
                         </div>

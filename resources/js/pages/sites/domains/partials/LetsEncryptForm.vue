@@ -108,7 +108,9 @@ watch(
             <Select v-model="form.domain">
                 <SelectTrigger id="le-domain">
                     <SelectValue placeholder="Select domain">
-                        {{ selectedDomainRecord?.displayName ?? 'Select domain' }}
+                        {{
+                            selectedDomainRecord?.displayName ?? 'Select domain'
+                        }}
                     </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -182,7 +184,10 @@ watch(
                     @select="form.key_algorithm = 'rsa'"
                 />
             </div>
-            <p v-if="form.errors.key_algorithm" class="text-sm text-destructive">
+            <p
+                v-if="form.errors.key_algorithm"
+                class="text-sm text-destructive"
+            >
                 {{ form.errors.key_algorithm }}
             </p>
         </div>
@@ -190,9 +195,7 @@ watch(
         <!-- ISRG Root X1 Chain -->
         <div class="flex items-center justify-between">
             <div class="space-y-0.5">
-                <Label for="isrg-root-chain"
-                    >Enable "ISRG Root X1" chain</Label
-                >
+                <Label for="isrg-root-chain">Enable "ISRG Root X1" chain</Label>
                 <p class="text-xs text-muted-foreground">
                     Use the modern ISRG Root X1 certificate chain for broader
                     compatibility.

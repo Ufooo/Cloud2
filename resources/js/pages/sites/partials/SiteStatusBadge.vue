@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import StatusBadge from '@/components/StatusBadge.vue';
-import { useStatusBadge, type StatusDefinition } from '@/composables/useStatusBadge';
+import {
+    useStatusBadge,
+    type StatusDefinition,
+} from '@/composables/useStatusBadge';
 
 interface Props {
     status: string;
@@ -17,10 +20,7 @@ const siteStatusDefinitions: Record<string, StatusDefinition> = {
     deleting: { type: 'error', label: 'Deleting', pulse: true },
 };
 
-const statusConfig = useStatusBadge(
-    () => props.status,
-    siteStatusDefinitions,
-);
+const statusConfig = useStatusBadge(() => props.status, siteStatusDefinitions);
 </script>
 
 <template>

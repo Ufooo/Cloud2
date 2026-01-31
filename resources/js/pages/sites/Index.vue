@@ -15,12 +15,12 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { useResourceStatusUpdates } from '@/composables/useResourceStatusUpdates';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem, Server, Site } from '@/types';
 import type { PaginatedResponse } from '@/types/pagination';
 import { Head, router } from '@inertiajs/vue3';
-import { Input } from '@/components/ui/input';
 import { Globe, Plus, Search } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import SiteCardListItem from './partials/SiteCardListItem.vue';
@@ -126,7 +126,9 @@ function selectTypeAndNavigate(type: string) {
                 </div>
                 <div class="flex items-center gap-3">
                     <div class="relative">
-                        <Search class="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                        <Search
+                            class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                        />
                         <Input
                             v-model="searchQuery"
                             type="text"

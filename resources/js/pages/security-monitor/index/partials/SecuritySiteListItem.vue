@@ -4,7 +4,13 @@ import Avatar from '@/components/shared/Avatar.vue';
 import { Badge } from '@/components/ui/badge';
 import type { SecuritySite } from '@/types/security-monitor';
 import { Link } from '@inertiajs/vue3';
-import { AlertTriangle, CheckCircle2, Clock, Server, XCircle } from 'lucide-vue-next';
+import {
+    AlertTriangle,
+    CheckCircle2,
+    Clock,
+    Server,
+    XCircle,
+} from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface Props {
@@ -47,7 +53,8 @@ const statusColor = computed(() => {
 });
 
 const statusBadge = computed(() => {
-    if (!props.site.lastScan) return { variant: 'secondary' as const, label: 'No scan' };
+    if (!props.site.lastScan)
+        return { variant: 'secondary' as const, label: 'No scan' };
 
     switch (props.site.lastScan.status) {
         case 'clean':
@@ -92,22 +99,23 @@ const lastScanTime = computed(() => {
     >
         <!-- Status Icon -->
         <div class="flex-shrink-0">
-            <component
-                :is="statusIcon"
-                class="size-5"
-                :class="statusColor"
-            />
+            <component :is="statusIcon" class="size-5" :class="statusColor" />
         </div>
 
         <!-- Avatar -->
         <Avatar :name="site.domain" size="md" />
 
         <!-- Main Info -->
-        <div class="flex-1 min-w-0">
-            <h4 class="font-semibold text-foreground truncate mb-1">{{ site.domain }}</h4>
+        <div class="min-w-0 flex-1">
+            <h4 class="mb-1 truncate font-semibold text-foreground">
+                {{ site.domain }}
+            </h4>
             <div class="flex items-center gap-4 text-sm">
-                <span v-if="site.server?.name && showServer" class="text-muted-foreground">
-                    <Server class="w-3.5 h-3.5 inline mr-1" />
+                <span
+                    v-if="site.server?.name && showServer"
+                    class="text-muted-foreground"
+                >
+                    <Server class="mr-1 inline h-3.5 w-3.5" />
                     {{ site.server.name }}
                 </span>
                 <span v-if="issuesSummary" class="text-muted-foreground">
@@ -117,8 +125,12 @@ const lastScanTime = computed(() => {
         </div>
 
         <!-- Monitoring badge -->
-        <div class="flex items-center gap-2 flex-shrink-0">
-            <Badge v-if="site.gitMonitorEnabled" variant="outline" class="text-xs">
+        <div class="flex flex-shrink-0 items-center gap-2">
+            <Badge
+                v-if="site.gitMonitorEnabled"
+                variant="outline"
+                class="text-xs"
+            >
                 Git
             </Badge>
         </div>
@@ -129,10 +141,13 @@ const lastScanTime = computed(() => {
         </Badge>
 
         <!-- Last Scan Time -->
-        <div class="flex-shrink-0 text-right w-24">
-            <div class="text-xs text-muted-foreground mb-1">Last scan</div>
-            <div v-if="lastScanTime" class="flex items-center justify-end gap-1 text-sm text-muted-foreground">
-                <Clock class="w-3.5 h-3.5" />
+        <div class="w-24 flex-shrink-0 text-right">
+            <div class="mb-1 text-xs text-muted-foreground">Last scan</div>
+            <div
+                v-if="lastScanTime"
+                class="flex items-center justify-end gap-1 text-sm text-muted-foreground"
+            >
+                <Clock class="h-3.5 w-3.5" />
                 {{ lastScanTime }}
             </div>
             <div v-else class="text-sm text-muted-foreground">Never</div>

@@ -108,7 +108,10 @@ const availableDomains = computed(() => {
                     v-model="form.csr_state"
                     placeholder="California"
                 />
-                <p v-if="form.errors.csr_state" class="text-sm text-destructive">
+                <p
+                    v-if="form.errors.csr_state"
+                    class="text-sm text-destructive"
+                >
                     {{ form.errors.csr_state }}
                 </p>
             </div>

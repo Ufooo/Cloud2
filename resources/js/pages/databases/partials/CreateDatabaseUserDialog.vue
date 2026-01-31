@@ -177,7 +177,9 @@ function submit() {
                             >
                                 <Checkbox
                                     :id="`db-${db.id}`"
-                                    :model-value="form.databases.includes(db.id)"
+                                    :model-value="
+                                        form.databases.includes(db.id)
+                                    "
                                     @update:model-value="
                                         handleToggleDatabase(db.id)
                                     "

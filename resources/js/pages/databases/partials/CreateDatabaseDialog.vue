@@ -167,7 +167,9 @@ function submit() {
                         class="w-full"
                         :disabled="form.processing"
                     >
-                        {{ form.processing ? 'Creating...' : 'Create database' }}
+                        {{
+                            form.processing ? 'Creating...' : 'Create database'
+                        }}
                     </Button>
                 </DialogFooter>
             </form>

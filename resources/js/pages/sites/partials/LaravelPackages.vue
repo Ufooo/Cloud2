@@ -198,12 +198,14 @@ function getPackageActionLabel(pkg: DetectedPackageData): string {
                     <div class="flex items-center gap-3">
                         <CheckCircle class="size-5 text-green-500" />
                         <div>
-                            <p class="flex items-center gap-2 text-sm font-medium">
+                            <p
+                                class="flex items-center gap-2 text-sm font-medium"
+                            >
                                 {{ pkg.label }}
                                 <Badge
                                     v-if="pkg.version"
                                     variant="custom"
-                                    class="bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-800"
+                                    class="border-blue-200 bg-blue-50 text-blue-600 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-400"
                                 >
                                     {{ pkg.version }}
                                 </Badge>

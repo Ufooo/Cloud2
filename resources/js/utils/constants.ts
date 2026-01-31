@@ -8,12 +8,14 @@ export const PHP_BASED_SITE_TYPES = [
     'wordpress',
     'phpmyadmin',
     'php',
-] as const
+] as const;
 
 /**
  * Check if a site type is PHP-based
  */
 export function isPhpBasedSiteType(type: string | null): boolean {
-    if (!type) return false
-    return PHP_BASED_SITE_TYPES.includes(type as typeof PHP_BASED_SITE_TYPES[number])
+    if (!type) return false;
+    return PHP_BASED_SITE_TYPES.includes(
+        type as (typeof PHP_BASED_SITE_TYPES)[number],
+    );
 }

@@ -23,27 +23,36 @@ function getTypeColor(type: Notification['type']): string {
 
 <template>
     <div
-        class="group/item relative flex items-start gap-2 p-3 rounded-xl bg-white dark:bg-card border border-border hover:border-primary/50 hover:shadow-sm transition-all cursor-pointer"
+        class="group/item relative flex cursor-pointer items-start gap-2 rounded-xl border border-border bg-white p-3 transition-all hover:border-primary/50 hover:shadow-sm dark:bg-card"
     >
-        <div :class="[getTypeColor(notification.type), 'w-2 h-2 rounded-full mt-1.5 flex-shrink-0']" />
-        <div class="flex-1 min-w-0 pr-0 group-hover/item:pr-14 transition-all">
-            <p class="text-xs text-foreground truncate">{{ notification.message }}</p>
+        <div
+            :class="[
+                getTypeColor(notification.type),
+                'mt-1.5 h-2 w-2 flex-shrink-0 rounded-full',
+            ]"
+        />
+        <div class="min-w-0 flex-1 pr-0 transition-all group-hover/item:pr-14">
+            <p class="truncate text-xs text-foreground">
+                {{ notification.message }}
+            </p>
             <p class="text-xs text-muted-foreground">{{ notification.time }}</p>
         </div>
-        <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
+        <div
+            class="absolute top-1/2 right-2 flex -translate-y-1/2 items-center gap-1 opacity-0 transition-opacity group-hover/item:opacity-100"
+        >
             <button
                 type="button"
                 @click.stop="emit('markAsRead', notification.id)"
-                class="p-1 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                class="rounded-md p-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
             >
-                <Check class="w-3.5 h-3.5" />
+                <Check class="h-3.5 w-3.5" />
             </button>
             <button
                 type="button"
                 @click.stop="emit('delete', notification.id)"
-                class="p-1 rounded-md text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                class="rounded-md p-1 text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-500"
             >
-                <Trash2 class="w-3.5 h-3.5" />
+                <Trash2 class="h-3.5 w-3.5" />
             </button>
         </div>
     </div>

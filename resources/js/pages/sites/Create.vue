@@ -34,13 +34,13 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { useSiteCreationForm } from '@/composables/useSiteCreationForm';
 import AppLayout from '@/layouts/AppLayout.vue';
+import type { SelectOptionData } from '@/types/generated';
 import type {
     ServerOption,
     SiteTypeData,
     SourceControlOption,
     WwwRedirectTypeOption,
 } from '@/types/site-creation';
-import type { SelectOptionData } from '@/types/generated';
 import { Form, Head, router } from '@inertiajs/vue3';
 import { Check, ChevronDown, GitBranch, Loader2 } from 'lucide-vue-next';
 import { computed, toRef } from 'vue';
@@ -539,7 +539,9 @@ function navigateToSites() {
                                 :value="zeroDowntime ? '1' : '0'"
                             />
                             <div class="space-y-0.5">
-                                <Label for="zero_downtime">Zero downtime deployment</Label>
+                                <Label for="zero_downtime"
+                                    >Zero downtime deployment</Label
+                                >
                                 <p class="text-xs text-muted-foreground">
                                     Uses releases directory with symlink for
                                     instant switchover during deployments
@@ -575,29 +577,39 @@ function navigateToSites() {
                                 class="grid gap-4 rounded-lg border border-dashed p-4"
                             >
                                 <div class="space-y-2">
-                                    <Label for="database_name">Database name</Label>
+                                    <Label for="database_name"
+                                        >Database name</Label
+                                    >
                                     <Input
                                         id="database_name"
                                         v-model="databaseName"
                                         placeholder="my_database"
                                         required
                                     />
-                                    <InputError :message="errors.database_name" />
+                                    <InputError
+                                        :message="errors.database_name"
+                                    />
                                 </div>
 
                                 <div class="space-y-2">
-                                    <Label for="database_user">Database user</Label>
+                                    <Label for="database_user"
+                                        >Database user</Label
+                                    >
                                     <Input
                                         id="database_user"
                                         v-model="databaseUser"
                                         placeholder="db_user"
                                         required
                                     />
-                                    <InputError :message="errors.database_user" />
+                                    <InputError
+                                        :message="errors.database_user"
+                                    />
                                 </div>
 
                                 <div class="space-y-2">
-                                    <Label for="database_password">Database password</Label>
+                                    <Label for="database_password"
+                                        >Database password</Label
+                                    >
                                     <div class="flex gap-2">
                                         <Input
                                             id="database_password"
@@ -607,11 +619,17 @@ function navigateToSites() {
                                             required
                                             class="flex-1"
                                         />
-                                        <Button type="button" variant="outline" @click="generatePassword">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            @click="generatePassword"
+                                        >
                                             Generate
                                         </Button>
                                     </div>
-                                    <InputError :message="errors.database_password" />
+                                    <InputError
+                                        :message="errors.database_password"
+                                    />
                                 </div>
                             </div>
 

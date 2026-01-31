@@ -1,7 +1,7 @@
-import { computed, type Component, type ComputedRef } from 'vue';
+import BitbucketIcon from '@/components/icons/BitbucketIcon.vue';
 import GithubIcon from '@/components/icons/GithubIcon.vue';
 import GitlabIcon from '@/components/icons/GitlabIcon.vue';
-import BitbucketIcon from '@/components/icons/BitbucketIcon.vue';
+import { computed, type Component, type ComputedRef } from 'vue';
 
 export interface RepositoryProviderConfig {
     icon: Component;

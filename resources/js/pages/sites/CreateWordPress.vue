@@ -164,9 +164,12 @@ function navigateToSites() {
                     <div class="flex items-center gap-3">
                         <WordpressIcon class="size-8" />
                         <div>
-                            <CardTitle>Install a WordPress application</CardTitle>
+                            <CardTitle
+                                >Install a WordPress application</CardTitle
+                            >
                             <CardDescription>
-                                WordPress will be downloaded and configured automatically.
+                                WordPress will be downloaded and configured
+                                automatically.
                             </CardDescription>
                         </div>
                     </div>
@@ -224,9 +227,14 @@ function navigateToSites() {
                         >
                             <div class="space-y-2">
                                 <Label for="server_id">Server</Label>
-                                <Select name="server_id" v-model="selectedServer">
+                                <Select
+                                    name="server_id"
+                                    v-model="selectedServer"
+                                >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select a server" />
+                                        <SelectValue
+                                            placeholder="Select a server"
+                                        />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem
@@ -245,7 +253,9 @@ function navigateToSites() {
                                 <Label for="user">Site user</Label>
                                 <Select name="user" v-model="selectedUser">
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select a user" />
+                                        <SelectValue
+                                            placeholder="Select a user"
+                                        />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem
@@ -270,7 +280,9 @@ function navigateToSites() {
                                     v-model="selectedPhpVersion"
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select PHP version" />
+                                        <SelectValue
+                                            placeholder="Select PHP version"
+                                        />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem
@@ -300,7 +312,9 @@ function navigateToSites() {
                                     :value="createDatabase ? '1' : '0'"
                                 />
                                 <div class="space-y-0.5">
-                                    <Label for="create_database">Create database</Label>
+                                    <Label for="create_database"
+                                        >Create database</Label
+                                    >
                                     <p class="text-xs text-muted-foreground">
                                         Create a new database for this site
                                     </p>
@@ -317,29 +331,39 @@ function navigateToSites() {
                                 class="grid gap-4 rounded-lg border border-dashed p-4"
                             >
                                 <div class="space-y-2">
-                                    <Label for="database_name">Database name</Label>
+                                    <Label for="database_name"
+                                        >Database name</Label
+                                    >
                                     <Input
                                         id="database_name"
                                         v-model="databaseName"
                                         placeholder="my_database"
                                         required
                                     />
-                                    <InputError :message="errors.database_name" />
+                                    <InputError
+                                        :message="errors.database_name"
+                                    />
                                 </div>
 
                                 <div class="space-y-2">
-                                    <Label for="database_user">Database user</Label>
+                                    <Label for="database_user"
+                                        >Database user</Label
+                                    >
                                     <Input
                                         id="database_user"
                                         v-model="databaseUser"
                                         placeholder="db_user"
                                         required
                                     />
-                                    <InputError :message="errors.database_user" />
+                                    <InputError
+                                        :message="errors.database_user"
+                                    />
                                 </div>
 
                                 <div class="space-y-2">
-                                    <Label for="database_password">Database password</Label>
+                                    <Label for="database_password"
+                                        >Database password</Label
+                                    >
                                     <div class="flex gap-2">
                                         <Input
                                             id="database_password"
@@ -357,13 +381,18 @@ function navigateToSites() {
                                             Generate
                                         </Button>
                                     </div>
-                                    <InputError :message="errors.database_password" />
+                                    <InputError
+                                        :message="errors.database_password"
+                                    />
                                 </div>
                             </div>
 
                             <!-- Database selection (when not creating a new one) -->
                             <div
-                                v-if="!createDatabase && availableDatabases.length > 0"
+                                v-if="
+                                    !createDatabase &&
+                                    availableDatabases.length > 0
+                                "
                                 class="grid grid-cols-2 gap-4 rounded-lg border border-dashed p-4"
                             >
                                 <input
@@ -380,7 +409,9 @@ function navigateToSites() {
                                     <Label for="database_id">Database</Label>
                                     <Select v-model="selectedDatabase">
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Select a database" />
+                                            <SelectValue
+                                                placeholder="Select a database"
+                                            />
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem
@@ -396,7 +427,9 @@ function navigateToSites() {
                                 </div>
 
                                 <div class="space-y-2">
-                                    <Label for="database_user_id">Database user</Label>
+                                    <Label for="database_user_id"
+                                        >Database user</Label
+                                    >
                                     <Select
                                         v-model="selectedDatabaseUser"
                                         :disabled="
@@ -411,7 +444,8 @@ function navigateToSites() {
                                                     !selectedDatabase
                                                         ? 'Select database first'
                                                         : !availableDatabaseUsers ||
-                                                            availableDatabaseUsers.length === 0
+                                                            availableDatabaseUsers.length ===
+                                                                0
                                                           ? 'No users available'
                                                           : 'Select a user'
                                                 "
@@ -427,7 +461,9 @@ function navigateToSites() {
                                             </SelectItem>
                                         </SelectContent>
                                     </Select>
-                                    <InputError :message="errors.database_user_id" />
+                                    <InputError
+                                        :message="errors.database_user_id"
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -442,7 +478,11 @@ function navigateToSites() {
                                 Cancel
                             </Button>
                             <Button type="submit" :disabled="processing">
-                                {{ processing ? 'Installing...' : 'Install WordPress' }}
+                                {{
+                                    processing
+                                        ? 'Installing...'
+                                        : 'Install WordPress'
+                                }}
                             </Button>
                         </div>
                     </Form>

@@ -40,7 +40,11 @@ function handleWhitelistAll() {
 }
 
 function handleRemoveFromWhitelist(change: GitChange) {
-    if (!confirm(`Remove "${change.filePath}" from whitelist? It will reappear on the next scan if the file still exists.`)) {
+    if (
+        !confirm(
+            `Remove "${change.filePath}" from whitelist? It will reappear on the next scan if the file still exists.`,
+        )
+    ) {
         return;
     }
 
@@ -71,8 +75,8 @@ const isEmpty = computed(() => props.changes.length === 0);
             </Button>
         </div>
 
-        <div v-if="isEmpty" class="text-center py-8 text-muted-foreground">
-            <FileIcon class="size-12 mx-auto mb-2 opacity-50" />
+        <div v-if="isEmpty" class="py-8 text-center text-muted-foreground">
+            <FileIcon class="mx-auto mb-2 size-12 opacity-50" />
             <p>No {{ title.toLowerCase() }} found</p>
         </div>
 
@@ -80,11 +84,24 @@ const isEmpty = computed(() => props.changes.length === 0);
             <table class="w-full">
                 <thead>
                     <tr class="border-b bg-muted/50">
-                        <th class="p-3 text-left text-sm font-medium w-16">Code</th>
-                        <th class="p-3 text-left text-sm font-medium">File Path</th>
-                        <th class="p-3 text-left text-sm font-medium w-32">Type</th>
-                        <th v-if="isWhitelisted" class="p-3 text-left text-sm font-medium">Reason</th>
-                        <th class="p-3 text-right text-sm font-medium w-32">Actions</th>
+                        <th class="w-16 p-3 text-left text-sm font-medium">
+                            Code
+                        </th>
+                        <th class="p-3 text-left text-sm font-medium">
+                            File Path
+                        </th>
+                        <th class="w-32 p-3 text-left text-sm font-medium">
+                            Type
+                        </th>
+                        <th
+                            v-if="isWhitelisted"
+                            class="p-3 text-left text-sm font-medium"
+                        >
+                            Reason
+                        </th>
+                        <th class="w-32 p-3 text-right text-sm font-medium">
+                            Actions
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -94,8 +111,13 @@ const isEmpty = computed(() => props.changes.length === 0);
                         class="border-b last:border-b-0 hover:bg-muted/50"
                         :class="{ 'opacity-60': isWhitelisted }"
                     >
-                        <td class="p-3 text-sm font-mono">{{ change.gitStatusCode }}</td>
-                        <td class="p-3 text-sm font-mono truncate max-w-md" :title="change.filePath">
+                        <td class="p-3 font-mono text-sm">
+                            {{ change.gitStatusCode }}
+                        </td>
+                        <td
+                            class="max-w-md truncate p-3 font-mono text-sm"
+                            :title="change.filePath"
+                        >
                             {{ change.filePath }}
                         </td>
                         <td class="p-3">
@@ -103,7 +125,10 @@ const isEmpty = computed(() => props.changes.length === 0);
                                 {{ change.changeTypeLabel }}
                             </Badge>
                         </td>
-                        <td v-if="isWhitelisted" class="p-3 text-sm text-muted-foreground">
+                        <td
+                            v-if="isWhitelisted"
+                            class="p-3 text-sm text-muted-foreground"
+                        >
                             {{ change.whitelistReason || '-' }}
                         </td>
                         <td class="p-3 text-right">

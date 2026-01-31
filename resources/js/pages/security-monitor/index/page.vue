@@ -69,14 +69,22 @@ const hasSites = computed(() => props.serverGroups.data.length > 0);
                     <Card
                         v-for="group in serverGroups.data"
                         :key="group.server.id"
-                        class="overflow-hidden bg-white dark:bg-card py-0"
+                        class="overflow-hidden bg-white py-0 dark:bg-card"
                     >
                         <!-- Server Header -->
-                        <div class="flex items-center gap-2 px-4 py-3 bg-muted/50 text-sm font-medium">
+                        <div
+                            class="flex items-center gap-2 bg-muted/50 px-4 py-3 text-sm font-medium"
+                        >
                             <Server class="size-4 text-muted-foreground" />
                             <span>{{ group.server.name }}</span>
-                            <span class="text-muted-foreground">({{ group.server.ipAddress }})</span>
-                            <span class="ml-auto text-muted-foreground">{{ group.sites.length }} site{{ group.sites.length !== 1 ? 's' : '' }}</span>
+                            <span class="text-muted-foreground"
+                                >({{ group.server.ipAddress }})</span
+                            >
+                            <span class="ml-auto text-muted-foreground"
+                                >{{ group.sites.length }} site{{
+                                    group.sites.length !== 1 ? 's' : ''
+                                }}</span
+                            >
                         </div>
 
                         <!-- Sites in this server -->

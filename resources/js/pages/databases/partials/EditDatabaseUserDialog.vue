@@ -195,7 +195,9 @@ function submit() {
                             >
                                 <Checkbox
                                     :id="`edit-db-${db.id}`"
-                                    :model-value="form.databases.includes(db.id)"
+                                    :model-value="
+                                        form.databases.includes(db.id)
+                                    "
                                     @update:model-value="
                                         handleToggleDatabase(db.id)
                                     "
@@ -236,7 +238,10 @@ function submit() {
                                     read data from the selected databases.
                                 </p>
                             </div>
-                            <Switch id="edit-readonly" v-model="form.readonly" />
+                            <Switch
+                                id="edit-readonly"
+                                v-model="form.readonly"
+                            />
                         </div>
                     </div>
                 </div>

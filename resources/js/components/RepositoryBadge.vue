@@ -14,7 +14,7 @@ const providerConfig = useRepositoryProvider(() => props.provider);
 </script>
 
 <template>
-    <Badge variant="outline" class="gap-2 px-3 py-1.5 bg-muted">
+    <Badge variant="outline" class="gap-2 bg-muted px-3 py-1.5">
         <component
             v-if="providerConfig"
             :is="providerConfig.icon"
@@ -23,8 +23,8 @@ const providerConfig = useRepositoryProvider(() => props.provider);
         <div class="text-sm">
             <span class="text-muted-foreground">{{ repository }}</span>
             <template v-if="branch">
-                <span class="text-muted-foreground/60 mx-1">:</span>
-                <span class="text-emerald-500 font-medium">{{ branch }}</span>
+                <span class="mx-1 text-muted-foreground/60">:</span>
+                <span class="font-medium text-emerald-500">{{ branch }}</span>
             </template>
         </div>
     </Badge>

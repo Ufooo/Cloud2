@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { scan } from '@/actions/Nip/SecurityMonitor/Http/Controllers/SecurityMonitorController';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import SiteLayout from '@/layouts/SiteLayout.vue';
 import type { SecuritySettingsData, Site } from '@/types';
@@ -40,15 +46,15 @@ function handleScanNow() {
 }
 
 const gitChangesData = computed(() =>
-    Array.isArray(props.gitChanges) ? props.gitChanges : props.gitChanges.data
+    Array.isArray(props.gitChanges) ? props.gitChanges : props.gitChanges.data,
 );
 
 const newGitChanges = computed(() =>
-    gitChangesData.value.filter(change => !change.isWhitelisted)
+    gitChangesData.value.filter((change) => !change.isWhitelisted),
 );
 
 const whitelistedGitChanges = computed(() =>
-    gitChangesData.value.filter(change => change.isWhitelisted)
+    gitChangesData.value.filter((change) => change.isWhitelisted),
 );
 </script>
 
@@ -64,24 +70,23 @@ const whitelistedGitChanges = computed(() =>
                     <p class="text-muted-foreground">Git changes monitoring</p>
                 </div>
 
-                <Button
-                    :disabled="scanForm.processing"
-                    @click="handleScanNow"
-                >
-                    <RefreshCw class="mr-2 size-4" :class="{ 'animate-spin': scanForm.processing }" />
+                <Button :disabled="scanForm.processing" @click="handleScanNow">
+                    <RefreshCw
+                        class="mr-2 size-4"
+                        :class="{ 'animate-spin': scanForm.processing }"
+                    />
                     {{ scanForm.processing ? 'Scanning...' : 'Scan Now' }}
                 </Button>
             </div>
 
             <!-- Last Scan Info -->
-            <ScanHeader
-                v-if="lastScan"
-                :scan="lastScan.data"
-                :site="site"
-            />
+            <ScanHeader v-if="lastScan" :scan="lastScan.data" :site="site" />
 
             <!-- Git Changes Section -->
-            <Card v-if="securitySettings.gitMonitorEnabled" class="bg-white dark:bg-card">
+            <Card
+                v-if="securitySettings.gitMonitorEnabled"
+                class="bg-white dark:bg-card"
+            >
                 <CardHeader>
                     <CardTitle>Git Changes</CardTitle>
                     <CardDescription>
@@ -109,10 +114,7 @@ const whitelistedGitChanges = computed(() =>
             </Card>
 
             <!-- Security Settings -->
-            <SecuritySettings
-                :site="site"
-                :settings="securitySettings"
-            />
+            <SecuritySettings :site="site" :settings="securitySettings" />
         </div>
     </SiteLayout>
 </template>

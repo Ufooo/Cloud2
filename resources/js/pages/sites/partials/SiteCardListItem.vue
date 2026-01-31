@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { show } from '@/actions/Nip/Site/Http/Controllers/SiteController';
-import Avatar from '@/components/shared/Avatar.vue';
 import PhpVersionBadge from '@/components/PhpVersionBadge.vue';
 import RepositoryBadge from '@/components/RepositoryBadge.vue';
+import Avatar from '@/components/shared/Avatar.vue';
 import SiteTypeBadge from '@/components/SiteTypeBadge.vue';
 import { Button } from '@/components/ui/button';
 import SiteStatusBadge from '@/pages/sites/partials/SiteStatusBadge.vue';
@@ -50,7 +50,7 @@ const showSslIndicator = computed(
             <Avatar :name="site.domain" :color="site.avatarColor" size="md" />
             <div
                 v-if="showSslIndicator"
-                class="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full ring-2 ring-background"
+                class="absolute -right-0.5 -bottom-0.5 flex h-4 w-4 items-center justify-center rounded-full ring-2 ring-background"
                 :class="sslIndicatorClass"
             >
                 <Lock class="h-2 w-2 text-white" />
@@ -58,18 +58,26 @@ const showSslIndicator = computed(
         </div>
 
         <!-- Main Info -->
-        <div class="flex-1 min-w-0">
-            <h4 class="font-semibold text-foreground truncate mb-1">{{ site.domain }}</h4>
+        <div class="min-w-0 flex-1">
+            <h4 class="mb-1 truncate font-semibold text-foreground">
+                {{ site.domain }}
+            </h4>
             <div class="flex items-center gap-4 text-sm">
-                <span v-if="site.serverName && showServer" class="text-muted-foreground">
-                    <Server class="w-3.5 h-3.5 inline mr-1" />
+                <span
+                    v-if="site.serverName && showServer"
+                    class="text-muted-foreground"
+                >
+                    <Server class="mr-1 inline h-3.5 w-3.5" />
                     {{ site.serverName }}
                 </span>
                 <span class="text-muted-foreground">
-                    <User class="w-3.5 h-3.5 inline mr-1" />
+                    <User class="mr-1 inline h-3.5 w-3.5" />
                     {{ site.user }}
                 </span>
-                <PhpVersionBadge v-if="site.phpVersionLabel" :version="site.phpVersionLabel" />
+                <PhpVersionBadge
+                    v-if="site.phpVersionLabel"
+                    :version="site.phpVersionLabel"
+                />
             </div>
         </div>
 
@@ -90,11 +98,16 @@ const showSslIndicator = computed(
         />
 
         <!-- Right side -->
-        <div class="flex-shrink-0 text-right w-32">
+        <div class="w-32 flex-shrink-0 text-right">
             <template v-if="isInstalled">
-                <div class="text-xs text-muted-foreground mb-1">Last deploy</div>
-                <div v-if="site.lastDeployedAtHuman" class="flex items-center justify-end gap-1 text-sm text-muted-foreground">
-                    <Clock class="w-3.5 h-3.5" />
+                <div class="mb-1 text-xs text-muted-foreground">
+                    Last deploy
+                </div>
+                <div
+                    v-if="site.lastDeployedAtHuman"
+                    class="flex items-center justify-end gap-1 text-sm text-muted-foreground"
+                >
+                    <Clock class="h-3.5 w-3.5" />
                     {{ site.lastDeployedAtHuman }}
                 </div>
                 <div v-else class="text-sm text-muted-foreground">Never</div>
@@ -103,8 +116,13 @@ const showSslIndicator = computed(
         </div>
 
         <!-- Actions - TODO: Implement actions menu -->
-        <Button variant="ghost" size="icon" class="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted flex-shrink-0" @click.prevent>
-            <MoreHorizontal class="w-4 h-4" />
+        <Button
+            variant="ghost"
+            size="icon"
+            class="h-9 w-9 flex-shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground"
+            @click.prevent
+        >
+            <MoreHorizontal class="h-4 w-4" />
         </Button>
     </Link>
 </template>
