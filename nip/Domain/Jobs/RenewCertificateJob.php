@@ -2,6 +2,7 @@
 
 namespace Nip\Domain\Jobs;
 
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Nip\Domain\Enums\CertificateStatus;
 use Nip\Domain\Jobs\Concerns\HandlesCertificateProvision;
 use Nip\Domain\Models\Certificate;
@@ -12,9 +13,23 @@ class RenewCertificateJob extends BaseProvisionJob
 {
     use HandlesCertificateProvision;
 
+    public string $queue = 'provisioning';
+
     public function __construct(
         public Certificate $certificate,
     ) {}
+
+    /**
+     * @return array<int, object>
+     */
+    public function middleware(): array
+    {
+        return [
+            (new WithoutOverlapping('certificate-renewal'))
+                ->releaseAfter(600)
+                ->expireAfter(3600),
+        ];
+    }
 
     protected function generateScript(): string
     {

@@ -15,7 +15,7 @@ class DashboardController extends Controller
     public function index(): Response
     {
         $expiringCertificates = Certificate::query()
-            ->where('status', CertificateStatus::Installed)
+            ->whereIn('status', [CertificateStatus::Installed, CertificateStatus::Renewing])
             ->where('active', true)
             ->whereNotNull('expires_at')
             ->where('expires_at', '<=', now()->addDays(30))

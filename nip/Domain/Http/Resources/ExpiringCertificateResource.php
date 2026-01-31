@@ -4,6 +4,7 @@ namespace Nip\Domain\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Nip\Domain\Enums\CertificateStatus;
 use Nip\Domain\Enums\CertificateType;
 use Nip\Domain\Models\Certificate;
 
@@ -34,7 +35,8 @@ class ExpiringCertificateResource extends JsonResource
             'expiresAt' => $this->expires_at?->toISOString(),
             'expiresAtHuman' => $this->expires_at ? 'in '.$this->expires_at->diffForHumans(syntax: true) : null,
             'daysUntilExpiry' => $daysUntilExpiry,
-            'canRenew' => $this->type === CertificateType::LetsEncrypt,
+            'isRenewing' => $this->status === CertificateStatus::Renewing,
+            'canRenew' => $this->type === CertificateType::LetsEncrypt && $this->status !== CertificateStatus::Renewing,
         ];
     }
 

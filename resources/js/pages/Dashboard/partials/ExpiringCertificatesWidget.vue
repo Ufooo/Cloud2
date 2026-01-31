@@ -20,6 +20,7 @@ interface ExpiringCertificate {
     expiresAt: string;
     expiresAtHuman: string;
     daysUntilExpiry: number;
+    isRenewing: boolean;
     canRenew: boolean;
 }
 
@@ -48,8 +49,8 @@ function handleRenew(cert: ExpiringCertificate) {
     });
 }
 
-function isRenewing(id: number): boolean {
-    return renewingIds.value.has(id);
+function isRenewing(cert: ExpiringCertificate): boolean {
+    return cert.isRenewing || renewingIds.value.has(cert.id);
 }
 </script>
 
@@ -85,15 +86,18 @@ function isRenewing(id: number): boolean {
                     <Badge variant="secondary" :class="getUrgencyClass(cert.daysUntilExpiry)" class="shrink-0 text-xs">
                         {{ cert.daysUntilExpiry }}d
                     </Badge>
+                    <Badge v-if="isRenewing(cert)" variant="secondary" class="shrink-0 bg-blue-100 text-xs text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                        <RefreshCw class="mr-1 size-3 animate-spin" />
+                        Renewing
+                    </Badge>
                     <Button
-                        v-if="cert.canRenew"
+                        v-else-if="cert.canRenew"
                         size="icon"
                         variant="ghost"
                         class="size-6 shrink-0"
-                        :disabled="isRenewing(cert.id)"
                         @click="handleRenew(cert)"
                     >
-                        <RefreshCw class="size-3" :class="{ 'animate-spin': isRenewing(cert.id) }" />
+                        <RefreshCw class="size-3" />
                     </Button>
                 </div>
             </div>
