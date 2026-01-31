@@ -3,7 +3,7 @@ server {
     listen [::]:80;
 
 @if($allowWildcard)
-    server_name .{{ $domain }};
+    server_name {{ $domain }} *.{{ $domain }};
 @else
 @if($wwwRedirectType->value === 'from_www')
     server_name {{ $domain }};

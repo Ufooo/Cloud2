@@ -101,7 +101,7 @@ server {
     listen [::]:80;
     server_tokens off;
 @if($hasWildcard)
-    server_name .{{ $domain }};
+    server_name {{ $domain }} *.{{ $domain }};
 @else
     server_name {{ $domain }}{{ !empty($redirectDomains) ? ' ' . implode(' ', $redirectDomains) : '' }};
 @endif
