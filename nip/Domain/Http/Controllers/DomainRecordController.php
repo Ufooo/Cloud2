@@ -17,6 +17,7 @@ use Nip\Domain\Jobs\AddDomainJob;
 use Nip\Domain\Jobs\DisableDomainJob;
 use Nip\Domain\Jobs\EnableDomainJob;
 use Nip\Domain\Jobs\RemoveDomainJob;
+use Nip\Domain\Jobs\UpdateDomainJob;
 use Nip\Domain\Models\DomainRecord;
 use Nip\Domain\Services\CloudflareService;
 use Nip\Site\Data\SiteData;
@@ -122,7 +123,9 @@ class DomainRecordController extends Controller
             'allow_wildcard' => $data['allow_wildcard'] ?? $domainRecord->allow_wildcard,
         ]);
 
-        return redirect()->route('sites.domains.index', $site)->with('success', "Domain {$domainRecord->name} has been updated.");
+        UpdateDomainJob::dispatch($domainRecord);
+
+        return redirect()->route('sites.domains.index', $site)->with('success', "Domain {$domainRecord->name} is being updated.");
     }
 
     public function destroy(Site $site, DomainRecord $domainRecord): RedirectResponse
