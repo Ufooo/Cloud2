@@ -6,6 +6,44 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Cloud is a server management and deployment platform built with Laravel 12, Inertia.js v2, and Vue 3. It manages server provisioning, sites, domains, SSL certificates, databases, and deployments via SSH.
 
+## Production Server
+
+The production instance runs at **netipar.cloud** on a DigitalOcean droplet.
+
+| Detail | Value |
+|--------|-------|
+| IP | `68.183.218.216` |
+| SSH | `ssh root@68.183.218.216` (key-based, no password) |
+| OS | Ubuntu 24.04 LTS |
+| PHP | `php8.4` (default `php` is 8.2 — always use `php8.4` explicitly) |
+| Nginx | 1.28.1 |
+| App path | `/home/netipar/netipar.cloud` (Zero-Downtime deployment) |
+| Current release | `/home/netipar/netipar.cloud/current` (symlink) |
+| Unix user | `netipar` |
+| Database | MySQL on localhost, database `netipar_cloud2`, user `netipar_cloud2` |
+| Queue | Redis, managed by Supervisor (workers: `netipar-*`) |
+| Artisan | `cd /home/netipar/netipar.cloud/current && php8.4 artisan ...` |
+| Tinker | `cd /home/netipar/netipar.cloud/current && php8.4 artisan tinker --no-interaction` |
+
+### Production SSH Quick Reference
+
+```bash
+# Connect
+ssh root@68.183.218.216
+
+# Run artisan command
+cd /home/netipar/netipar.cloud/current && php8.4 artisan <command>
+
+# Check queue workers
+supervisorctl status
+
+# Check Laravel logs
+tail -50 /home/netipar/netipar.cloud/current/storage/logs/laravel.log
+
+# MySQL query
+mysql netipar_cloud2 -e "SELECT ..."
+```
+
 ## Development Commands
 
 ```bash
