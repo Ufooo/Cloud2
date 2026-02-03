@@ -63,17 +63,23 @@ deploy_challenge() {
     echo "Deploying DNS-01 challenge for domain: $DOMAIN"
     echo "Creating TXT record at ${ACME_SUBDOMAIN}.${ACME_DNS_DOMAIN}"
 
-    # Delete any existing TXT records for this subdomain (from previous attempts or same-name authorizations)
-    EXISTING=$(curl -s -X GET "${CF_API_URL}/zones/${CF_ZONE_ID}/dns_records?type=TXT&name=${ACME_SUBDOMAIN}.${ACME_DNS_DOMAIN}" \
-        -H "Authorization: Bearer ${CF_API_TOKEN}" \
-        -H "Content-Type: application/json")
-
-    for EXISTING_ID in $(echo "$EXISTING" | grep -o '"id":"[^"]*"' | cut -d'"' -f4); do
-        echo "Removing existing TXT record: $EXISTING_ID"
-        curl -s -X DELETE "${CF_API_URL}/zones/${CF_ZONE_ID}/dns_records/${EXISTING_ID}" \
+    # Delete stale TXT records from previous failed attempts (not from current run)
+    RECORD_ID_FILE="/tmp/cf_records_${ACME_SUBDOMAIN}.txt"
+    if [ ! -f "$RECORD_ID_FILE" ]; then
+        # First call for this subdomain in this run - clean up any leftover records
+        EXISTING=$(curl -s -X GET "${CF_API_URL}/zones/${CF_ZONE_ID}/dns_records?type=TXT&name=${ACME_SUBDOMAIN}.${ACME_DNS_DOMAIN}" \
             -H "Authorization: Bearer ${CF_API_TOKEN}" \
-            -H "Content-Type: application/json" > /dev/null
-    done
+            -H "Content-Type: application/json")
+
+        for EXISTING_ID in $(echo "$EXISTING" | grep -o '"id":"[^"]*"' | cut -d'"' -f4); do
+            echo "Removing stale TXT record: $EXISTING_ID"
+            curl -s -X DELETE "${CF_API_URL}/zones/${CF_ZONE_ID}/dns_records/${EXISTING_ID}" \
+                -H "Authorization: Bearer ${CF_API_TOKEN}" \
+                -H "Content-Type: application/json" > /dev/null
+        done
+        # Initialize the record ID file
+        > "$RECORD_ID_FILE"
+    fi
 
     # Create TXT record via Cloudflare API
     RESPONSE=$(curl -s -X POST "${CF_API_URL}/zones/${CF_ZONE_ID}/dns_records" \
@@ -86,16 +92,21 @@ deploy_challenge() {
             \"ttl\": 60
         }")
 
-    # Check if successful
+    # Check if successful (also accept "identical record" as success for multi-authorization wildcard certs)
     SUCCESS=$(echo "$RESPONSE" | grep -o '"success":true')
     if [ -z "$SUCCESS" ]; then
+        DUPLICATE=$(echo "$RESPONSE" | grep -o '"code":81058')
+        if [ -n "$DUPLICATE" ]; then
+            echo "TXT record already exists with same content (duplicate authorization), continuing..."
+            return 0
+        fi
         echo "Failed to create DNS record: $RESPONSE"
         exit 1
     fi
 
-    # Store the record ID for cleanup (use domain-specific file)
+    # Append the record ID for cleanup (multiple records per subdomain for wildcard certs)
     RECORD_ID=$(echo "$RESPONSE" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4)
-    echo "$RECORD_ID" > "/tmp/cf_record_${ACME_SUBDOMAIN}.txt"
+    echo "$RECORD_ID" >> "$RECORD_ID_FILE"
 
     echo "TXT record created successfully (ID: $RECORD_ID)"
     echo "Waiting for DNS propagation..."
@@ -126,32 +137,31 @@ clean_challenge() {
 
     echo "Cleaning up DNS-01 challenge for domain: $DOMAIN"
 
-    # Get the stored record ID
-    RECORD_ID_FILE="/tmp/cf_record_${ACME_SUBDOMAIN}.txt"
+    # Get the stored record IDs (may contain multiple for wildcard certs)
+    RECORD_ID_FILE="/tmp/cf_records_${ACME_SUBDOMAIN}.txt"
     if [ -f "$RECORD_ID_FILE" ]; then
-        RECORD_ID=$(cat "$RECORD_ID_FILE")
-
-        # Delete TXT record via Cloudflare API
-        curl -s -X DELETE "${CF_API_URL}/zones/${CF_ZONE_ID}/dns_records/${RECORD_ID}" \
-            -H "Authorization: Bearer ${CF_API_TOKEN}" \
-            -H "Content-Type: application/json" > /dev/null
-
+        while IFS= read -r RECORD_ID; do
+            if [ -n "$RECORD_ID" ]; then
+                curl -s -X DELETE "${CF_API_URL}/zones/${CF_ZONE_ID}/dns_records/${RECORD_ID}" \
+                    -H "Authorization: Bearer ${CF_API_TOKEN}" \
+                    -H "Content-Type: application/json" > /dev/null
+                echo "TXT record cleaned up (ID: $RECORD_ID)"
+            fi
+        done < "$RECORD_ID_FILE"
         rm -f "$RECORD_ID_FILE"
-        echo "TXT record cleaned up successfully"
     else
-        # Fallback: Find and delete by name
-        echo "Record ID not found, searching by name..."
+        # Fallback: Find and delete all by name
+        echo "Record IDs not found, searching by name..."
         RECORDS=$(curl -s -X GET "${CF_API_URL}/zones/${CF_ZONE_ID}/dns_records?type=TXT&name=${ACME_SUBDOMAIN}.${ACME_DNS_DOMAIN}" \
             -H "Authorization: Bearer ${CF_API_TOKEN}" \
             -H "Content-Type: application/json")
 
-        RECORD_ID=$(echo "$RECORDS" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4)
-        if [ -n "$RECORD_ID" ]; then
+        for RECORD_ID in $(echo "$RECORDS" | grep -o '"id":"[^"]*"' | cut -d'"' -f4); do
             curl -s -X DELETE "${CF_API_URL}/zones/${CF_ZONE_ID}/dns_records/${RECORD_ID}" \
                 -H "Authorization: Bearer ${CF_API_TOKEN}" \
                 -H "Content-Type: application/json" > /dev/null
-            echo "TXT record found and cleaned up"
-        fi
+            echo "TXT record found and cleaned up (ID: $RECORD_ID)"
+        done
     fi
 }
 
