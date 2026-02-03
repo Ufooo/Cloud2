@@ -25,6 +25,7 @@ class BuildFrontendAssetsJob extends BaseSiteProvisionJob
             'buildCommand' => $this->site->build_command,
             'packageManager' => $this->site->package_manager,
             'hasRepository' => ! empty($this->site->repository),
+            'phpVersion' => $this->site->php_version?->version(),
         ])->render();
     }
 }

@@ -11,6 +11,13 @@ exit 0
 @else
 echo "Building frontend assets for {{ $site->domain }}..."
 
+@if($phpVersion)
+# Ensure the correct PHP version is used by build tools (e.g. Vite plugins calling php artisan)
+mkdir -p /tmp/site-{{ $site->id }}
+ln -sf /usr/bin/php{{ $phpVersion }} /tmp/site-{{ $site->id }}/php
+export PATH="/tmp/site-{{ $site->id }}:$PATH"
+@endif
+
 APPLICATION_PATH="{{ $applicationPath }}"
 
 cd "$APPLICATION_PATH"
