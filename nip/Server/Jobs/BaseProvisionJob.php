@@ -95,7 +95,11 @@ abstract class BaseProvisionJob implements ShouldQueue
             if ($result->isSuccessful()) {
                 $this->handleSuccess($result);
             } else {
-                throw new Exception("Script execution failed with exit code {$result->exitCode}");
+                // Include last 2000 chars of output in error message for visibility
+                $errorOutput = strlen($result->output) > 2000
+                    ? '...'.substr($result->output, -2000)
+                    : $result->output;
+                throw new Exception("Script execution failed with exit code {$result->exitCode}:\n{$errorOutput}");
             }
 
         } catch (Exception $e) {
