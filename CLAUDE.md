@@ -160,6 +160,11 @@ resources/
 - Use model factories, not manual data
 - Tests in `tests/Feature/` (most) and `tests/Unit/`
 
+### Git Commits
+- **NEVER commit without explicit user permission**
+- **ALWAYS use the `/commit` command** for all commits
+- Do not suggest or offer to commit — wait for the user to explicitly request it
+
 ## Module ServiceProviders
 
 Registered in `bootstrap/providers.php`. Each module's ServiceProvider:
