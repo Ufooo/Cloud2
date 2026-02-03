@@ -46,12 +46,20 @@ class RenewCertificateJob extends BaseProvisionJob
     protected function handleSuccess(ExecutionResult $result): void
     {
         $expiresAt = $this->parseCertificateExpiry($result->output);
+        $issuedAt = now();
 
         $this->certificate->update([
             'status' => CertificateStatus::Installed,
-            'issued_at' => now(),
+            'issued_at' => $issuedAt,
             'expires_at' => $expiresAt,
         ]);
+
+        // Update all clone certificates that reference this source certificate
+        Certificate::where('source_certificate_id', $this->certificate->id)
+            ->update([
+                'issued_at' => $issuedAt,
+                'expires_at' => $expiresAt,
+            ]);
     }
 
     protected function handleFailure(\Throwable $exception): void

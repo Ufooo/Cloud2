@@ -98,6 +98,8 @@ class CertificateController extends Controller
             $certificateData['source_certificate_id'] = $sourceCert->id;
             $certificateData['path'] = $sourceCert->path;
             $certificateData['status'] = CertificateStatus::Installed;
+            $certificateData['expires_at'] = $sourceCert->expires_at;
+            $certificateData['issued_at'] = $sourceCert->issued_at;
         }
 
         $certificate = $site->certificates()->create($certificateData);
