@@ -125,7 +125,7 @@ supervisorctl reread
 supervisorctl update
 @endif
 
-@if($shouldDeletePool)
+@if($shouldDeletePool && $phpVersion)
 #
 # Remove Isolated PHP-FPM Pool (no other sites using this user)
 #
@@ -139,6 +139,8 @@ fi
 if [ -S "/var/run/php/php{{ $phpVersion }}-fpm-{{ $user }}.sock" ]; then
     rm -f /var/run/php/php{{ $phpVersion }}-fpm-{{ $user }}.sock
 fi
+@elseif($shouldDeletePool && !$phpVersion)
+echo "Skipping PHP-FPM pool removal (no PHP version configured for this site)"
 @else
 echo "Keeping PHP-FPM pool for user {{ $user }} (other sites still use it)"
 @endif

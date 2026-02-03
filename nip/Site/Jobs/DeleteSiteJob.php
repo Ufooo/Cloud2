@@ -78,6 +78,9 @@ class DeleteSiteJob extends BaseProvisionJob
             'server_id' => $this->site->server_id,
             'error' => $exception->getMessage(),
         ]);
+
+        // Reset site status so deletion can be retried
+        $this->site->update(['status' => \Nip\Site\Enums\SiteStatus::Installed]);
     }
 
     /**
