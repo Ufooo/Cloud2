@@ -17,3 +17,5 @@ Schedule::command('servers:collect-metrics')->everyFiveMinutes();
 Schedule::command('security:scan')->everyMinute()->withoutOverlapping();
 
 Schedule::command('security:cleanup')->dailyAt('03:00');
+
+Schedule::command('openvpn:sync')->everyMinute()->withoutOverlapping();
