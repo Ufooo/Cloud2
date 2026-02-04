@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class OpenVpnClient extends Model
 {
+    protected $table = 'openvpn_clients';
+
     protected $fillable = [
         'common_name',
         'real_address',
