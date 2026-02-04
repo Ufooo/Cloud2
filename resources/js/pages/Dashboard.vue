@@ -5,6 +5,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import ExpiringCertificatesWidget from './Dashboard/partials/ExpiringCertificatesWidget.vue';
 import ServersWidget from './Dashboard/partials/ServersWidget.vue';
+import VpnClientsWidget from './Dashboard/partials/VpnClientsWidget.vue';
 
 interface ServerWidget {
     id: number;
@@ -42,12 +43,31 @@ interface ExpiringCertificate {
     canRenew: boolean;
 }
 
+interface VpnClient {
+    id: number;
+    commonName: string;
+    realAddress: string;
+    virtualAddress: string;
+    bytesReceived: number;
+    bytesSent: number;
+    bytesReceivedFormatted: string;
+    bytesSentFormatted: string;
+    connectedSince: string;
+    connectedSinceHuman: string;
+    isOnline: boolean;
+    lastSeenAt: string;
+    lastSeenAtHuman: string;
+}
+
 interface Props {
     servers: {
         data: ServerWidget[];
     };
     expiringCertificates: {
         data: ExpiringCertificate[];
+    };
+    vpnClients: {
+        data: VpnClient[];
     };
 }
 
@@ -69,11 +89,12 @@ const breadcrumbs: BreadcrumbItem[] = [
             <!-- Servers Widget -->
             <ServersWidget :servers="servers.data" />
 
-            <!-- Certificates Widget -->
-            <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <!-- Bottom Widgets Grid -->
+            <div class="grid items-start gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <ExpiringCertificatesWidget
                     :certificates="expiringCertificates.data"
                 />
+                <VpnClientsWidget :clients="vpnClients.data" />
             </div>
         </div>
     </AppLayout>
