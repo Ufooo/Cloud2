@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Nip\Server\Http\Controllers\ProvisionScriptController;
 use Nip\Site\Http\Controllers\ServerSiteController;
 use Nip\Site\Http\Controllers\SiteController;
+use Nip\Site\Http\Controllers\SiteEnvironmentController;
 
 Route::middleware(['web', 'auth', 'verified'])->group(function () {
     // Global sites list
@@ -17,6 +18,12 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
     // Site-specific routes
     Route::get('/sites/{site}', [SiteController::class, 'show'])->name('sites.show');
     Route::get('/sites/{site}/settings', [SiteController::class, 'settings'])->name('sites.settings');
+
+    // Environment management
+    Route::get('/sites/{site}/environment', [SiteEnvironmentController::class, 'show'])->name('sites.environment');
+    Route::get('/sites/{site}/environment/content', [SiteEnvironmentController::class, 'get'])->name('sites.environment.get');
+    Route::put('/sites/{site}/environment', [SiteEnvironmentController::class, 'update'])->name('sites.environment.update');
+
     Route::get('/sites/{site}/failed-scripts', [ProvisionScriptController::class, 'failedForSite'])
         ->name('sites.failed-scripts');
     Route::match(['put', 'patch'], '/sites/{site}', [SiteController::class, 'update'])->name('sites.update');

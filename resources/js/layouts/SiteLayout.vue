@@ -26,6 +26,7 @@ import {
     Clock,
     Database,
     ExternalLink,
+    FileCode2,
     GitBranch,
     Globe,
     Layers,
@@ -88,6 +89,13 @@ const navItems = computed<NavItem[]>(() =>
             href: `/sites/${props.site.slug}/deployments`,
             icon: Rocket,
         },
+        !isWordPress.value && !isHtml.value
+            ? {
+                  title: 'Environment',
+                  href: `/sites/${props.site.slug}/environment`,
+                  icon: FileCode2,
+              }
+            : null,
         {
             title: 'Databases',
             href: databasesIndex.url(props.site),

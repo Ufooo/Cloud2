@@ -55,6 +55,8 @@ class SiteData extends Data
         public ?string $deployHookUrl,
         public int $deploymentRetention,
         public bool $zeroDowntime,
+        public bool $envClearConfigCache,
+        public bool $envRestartQueue,
         public ?string $healthcheckEndpoint,
         public ?string $deployKey,
         /** @var string[]|null */
@@ -118,6 +120,8 @@ class SiteData extends Data
             deployHookUrl: $site->getDeployHookUrl(),
             deploymentRetention: $site->deployment_retention ?? 5,
             zeroDowntime: $site->zero_downtime ?? false,
+            envClearConfigCache: $site->env_clear_config_cache ?? false,
+            envRestartQueue: $site->env_restart_queue ?? false,
             healthcheckEndpoint: $site->healthcheck_endpoint,
             deployKey: $site->deploy_key,
             detectedPackages: $site->detected_packages,
