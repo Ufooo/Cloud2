@@ -54,6 +54,19 @@ sed -i "s/worker_processes.*/worker_processes auto;/" /etc/nginx/nginx.conf
 sed -i "s/# multi_accept.*/multi_accept on;/" /etc/nginx/nginx.conf
 sed -i "s/# server_names_hash_bucket_size.*/server_names_hash_bucket_size 128;/" /etc/nginx/nginx.conf
 
+# Add custom log format with $host for fail2ban site tracking
+sed -i '/##\s*$/{N;/Logging Settings/a\\n\tlog_format combined_host '"'"'$remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent" $host'"'"';
+}' /etc/nginx/nginx.conf
+sed -i 's|access_log /var/log/nginx/access.log;|access_log /var/log/nginx/access.log combined_host;|' /etc/nginx/nginx.conf
+
+# Configure Rate Limiting Zones
+
+cat > /etc/nginx/conf.d/rate-limiting.conf << 'EOF'
+# Rate limiting zones for fail2ban integration
+limit_req_zone $binary_remote_addr zone=general:10m rate=10r/s;
+limit_req_zone $binary_remote_addr zone=login:10m rate=3r/m;
+EOF
+
 # Configure Gzip
 
 cat > /etc/nginx/conf.d/gzip.conf << EOF

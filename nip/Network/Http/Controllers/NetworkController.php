@@ -48,7 +48,7 @@ class NetworkController extends Controller
         Gate::authorize('update', $server);
 
         $validated = $request->validate([
-            'jail' => ['required', 'string', 'in:sshd,recidive'],
+            'jail' => ['required', 'string', 'regex:/^[a-z][a-z0-9\-]*$/'],
             'ip' => ['required', 'ip'],
         ]);
 

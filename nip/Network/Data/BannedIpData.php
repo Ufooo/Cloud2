@@ -21,6 +21,10 @@ class BannedIpData extends Data
         public bool $isPermanent,
         public ?string $country = null,
         public ?string $countryCode = null,
+        /** @var array<int, string> */
+        public array $targetedHosts = [],
+        /** @var array<int, string> */
+        public array $attemptedUsers = [],
     ) {}
 
     /** @return array<int, self> */

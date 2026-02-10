@@ -1,5 +1,27 @@
     apt-get install -y --force-yes unattended-upgrades
 
+# Configure Fail2ban custom filter for nginx probe/scanner detection
+cat > /etc/fail2ban/filter.d/nginx-probe-scanner.conf << 'EOF'
+# Fail2Ban filter for nginx probe/scanner detection
+# Catches PHP backdoor probes, .env access attempts, WordPress exploits
+
+[Definition]
+
+failregex = ^<HOST> \- \S+ \[\] \"(GET|POST|HEAD) /\.env\b
+            ^<HOST> \- \S+ \[\] \"(GET|POST|HEAD) /[^\"]*\.env\b
+            ^<HOST> \- \S+ \[\] \"(GET|POST|HEAD) /wp-(admin|login|content|includes)/[^\"]*\.php
+            ^<HOST> \- \S+ \[\] \"(GET|POST|HEAD) /[a-z0-9]{1,8}\.php\b[^\"]*\" (301|404|403|444|400)
+            ^<HOST> \- \S+ \[\] \"(GET|POST|HEAD) /[^\"]*(?:phpinfo|setup-config|filemanager|wp_filemanager)[^\"]*\"
+
+ignoreregex =
+
+datepattern = {^LN-BEG}%%ExY(?P<_sep>[-/.])%%m(?P=_sep)%%d[T ]%%H:%%M:%%S(?:[.,]%%f)?(?:\s*%%z)?
+              ^[^\[]*\[({DATE})
+              {^LN-BEG}
+
+journalmatch = _SYSTEMD_UNIT=nginx.service + _COMM=nginx
+EOF
+
 # Configure Fail2ban with hardened settings
 cat > /etc/fail2ban/jail.local << 'EOF'
 [DEFAULT]
@@ -29,6 +51,46 @@ banaction = %(banaction_allports)s
 bantime = 1w
 findtime = 1d
 maxretry = 3
+
+# Nginx: malformed/bad requests (400 errors)
+[nginx-bad-request]
+enabled = true
+port = http,https
+logpath = /var/log/nginx/access.log
+backend = auto
+maxretry = 3
+bantime = 24h
+findtime = 5m
+
+# Nginx: bot scanner 404 probes
+[nginx-botsearch]
+enabled = true
+port = http,https
+logpath = /var/log/nginx/access.log
+backend = auto
+maxretry = 3
+bantime = 24h
+findtime = 10m
+
+# Nginx: rate limit violations
+[nginx-limit-req]
+enabled = true
+port = http,https
+logpath = /var/log/nginx/error.log
+backend = auto
+maxretry = 5
+bantime = 1h
+findtime = 1m
+
+# Nginx: PHP/env probe scanner - strictest
+[nginx-probe-scanner]
+enabled = true
+port = http,https
+logpath = /var/log/nginx/access.log
+backend = auto
+maxretry = 2
+bantime = 1w
+findtime = 1m
 EOF
 
 systemctl restart fail2ban

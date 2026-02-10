@@ -346,6 +346,20 @@ function getBadgeVariant(
                                         : 'violations'
                                 }}
                             </p>
+                            <p
+                                v-if="Object.values(ban.targetedHosts).length > 0"
+                                class="text-sm text-muted-foreground"
+                            >
+                                Targeted:
+                                {{ Object.values(ban.targetedHosts).join(', ') }}
+                            </p>
+                            <p
+                                v-if="Object.values(ban.attemptedUsers).length > 0"
+                                class="text-sm text-muted-foreground"
+                            >
+                                Users:
+                                {{ Object.values(ban.attemptedUsers).join(', ') }}
+                            </p>
                         </div>
                         <div class="flex items-center gap-2">
                             <Badge variant="destructive">

@@ -29,7 +29,90 @@ class Fail2banService
             return [];
         }
 
-        return BannedIpData::fromSqliteOutput($result->getTrimmedOutput());
+        $bans = BannedIpData::fromSqliteOutput($result->getTrimmedOutput());
+
+        $this->enrichWithTargetedHosts($server, $bans);
+        $this->enrichWithAttemptedUsers($server, $bans);
+
+        return $bans;
+    }
+
+    /** @param  array<int, BannedIpData>  $bans */
+    private function enrichWithTargetedHosts(Server $server, array $bans): void
+    {
+        $nginxBans = array_filter($bans, fn (BannedIpData $ban) => str_starts_with($ban->jail, 'nginx-'));
+
+        if (empty($nginxBans)) {
+            return;
+        }
+
+        $ips = array_unique(array_map(fn (BannedIpData $ban) => $ban->ip, $nginxBans));
+        $grepPattern = implode('|', array_map(fn (string $ip) => preg_quote($ip, '/'), $ips));
+
+        $result = $this->ssh->exec(
+            "grep -E '^({$grepPattern}) ' /var/log/nginx/access.log 2>/dev/null | awk '{print \$1, \$NF}' | sort -u"
+        );
+
+        if ($result->failed()) {
+            return;
+        }
+
+        $hostMap = [];
+
+        foreach (explode("\n", trim($result->getTrimmedOutput())) as $line) {
+            $parts = explode(' ', trim($line), 2);
+
+            if (count($parts) !== 2 || empty($parts[1]) || $parts[1] === '-') {
+                continue;
+            }
+
+            $hostMap[$parts[0]][] = $parts[1];
+        }
+
+        foreach ($bans as $ban) {
+            if (isset($hostMap[$ban->ip])) {
+                $ban->targetedHosts = array_values(array_unique($hostMap[$ban->ip]));
+            }
+        }
+    }
+
+    /** @param  array<int, BannedIpData>  $bans */
+    private function enrichWithAttemptedUsers(Server $server, array $bans): void
+    {
+        $sshBans = array_filter($bans, fn (BannedIpData $ban) => $ban->jail === 'sshd');
+
+        if (empty($sshBans)) {
+            return;
+        }
+
+        $ips = array_unique(array_map(fn (BannedIpData $ban) => $ban->ip, $sshBans));
+        $grepPattern = implode('|', array_map(fn (string $ip) => preg_quote($ip, '/'), $ips));
+
+        $result = $this->ssh->exec(
+            "grep -E 'Invalid user .* from ({$grepPattern}) ' /var/log/auth.log 2>/dev/null | sed 's/.*Invalid user \\(.*\\) from \\([^ ]*\\).*/\\2 \\1/' | sort -u"
+        );
+
+        if ($result->failed()) {
+            return;
+        }
+
+        $userMap = [];
+
+        foreach (explode("\n", trim($result->getTrimmedOutput())) as $line) {
+            $parts = explode(' ', trim($line), 2);
+
+            if (count($parts) !== 2 || empty($parts[1])) {
+                continue;
+            }
+
+            $userMap[$parts[0]][] = $parts[1];
+        }
+
+        foreach ($bans as $ban) {
+            if (isset($userMap[$ban->ip])) {
+                $ban->attemptedUsers = array_values(array_unique($userMap[$ban->ip]));
+            }
+        }
     }
 
     /**
