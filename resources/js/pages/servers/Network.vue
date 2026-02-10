@@ -19,6 +19,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
     Select,
     SelectContent,
     SelectItem,
@@ -347,18 +353,56 @@ function getBadgeVariant(
                                 }}
                             </p>
                             <p
-                                v-if="Object.values(ban.targetedHosts).length > 0"
-                                class="text-sm text-muted-foreground"
+                                v-if="Object.values(ban.attackRequests).length > 0"
+                                class="text-sm font-mono text-muted-foreground"
                             >
-                                Targeted:
-                                {{ Object.values(ban.targetedHosts).join(', ') }}
+                                {{ Object.values(ban.attackRequests)[0] }}
+                                <TooltipProvider
+                                    v-if="Object.values(ban.attackRequests).length > 1"
+                                >
+                                    <Tooltip>
+                                        <TooltipTrigger as-child>
+                                            <span class="cursor-help text-xs text-muted-foreground/70">
+                                                + {{ Object.values(ban.attackRequests).length - 1 }} more
+                                            </span>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="bottom" align="start" class="max-h-64 overflow-y-auto">
+                                            <p
+                                                v-for="req in Object.values(ban.attackRequests)"
+                                                :key="req"
+                                                class="font-mono text-xs"
+                                            >
+                                                {{ req }}
+                                            </p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
                             </p>
                             <p
                                 v-if="Object.values(ban.attemptedUsers).length > 0"
                                 class="text-sm text-muted-foreground"
                             >
-                                Users:
-                                {{ Object.values(ban.attemptedUsers).join(', ') }}
+                                Users: {{ Object.values(ban.attemptedUsers)[0] }}
+                                <TooltipProvider
+                                    v-if="Object.values(ban.attemptedUsers).length > 1"
+                                >
+                                    <Tooltip>
+                                        <TooltipTrigger as-child>
+                                            <span class="cursor-help text-xs text-muted-foreground/70">
+                                                + {{ Object.values(ban.attemptedUsers).length - 1 }} more
+                                            </span>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="bottom" align="start" class="max-h-64 overflow-y-auto">
+                                            <p
+                                                v-for="user in Object.values(ban.attemptedUsers)"
+                                                :key="user"
+                                                class="text-xs"
+                                            >
+                                                {{ user }}
+                                            </p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
                             </p>
                         </div>
                         <div class="flex items-center gap-2">

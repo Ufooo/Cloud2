@@ -22,7 +22,7 @@ class BannedIpData extends Data
         public ?string $country = null,
         public ?string $countryCode = null,
         /** @var array<int, string> */
-        public array $targetedHosts = [],
+        public array $attackRequests = [],
         /** @var array<int, string> */
         public array $attemptedUsers = [],
     ) {}

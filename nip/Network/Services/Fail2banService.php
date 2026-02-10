@@ -31,14 +31,14 @@ class Fail2banService
 
         $bans = BannedIpData::fromSqliteOutput($result->getTrimmedOutput());
 
-        $this->enrichWithTargetedHosts($server, $bans);
+        $this->enrichWithAttackRequests($server, $bans);
         $this->enrichWithAttemptedUsers($server, $bans);
 
         return $bans;
     }
 
     /** @param  array<int, BannedIpData>  $bans */
-    private function enrichWithTargetedHosts(Server $server, array $bans): void
+    private function enrichWithAttackRequests(Server $server, array $bans): void
     {
         $nginxBans = array_filter($bans, fn (BannedIpData $ban) => str_starts_with($ban->jail, 'nginx-'));
 
@@ -50,28 +50,29 @@ class Fail2banService
         $grepPattern = implode('|', array_map(fn (string $ip) => preg_quote($ip, '/'), $ips));
 
         $result = $this->ssh->exec(
-            "grep -E '^({$grepPattern}) ' /var/log/nginx/access.log 2>/dev/null | awk '{print \$1, \$NF}' | sort -u"
+            "grep -E '^({$grepPattern}) ' /var/log/nginx/access.log 2>/dev/null | awk '{print \$1, \$NF, \$7}' | sort -u | head -200"
         );
 
         if ($result->failed()) {
             return;
         }
 
-        $hostMap = [];
+        $requestMap = [];
 
         foreach (explode("\n", trim($result->getTrimmedOutput())) as $line) {
-            $parts = explode(' ', trim($line), 2);
+            $parts = explode(' ', trim($line), 3);
 
-            if (count($parts) !== 2 || empty($parts[1]) || $parts[1] === '-') {
+            if (count($parts) !== 3 || empty($parts[2])) {
                 continue;
             }
 
-            $hostMap[$parts[0]][] = $parts[1];
+            [$ip, $host, $path] = $parts;
+            $requestMap[$ip][] = "{$host}{$path}";
         }
 
         foreach ($bans as $ban) {
-            if (isset($hostMap[$ban->ip])) {
-                $ban->targetedHosts = array_values(array_unique($hostMap[$ban->ip]));
+            if (isset($requestMap[$ban->ip])) {
+                $ban->attackRequests = array_values(array_unique($requestMap[$ban->ip]));
             }
         }
     }

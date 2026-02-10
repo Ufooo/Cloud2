@@ -10,7 +10,7 @@ remainingTimeHuman: string;
 isPermanent: boolean;
 country: string | null;
 countryCode: string | null;
-targetedHosts: { [key: number]: string };
+attackRequests: { [key: number]: string };
 attemptedUsers: { [key: number]: string };
 };
 export type CertificateData = {
