@@ -19,7 +19,8 @@
         "laravel/wayfinder": "^0.1.9",
         "phpseclib/phpseclib": "~3.0",
         "spatie/laravel-data": "^4.18",
-        "spatie/laravel-sluggable": "^3.7"
+        "spatie/laravel-sluggable": "^3.7",
+        "stevebauman/location": "^7.6"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

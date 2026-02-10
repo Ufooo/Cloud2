@@ -4,7 +4,9 @@ namespace Nip\Network\Http\Controllers;
 
 use App\Http\Controllers\Concerns\LoadsServerPermissions;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -15,6 +17,7 @@ use Nip\Network\Http\Resources\FirewallRuleResource;
 use Nip\Network\Jobs\RemoveFirewallRuleJob;
 use Nip\Network\Jobs\SyncFirewallRuleJob;
 use Nip\Network\Models\FirewallRule;
+use Nip\Network\Services\Fail2banService;
 use Nip\Server\Data\ServerData;
 use Nip\Server\Models\Server;
 
@@ -22,7 +25,7 @@ class NetworkController extends Controller
 {
     use LoadsServerPermissions;
 
-    public function index(Server $server): Response
+    public function index(Server $server, Fail2banService $fail2ban): Response
     {
         Gate::authorize('view', $server);
 
@@ -36,7 +39,42 @@ class NetworkController extends Controller
             'server' => ServerData::from($server),
             'rules' => FirewallRuleResource::collection($rules),
             'ruleTypes' => RuleType::options(),
+            'bannedIps' => Inertia::defer(fn () => $fail2ban->getBannedIps($server)),
         ]);
+    }
+
+    public function unban(Request $request, Server $server, Fail2banService $fail2ban): RedirectResponse
+    {
+        Gate::authorize('update', $server);
+
+        $validated = $request->validate([
+            'jail' => ['required', 'string', 'in:sshd,recidive'],
+            'ip' => ['required', 'ip'],
+        ]);
+
+        $success = $fail2ban->unbanIp($server, $validated['jail'], $validated['ip']);
+
+        if (! $success) {
+            return redirect()
+                ->route('servers.network', $server)
+                ->with('error', "Failed to unban IP {$validated['ip']}.");
+        }
+
+        return redirect()
+            ->route('servers.network', $server)
+            ->with('success', "IP {$validated['ip']} has been unbanned.");
+    }
+
+    public function geoip(Request $request, Server $server, Fail2banService $fail2ban): JsonResponse
+    {
+        Gate::authorize('view', $server);
+
+        $validated = $request->validate([
+            'ips' => ['required', 'array', 'max:500'],
+            'ips.*' => ['required', 'ip'],
+        ]);
+
+        return response()->json($fail2ban->resolveGeoIp($validated['ips']));
     }
 
     public function store(StoreFirewallRuleRequest $request, Server $server): RedirectResponse

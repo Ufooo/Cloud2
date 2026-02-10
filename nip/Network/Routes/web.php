@@ -9,6 +9,8 @@ Route::middleware(['web', 'auth'])->group(function () {
             Route::get('/', [NetworkController::class, 'index'])->name('servers.network');
             Route::post('/rules', [NetworkController::class, 'store'])->name('servers.network.rules.store');
             Route::delete('/rules/{rule}', [NetworkController::class, 'destroy'])->name('servers.network.rules.destroy');
+            Route::post('/unban', [NetworkController::class, 'unban'])->name('servers.network.unban');
+            Route::post('/geoip', [NetworkController::class, 'geoip'])->name('servers.network.geoip');
         });
     });
 });
