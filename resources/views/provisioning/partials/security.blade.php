@@ -34,8 +34,8 @@ maxretry = 3
 # Detection window: 10 minutes
 findtime = 10m
 
-# Whitelist localhost
-ignoreip = 127.0.0.1/8 ::1
+# Whitelist localhost, server's own IP, and the Cloud platform IP
+ignoreip = 127.0.0.1/8 ::1 {{ $server->ip_address }}@if($server->private_ip_address) {{ ' ' . $server->private_ip_address }}@endif @if(config('services.platform.ip')){{ ' ' . config('services.platform.ip') }}@endif
 
 [sshd]
 enabled = true
