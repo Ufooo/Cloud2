@@ -4,6 +4,17 @@ server {
 
 @if($allowWildcard)
     server_name {{ $domain }} *.{{ $domain }};
+@if($wwwRedirectType->value === 'from_www')
+
+    if ($host != {{ $domain }}) {
+        return 301 $scheme://{{ $domain }}$request_uri;
+    }
+@elseif($wwwRedirectType->value === 'to_www')
+
+    if ($host != www.{{ $domain }}) {
+        return 301 $scheme://www.{{ $domain }}$request_uri;
+    }
+@endif
 @else
 @if($wwwRedirectType->value === 'from_www')
     server_name {{ $domain }};
@@ -24,10 +35,22 @@ server {
     # Site common configuration
     include /etc/nginx/netipar-conf/{{ $site->domain }}/site.conf;
 
-    # Site-specific Nginx includes
-    include {{ $applicationPath }}/nginx.conf*;
+
+    # Static assets - cache for 7 days
+    location ~* \.(ico|png|jpg|jpeg|gif|webp|svg|woff2|woff|ttf|eot)$ {
+        expires 7d;
+        add_header Cache-Control "public";
+        access_log off;
+    }
 
 @if($siteType->isPhpBased())
+    # Vite-built assets have content hashes - cache forever
+    location /build/assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+
     location / {
         try_files $uri $uri/ /index.php?$query_string;
     }
