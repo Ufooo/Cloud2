@@ -5,7 +5,6 @@ cd $NIP_RELEASE_DIRECTORY
 $NIP_COMPOSER install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
 if [ -f artisan ]; then
-    $NIP_PHP artisan optimize:clear
     $NIP_PHP artisan optimize
     $NIP_PHP artisan storage:link
     $NIP_PHP artisan migrate --force
