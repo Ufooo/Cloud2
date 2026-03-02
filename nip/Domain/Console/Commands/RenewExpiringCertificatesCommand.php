@@ -25,7 +25,6 @@ class RenewExpiringCertificatesCommand extends Command
             ->where('active', true)
             ->whereNotNull('expires_at')
             ->where('expires_at', '<=', $expiryThreshold)
-            ->where('expires_at', '>', now())
             ->get();
 
         if ($certificates->isEmpty()) {
@@ -34,7 +33,7 @@ class RenewExpiringCertificatesCommand extends Command
             return self::SUCCESS;
         }
 
-        $this->info("Found {$certificates->count()} certificate(s) expiring within {$days} days.");
+        $this->info("Found {$certificates->count()} certificate(s) expiring within {$days} days (including already expired).");
 
         foreach ($certificates as $certificate) {
             $daysUntilExpiry = (int) now()->diffInDays($certificate->expires_at);
