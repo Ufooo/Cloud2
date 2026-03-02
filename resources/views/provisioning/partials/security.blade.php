@@ -1,17 +1,19 @@
     apt-get install -y --force-yes unattended-upgrades
 
 # Configure Fail2ban custom filter for nginx probe/scanner detection
+# Only matches requests that return error codes (404/403/400/444) - not legitimate 200 responses
 cat > /etc/fail2ban/filter.d/nginx-probe-scanner.conf << 'EOF'
 # Fail2Ban filter for nginx probe/scanner detection
-# Catches PHP backdoor probes, .env access attempts, WordPress exploits
+# Catches .env access, PHP backdoor probes, WordPress exploit attempts
+# Only triggers on failed requests (non-200) to avoid banning legitimate users
 
 [Definition]
 
-failregex = ^<HOST> \- \S+ \[\] \"(GET|POST|HEAD) /\.env\b
-            ^<HOST> \- \S+ \[\] \"(GET|POST|HEAD) /[^\"]*\.env\b
-            ^<HOST> \- \S+ \[\] \"(GET|POST|HEAD) /wp-(admin|login|content|includes)/[^\"]*\.php
-            ^<HOST> \- \S+ \[\] \"(GET|POST|HEAD) /[a-z0-9]{1,8}\.php\b[^\"]*\" (301|404|403|444|400)
-            ^<HOST> \- \S+ \[\] \"(GET|POST|HEAD) /[^\"]*(?:phpinfo|setup-config|filemanager|wp_filemanager)[^\"]*\"
+failregex = ^<HOST> \- \S+ \[\] \"(GET|POST|HEAD) /\.env\b[^\"]*\" (400|403|404|444)
+            ^<HOST> \- \S+ \[\] \"(GET|POST|HEAD) /[^\"]*\.env\b[^\"]*\" (400|403|404|444)
+            ^<HOST> \- \S+ \[\] \"(GET|POST|HEAD) /wp-(admin|login|content|includes)/[^\"]*\.php[^\"]*\" (400|403|404|444)
+            ^<HOST> \- \S+ \[\] \"(GET|POST|HEAD) /[a-z0-9]{1,8}\.php\b[^\"]*\" (301|400|403|404|444)
+            ^<HOST> \- \S+ \[\] \"(GET|POST|HEAD) /[^\"]*(?:phpinfo|setup-config|filemanager|wp_filemanager)[^\"]*\" (400|403|404|444)
 
 ignoreregex =
 
@@ -82,7 +84,7 @@ maxretry = 5
 bantime = 1h
 findtime = 1m
 
-# Nginx: PHP/env probe scanner - strictest
+# Nginx: PHP/env probe scanner - only failed requests (non-200)
 [nginx-probe-scanner]
 enabled = true
 port = http,https

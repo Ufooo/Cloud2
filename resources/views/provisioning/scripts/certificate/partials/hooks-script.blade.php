@@ -9,37 +9,51 @@ cat > "$LE_DIR/hooks/netipar.sh" << 'HOOKEOF'
 
 SITE_CONF_DIR="{{ $siteConfDir }}"
 
-HOOK_NGINX_CONF="$(cat << 'NGINXHOOK'
-location ^~ /.well-known/acme-challenge {
-    auth_basic off;
-    allow all;
-    alias {{ $wellknown }};
-    try_files $uri =404;
-    default_type "text/plain";
-}
-NGINXHOOK
-)"
-
 deploy_challenge() {
     local FQDN="$1"
 
     echo "Deploying HTTP-01 challenge configuration..."
 
-    # Create letsencrypt.conf in site-level server directory (included by site.conf)
-    mkdir -p "$SITE_CONF_DIR/server"
-    printf '%s\n' "$HOOK_NGINX_CONF" > "$SITE_CONF_DIR/server/letsencrypt.conf"
+    # Create a standalone HTTP server block so the challenge is served on port 80
+    # regardless of whether the site's nginx config has a port 80 listener
+    cat > "/etc/nginx/sites-enabled/acme-challenge-${FQDN}.conf" << NGINXEOF
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${FQDN};
+
+    location ^~ /.well-known/acme-challenge {
+        auth_basic off;
+        allow all;
+        alias {{ $wellknown }};
+        try_files \$uri =404;
+        default_type "text/plain";
+    }
+
+    location / {
+        return 404;
+    }
+}
+NGINXEOF
 
     nginx -t && service nginx reload
     sleep 5
 }
 
 clean_challenge() {
+    local FQDN="$1"
+
     echo "Cleaning up ACME challenge configuration..."
 
-    # Remove letsencrypt.conf from site-level server directory
+    # Remove standalone challenge server block
+    if [ -f "/etc/nginx/sites-enabled/acme-challenge-${FQDN}.conf" ]; then
+        rm "/etc/nginx/sites-enabled/acme-challenge-${FQDN}.conf"
+        echo "  Removed ACME config"
+    fi
+
+    # Also clean up legacy server-include style config if present
     if [ -f "$SITE_CONF_DIR/server/letsencrypt.conf" ]; then
         rm "$SITE_CONF_DIR/server/letsencrypt.conf"
-        echo "  Removed ACME config"
     fi
 
     nginx -t && service nginx reload
