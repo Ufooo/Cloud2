@@ -22,7 +22,7 @@ class SSHService
     public function connect(Server $server, ?string $asUser = null): self
     {
         $this->server = $server;
-        $this->connectedUser = $asUser ?? $server->ssh_user ?? 'root';
+        $this->connectedUser = $asUser ?? 'root';
         $this->establishConnection();
 
         return $this;
@@ -33,9 +33,25 @@ class SSHService
         return $this->connectedUser;
     }
 
+    private function connectionUser(): string
+    {
+        return $this->server->ssh_user ?? $this->connectedUser;
+    }
+
+    private function hasJumpHost(): bool
+    {
+        return (bool) $this->server->jump_address;
+    }
+
+    private function usesSudo(): bool
+    {
+        return (bool) $this->server->ssh_user;
+    }
+
     private function establishConnection(): void
     {
         $lastException = null;
+        $connectionUser = $this->connectionUser();
 
         for ($attempt = 1; $attempt <= $this->maxRetries; $attempt++) {
             try {
@@ -48,11 +64,11 @@ class SSHService
 
                 $privateKey = $this->getPrivateKey();
 
-                if ($this->connection->login($this->connectedUser, $privateKey)) {
+                if ($this->connection->login($connectionUser, $privateKey)) {
                     return;
                 }
 
-                throw new Exception("SSH authentication failed for user {$this->connectedUser}");
+                throw new Exception("SSH authentication failed for user {$connectionUser}");
             } catch (Exception $e) {
                 $lastException = $e;
 
@@ -63,7 +79,7 @@ class SSHService
         }
 
         throw new SSHConnectionException(
-            "Failed to connect to server {$this->server->ip_address} as {$this->connectedUser} after {$this->maxRetries} attempts",
+            "Failed to connect to server {$this->server->ip_address} as {$connectionUser} after {$this->maxRetries} attempts",
             previous: $lastException
         );
     }
@@ -79,6 +95,19 @@ class SSHService
         return PublicKeyLoader::loadPrivateKey($privateKeyString);
     }
 
+    private function buildCommand(string $command): string
+    {
+        if (! $this->hasJumpHost()) {
+            return $command;
+        }
+
+        $port = $this->server->jump_port ?? 22;
+        $user = $this->server->jump_user;
+        $address = $this->server->jump_address;
+
+        return "ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 -p {$port} {$user}@{$address} ".escapeshellarg($command);
+    }
+
     public function exec(string $command): ExecutionResult
     {
         if (! $this->connection) {
@@ -86,7 +115,7 @@ class SSHService
         }
 
         $startTime = microtime(true);
-        $output = $this->connection->exec($command);
+        $output = $this->connection->exec($this->buildCommand($command));
         $exitCode = $this->connection->getExitStatus();
         $duration = microtime(true) - $startTime;
 
@@ -101,7 +130,11 @@ class SSHService
     {
         $scriptId = time().'_'.uniqid();
 
-        $homeDir = $this->connectedUser === 'root' ? '/root' : "/home/{$this->connectedUser}";
+        $scriptUser = $this->hasJumpHost()
+            ? $this->server->jump_user
+            : $this->connectedUser;
+
+        $homeDir = $scriptUser === 'root' ? '/root' : "/home/{$scriptUser}";
         $scriptDir = "{$homeDir}/.netipar";
         $remotePath = "{$scriptDir}/provision-{$scriptId}.sh";
         $outputPath = "{$scriptDir}/provision-{$scriptId}.output";
@@ -110,19 +143,18 @@ class SSHService
         $this->uploadContent($scriptContent, $remotePath);
         $this->exec("chmod +x {$remotePath}");
 
+        $bashCmd = $this->usesSudo() ? 'sudo bash' : 'bash';
+
         if ($onOutput) {
             return $this->execWithStreaming(
-                "bash {$remotePath} 2>&1 | tee {$outputPath}; exit \${PIPESTATUS[0]}",
+                "{$bashCmd} {$remotePath} 2>&1 | tee {$outputPath}; exit \${PIPESTATUS[0]}",
                 $onOutput
             );
         }
 
-        return $this->exec("bash {$remotePath} 2>&1 | tee {$outputPath}; exit \${PIPESTATUS[0]}");
+        return $this->exec("{$bashCmd} {$remotePath} 2>&1 | tee {$outputPath}; exit \${PIPESTATUS[0]}");
     }
 
-    /**
-     * Execute a command with real-time output streaming.
-     */
     public function execWithStreaming(string $command, callable $onOutput): ExecutionResult
     {
         if (! $this->connection) {
@@ -132,8 +164,7 @@ class SSHService
         $startTime = microtime(true);
         $fullOutput = '';
 
-        // Use phpseclib's callback mechanism for streaming
-        $this->connection->exec($command, function ($output) use (&$fullOutput, $onOutput) {
+        $this->connection->exec($this->buildCommand($command), function ($output) use (&$fullOutput, $onOutput) {
             $fullOutput .= $output;
             $onOutput($output, $fullOutput);
         });

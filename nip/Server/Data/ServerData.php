@@ -35,6 +35,10 @@ class ServerData extends Data
         public ?string $ipAddress,
         public ?string $privateIpAddress,
         public string $sshPort,
+        public ?string $sshUser,
+        public ?string $jumpAddress,
+        public ?int $jumpPort,
+        public ?string $jumpUser,
         public string $phpVersion,
         #[MapInputName('php_version_string')]
         public ?string $phpVersionLabel,

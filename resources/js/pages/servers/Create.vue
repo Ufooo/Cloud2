@@ -74,10 +74,25 @@ const form = useForm({
     ip_address: '',
     private_ip_address: '',
     ssh_port: '22',
+    ssh_user: '',
+    jump_address: '',
+    jump_port: '22',
+    jump_user: '',
     ubuntu_version: '24.04',
     php_version: 'php84',
     database_type: null as string | null,
     timezone: 'UTC',
+});
+
+// Jump host state
+const useJumpHost = ref(false);
+
+watch(useJumpHost, (newValue) => {
+    if (!newValue) {
+        form.jump_address = '';
+        form.jump_port = '22';
+        form.jump_user = '';
+    }
 });
 
 // SSH Keys state - separate refs for UI
@@ -130,6 +145,10 @@ function submitForm() {
         ip_address: data.ip_address || null,
         private_ip_address: data.private_ip_address || null,
         ssh_port: data.ssh_port || '22',
+        ssh_user: data.ssh_user || null,
+        jump_address: data.jump_address || null,
+        jump_port: data.jump_port ? parseInt(data.jump_port) : null,
+        jump_user: data.jump_user || null,
         database_type: data.database_type || null,
         ssh_key_ids:
             addSshKeys.value && selectedSshKeyIds.value.length > 0
@@ -422,6 +441,90 @@ function submitForm() {
                                     placeholder="22"
                                 />
                                 <InputError :message="form.errors.ssh_port" />
+                            </div>
+                        </div>
+
+                        <!-- SSH User -->
+                        <div class="space-y-2">
+                            <Label for="ssh_user">SSH User</Label>
+                            <Input
+                                id="ssh_user"
+                                v-model="form.ssh_user"
+                                type="text"
+                                placeholder="ufooo"
+                            />
+                            <p class="text-sm text-muted-foreground">
+                                If set, this user is used for the SSH connection
+                                instead of the default unix user. Commands will
+                                run with <code>sudo</code>.
+                            </p>
+                            <InputError :message="form.errors.ssh_user" />
+                        </div>
+
+                        <!-- Jump Host -->
+                        <div class="space-y-4">
+                            <div class="flex items-center gap-3">
+                                <Switch
+                                    id="use_jump_host"
+                                    v-model="useJumpHost"
+                                />
+                                <Label
+                                    for="use_jump_host"
+                                    class="cursor-pointer"
+                                >
+                                    Use jump host
+                                </Label>
+                            </div>
+
+                            <p class="text-sm text-muted-foreground">
+                                If the server is on a private network, connect
+                                through a jump host first.
+                            </p>
+
+                            <div
+                                v-if="useJumpHost"
+                                class="grid gap-4 rounded-lg border p-4 md:grid-cols-3"
+                            >
+                                <div class="space-y-2">
+                                    <Label for="jump_address"
+                                        >Internal IP Address</Label
+                                    >
+                                    <Input
+                                        id="jump_address"
+                                        v-model="form.jump_address"
+                                        type="text"
+                                        placeholder="10.40.0.65"
+                                    />
+                                    <InputError
+                                        :message="form.errors.jump_address"
+                                    />
+                                </div>
+
+                                <div class="space-y-2">
+                                    <Label for="jump_port">Port</Label>
+                                    <Input
+                                        id="jump_port"
+                                        v-model="form.jump_port"
+                                        type="text"
+                                        placeholder="22"
+                                    />
+                                    <InputError
+                                        :message="form.errors.jump_port"
+                                    />
+                                </div>
+
+                                <div class="space-y-2">
+                                    <Label for="jump_user">User</Label>
+                                    <Input
+                                        id="jump_user"
+                                        v-model="form.jump_user"
+                                        type="text"
+                                        placeholder="root"
+                                    />
+                                    <InputError
+                                        :message="form.errors.jump_user"
+                                    />
+                                </div>
                             </div>
                         </div>
 

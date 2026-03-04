@@ -26,8 +26,10 @@ import { useConfirmation } from '@/composables/useConfirmation';
 import { IDENTITY_COLOR_MAP } from '@/composables/useIdentityColor';
 import ServerLayout from '@/layouts/ServerLayout.vue';
 import { IdentityColor, type Server } from '@/types';
+import { Switch } from '@/components/ui/switch';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { Copy, Key, Trash2 } from 'lucide-vue-next';
+import { ref, watch } from 'vue';
 
 interface SelectOption {
     value: string;
@@ -45,11 +47,25 @@ const props = defineProps<Props>();
 const { confirmInput } = useConfirmation();
 const { copy } = useClipboard();
 
+const useJumpHost = ref(!!props.server.jumpAddress);
+
+watch(useJumpHost, (newValue) => {
+    if (!newValue) {
+        form.jump_address = '';
+        form.jump_port = null;
+        form.jump_user = '';
+    }
+});
+
 const form = useForm({
     name: props.server.name,
     ssh_port: props.server.sshPort,
     ip_address: props.server.ipAddress || '',
     private_ip_address: props.server.privateIpAddress || '',
+    ssh_user: props.server.sshUser || '',
+    jump_address: props.server.jumpAddress || '',
+    jump_port: props.server.jumpPort ?? null as number | null,
+    jump_user: props.server.jumpUser || '',
     timezone: props.server.timezone,
     avatar_color: props.server.avatarColor,
 });
@@ -59,6 +75,9 @@ function submitForm() {
         ...data,
         ip_address: data.ip_address || null,
         private_ip_address: data.private_ip_address || null,
+        ssh_user: data.ssh_user || null,
+        jump_address: data.jump_address || null,
+        jump_user: data.jump_user || null,
     })).patch(update.url(props.server));
 }
 
@@ -170,6 +189,85 @@ async function handleDelete() {
                             <InputError
                                 :message="form.errors.private_ip_address"
                             />
+                        </div>
+
+                        <!-- SSH User -->
+                        <div class="space-y-2">
+                            <Label for="ssh_user">SSH User</Label>
+                            <Input
+                                id="ssh_user"
+                                v-model="form.ssh_user"
+                                type="text"
+                                placeholder="ufooo"
+                            />
+                            <p class="text-sm text-muted-foreground">
+                                If set, this user is used for the SSH connection
+                                instead of the default unix user. Commands will
+                                run with <code>sudo</code>.
+                            </p>
+                            <InputError :message="form.errors.ssh_user" />
+                        </div>
+
+                        <!-- Jump Host -->
+                        <div class="space-y-4">
+                            <div class="flex items-center gap-3">
+                                <Switch
+                                    id="use_jump_host"
+                                    v-model="useJumpHost"
+                                />
+                                <Label
+                                    for="use_jump_host"
+                                    class="cursor-pointer font-medium"
+                                >
+                                    Use jump host
+                                </Label>
+                            </div>
+
+                            <div
+                                v-if="useJumpHost"
+                                class="grid gap-4 rounded-lg border p-4 md:grid-cols-3"
+                            >
+                                <div class="space-y-2">
+                                    <Label for="jump_address"
+                                        >Internal IP address</Label
+                                    >
+                                    <Input
+                                        id="jump_address"
+                                        v-model="form.jump_address"
+                                        type="text"
+                                        placeholder="10.40.0.65"
+                                    />
+                                    <InputError
+                                        :message="form.errors.jump_address"
+                                    />
+                                </div>
+
+                                <div class="space-y-2">
+                                    <Label for="jump_port">Port</Label>
+                                    <Input
+                                        id="jump_port"
+                                        v-model="form.jump_port"
+                                        type="number"
+                                        placeholder="22"
+                                    />
+                                    <InputError
+                                        :message="form.errors.jump_port"
+                                    />
+                                </div>
+
+                                <div class="space-y-2">
+                                    <Label for="jump_user">User</Label>
+                                    <Input
+                                        id="jump_user"
+                                        v-model="form.jump_user"
+                                        type="text"
+                                        placeholder="root"
+                                    />
+                                    <InputError
+                                        :message="form.errors.jump_user"
+                                    />
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Timezone -->
