@@ -143,7 +143,7 @@ class SSHService
         $this->uploadContent($scriptContent, $remotePath);
         $this->exec("chmod +x {$remotePath}");
 
-        $bashCmd = $this->usesSudo() ? 'sudo bash' : 'bash';
+        $bashCmd = ($this->usesSudo() && ! $this->hasJumpHost()) ? 'sudo bash' : 'bash';
 
         if ($onOutput) {
             return $this->execWithStreaming(
