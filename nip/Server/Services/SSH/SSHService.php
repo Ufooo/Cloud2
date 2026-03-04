@@ -102,10 +102,9 @@ class SSHService
         }
 
         $port = $this->server->jump_port ?? 22;
-        $user = $this->server->jump_user;
         $address = $this->server->jump_address;
 
-        return "ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 -p {$port} {$user}@{$address} ".escapeshellarg($command);
+        return "ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 -p {$port} {$this->connectedUser}@{$address} ".escapeshellarg($command);
     }
 
     public function exec(string $command): ExecutionResult
@@ -130,9 +129,7 @@ class SSHService
     {
         $scriptId = time().'_'.uniqid();
 
-        $scriptUser = $this->hasJumpHost()
-            ? $this->server->jump_user
-            : $this->connectedUser;
+        $scriptUser = $this->connectedUser;
 
         $homeDir = $scriptUser === 'root' ? '/root' : "/home/{$scriptUser}";
         $scriptDir = "{$homeDir}/.netipar";
