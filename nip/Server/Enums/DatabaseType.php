@@ -9,6 +9,7 @@ enum DatabaseType: string
 {
     // Versioned cases
     case Mysql80 = 'mysql80';
+    case Mysql84 = 'mysql84';
     case Mariadb1011 = 'mariadb1011';
     case Mariadb114 = 'mariadb114';
     case Postgresql16 = 'postgresql16';
@@ -24,6 +25,7 @@ enum DatabaseType: string
     {
         return match ($this) {
             self::Mysql80, self::Mysql => 'MySQL 8.0',
+            self::Mysql84 => 'MySQL 8.4',
             self::Mariadb1011 => 'MariaDB 10.11',
             self::Mariadb114, self::Mariadb => 'MariaDB 11.4',
             self::Postgresql16, self::Postgresql => 'PostgreSQL 16',
@@ -35,7 +37,7 @@ enum DatabaseType: string
     public function type(): string
     {
         return match ($this) {
-            self::Mysql80, self::Mysql => 'mysql',
+            self::Mysql80, self::Mysql84, self::Mysql => 'mysql',
             self::Mariadb1011, self::Mariadb114, self::Mariadb => 'mariadb',
             self::Postgresql16, self::Postgresql17, self::Postgresql18, self::Postgresql => 'postgresql',
         };
@@ -45,6 +47,7 @@ enum DatabaseType: string
     {
         return match ($this) {
             self::Mysql80, self::Mysql => '8.0',
+            self::Mysql84 => '8.4',
             self::Mariadb1011 => '10.11',
             self::Mariadb114, self::Mariadb => '11.4',
             self::Postgresql16, self::Postgresql => '16',
@@ -62,6 +65,7 @@ enum DatabaseType: string
 
         $versionedCases = [
             self::Mysql80,
+            self::Mysql84,
             self::Mariadb1011,
             self::Mariadb114,
             self::Postgresql16,
