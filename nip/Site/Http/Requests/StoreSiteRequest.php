@@ -16,6 +16,13 @@ class StoreSiteRequest extends FormRequest
 {
     use HasSiteValidationMessages;
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('domain')) {
+            $this->merge(['domain' => strtolower($this->input('domain'))]);
+        }
+    }
+
     public function authorize(): bool
     {
         $serverId = $this->input('server_id');
@@ -48,7 +55,7 @@ class StoreSiteRequest extends FormRequest
                 'string',
                 'min:1',
                 'max:255',
-                'regex:/^[a-zA-Z0-9][a-zA-Z0-9\-\.]*[a-zA-Z0-9]$/',
+                'regex:/^[a-z0-9][a-z0-9\-\.]*[a-z0-9]$/',
                 Rule::unique('sites')->where(function ($query) {
                     return $query->where('server_id', $this->input('server_id'));
                 }),

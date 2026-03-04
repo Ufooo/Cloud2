@@ -16,6 +16,13 @@ class UpdateSiteRequest extends FormRequest
 {
     use HasSiteValidationMessages;
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('domain')) {
+            $this->merge(['domain' => strtolower($this->input('domain'))]);
+        }
+    }
+
     public function authorize(): bool
     {
         /** @var Site $site */
