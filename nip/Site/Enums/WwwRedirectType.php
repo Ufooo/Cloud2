@@ -10,6 +10,7 @@ enum WwwRedirectType: string
     case FromWww = 'from_www';
     case ToWww = 'to_www';
     case None = 'none';
+    case ToPrimary = 'to_primary';
 
     public function label(): string
     {
@@ -17,6 +18,7 @@ enum WwwRedirectType: string
             self::FromWww => 'Redirect from www',
             self::ToWww => 'Redirect to www',
             self::None => 'No redirect',
+            self::ToPrimary => 'Redirect to primary domain',
         };
     }
 
@@ -26,7 +28,13 @@ enum WwwRedirectType: string
             self::FromWww => 'www.example.com → example.com',
             self::ToWww => 'example.com → www.example.com',
             self::None => 'No www redirect will be applied',
+            self::ToPrimary => 'Redirects all traffic to the primary domain',
         };
+    }
+
+    public function redirectsToPrimary(): bool
+    {
+        return $this === self::ToPrimary;
     }
 
     /**

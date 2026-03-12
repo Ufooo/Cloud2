@@ -2,9 +2,12 @@
 
 namespace Nip\Domain\Http\Requests;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
+use Nip\Domain\Enums\DomainRecordType;
+use Nip\Domain\Models\DomainRecord;
 use Nip\Site\Enums\WwwRedirectType;
 use Nip\Site\Models\Site;
 
@@ -26,6 +29,43 @@ class UpdateDomainRecordRequest extends FormRequest
             'www_redirect_type' => ['nullable', Rule::enum(WwwRedirectType::class)],
             'allow_wildcard' => ['nullable', 'boolean'],
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            $this->validateToPrimaryRedirect($validator);
+        });
+    }
+
+    protected function validateToPrimaryRedirect(Validator $validator): void
+    {
+        if ($this->input('www_redirect_type') !== WwwRedirectType::ToPrimary->value) {
+            return;
+        }
+
+        $domainRecord = $this->route('domainRecord');
+        $site = $this->route('site');
+
+        if ($domainRecord instanceof DomainRecord && $domainRecord->isPrimary()) {
+            $validator->errors()->add(
+                'www_redirect_type',
+                'Primary domain cannot redirect to itself.'
+            );
+
+            return;
+        }
+
+        $hasPrimary = $site->domainRecords()
+            ->where('type', DomainRecordType::Primary->value)
+            ->exists();
+
+        if (! $hasPrimary) {
+            $validator->errors()->add(
+                'www_redirect_type',
+                'A primary domain must exist before using redirect to primary.'
+            );
+        }
     }
 
     /**

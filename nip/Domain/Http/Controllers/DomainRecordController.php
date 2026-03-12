@@ -76,6 +76,10 @@ class DomainRecordController extends Controller
 
         $canUpdate = request()->user()?->can('update', $site->server);
 
+        $primaryDomain = $site->domainRecords()
+            ->where('type', DomainRecordType::Primary)
+            ->value('name');
+
         return Inertia::render('sites/domains/Index', [
             'site' => SiteData::fromModel($site->load('server')),
             'domainRecords' => DomainRecordResource::collection($domainRecords),
@@ -84,6 +88,7 @@ class DomainRecordController extends Controller
             'wwwRedirectTypes' => WwwRedirectType::options(),
             'certificateTypes' => \Nip\Domain\Enums\CertificateType::options(),
             'countries' => $this->getCountries(),
+            'primaryDomain' => $primaryDomain,
             'can' => [
                 'domains' => ['create' => $canUpdate],
                 'certificates' => ['create' => $canUpdate],

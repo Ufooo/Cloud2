@@ -9,7 +9,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 interface WwwRedirectTypeOption {
     value: string;
@@ -24,10 +24,14 @@ interface Props {
     wwwRedirectType: string;
     wwwRedirectTypes: WwwRedirectTypeOption[];
     allowWildcard?: boolean;
+    isPrimary?: boolean;
+    primaryDomain?: string | null;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     allowWildcard: false,
+    isPrimary: false,
+    primaryDomain: null,
 });
 
 const emit = defineEmits<{
@@ -39,6 +43,15 @@ const emit = defineEmits<{
 
 const localWwwRedirectType = ref(props.wwwRedirectType);
 const localAllowWildcard = ref(props.allowWildcard);
+
+const availableRedirectTypes = computed(() => {
+    return props.wwwRedirectTypes.filter((type) => {
+        if (type.value === 'to_primary') {
+            return !props.isPrimary && props.primaryDomain;
+        }
+        return true;
+    });
+});
 
 watch(
     () => props.open,
@@ -155,12 +168,11 @@ function save() {
                 <div class="space-y-3">
                     <Label>Redirects</Label>
                     <p class="text-sm text-muted-foreground">
-                        Manage how your domain handles www. redirects for this
-                        domain.
+                        Manage how your domain handles redirects.
                     </p>
                     <div class="space-y-2">
                         <button
-                            v-for="redirectType in wwwRedirectTypes"
+                            v-for="redirectType in availableRedirectTypes"
                             :key="redirectType.value"
                             type="button"
                             class="flex w-full items-start gap-3 rounded-md border p-3 text-left transition-colors"
@@ -169,13 +181,15 @@ function save() {
                                     ? 'border-primary bg-primary/5'
                                     : 'border-border hover:bg-muted/50',
                                 localAllowWildcard &&
-                                redirectType.value !== 'none'
+                                redirectType.value !== 'none' &&
+                                redirectType.value !== 'to_primary'
                                     ? 'cursor-not-allowed opacity-50'
                                     : '',
                             ]"
                             :disabled="
                                 localAllowWildcard &&
-                                redirectType.value !== 'none'
+                                redirectType.value !== 'none' &&
+                                redirectType.value !== 'to_primary'
                             "
                             @click="localWwwRedirectType = redirectType.value"
                         >
@@ -210,6 +224,15 @@ function save() {
                                         Recommended
                                     </span>
                                 </div>
+                                <p
+                                    v-if="
+                                        redirectType.value === 'to_primary' &&
+                                        primaryDomain
+                                    "
+                                    class="mt-1 text-sm text-muted-foreground"
+                                >
+                                    Redirects to {{ primaryDomain }}
+                                </p>
                             </div>
                         </button>
                     </div>

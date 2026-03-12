@@ -2,10 +2,12 @@
 
 namespace Nip\Domain\Jobs;
 
+use Nip\Domain\Enums\DomainRecordType;
 use Nip\Domain\Models\DomainRecord;
 use Nip\Server\Jobs\BaseProvisionJob;
 use Nip\Server\Models\Server;
 use Nip\Server\Services\SSH\ExecutionResult;
+use Nip\Site\Enums\WwwRedirectType;
 
 class UpdateDomainJob extends BaseProvisionJob
 {
@@ -32,6 +34,10 @@ class UpdateDomainJob extends BaseProvisionJob
     {
         $site = $this->domainRecord->site;
 
+        $primaryDomain = $site->domainRecords()
+            ->where('type', DomainRecordType::Primary->value)
+            ->value('name');
+
         $nginxConfig = view('provisioning.scripts.domain.partials.nginx-config', [
             'site' => $site,
             'domain' => $this->domainRecord->name,
@@ -41,13 +47,17 @@ class UpdateDomainJob extends BaseProvisionJob
             'siteType' => $site->type,
             'allowWildcard' => $this->domainRecord->allow_wildcard,
             'wwwRedirectType' => $this->domainRecord->www_redirect_type,
+            'primaryDomain' => $primaryDomain,
         ])->render();
 
-        $wwwRedirectConfig = view('provisioning.scripts.partials.nginx-www-redirect', [
-            'domain' => $this->domainRecord->name,
-            'wwwRedirectType' => $this->domainRecord->www_redirect_type,
-            'allowWildcard' => $this->domainRecord->allow_wildcard,
-        ])->render();
+        $wwwRedirectConfig = '';
+        if ($this->domainRecord->www_redirect_type !== WwwRedirectType::ToPrimary) {
+            $wwwRedirectConfig = view('provisioning.scripts.partials.nginx-www-redirect', [
+                'domain' => $this->domainRecord->name,
+                'wwwRedirectType' => $this->domainRecord->www_redirect_type,
+                'allowWildcard' => $this->domainRecord->allow_wildcard,
+            ])->render();
+        }
 
         return view('provisioning.scripts.domain.update', [
             'site' => $site,

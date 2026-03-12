@@ -3,10 +3,12 @@
 namespace Nip\Domain\Jobs;
 
 use Nip\Domain\Enums\DomainRecordStatus;
+use Nip\Domain\Enums\DomainRecordType;
 use Nip\Domain\Models\DomainRecord;
 use Nip\Server\Jobs\BaseProvisionJob;
 use Nip\Server\Models\Server;
 use Nip\Server\Services\SSH\ExecutionResult;
+use Nip\Site\Enums\WwwRedirectType;
 
 class AddDomainJob extends BaseProvisionJob
 {
@@ -47,6 +49,10 @@ class AddDomainJob extends BaseProvisionJob
 
     protected function generateNginxConfig(\Nip\Site\Models\Site $site): string
     {
+        $primaryDomain = $site->domainRecords()
+            ->where('type', DomainRecordType::Primary->value)
+            ->value('name');
+
         return view('provisioning.scripts.domain.partials.nginx-config', [
             'site' => $site,
             'domain' => $this->domainRecord->name,
@@ -56,11 +62,16 @@ class AddDomainJob extends BaseProvisionJob
             'siteType' => $site->type,
             'allowWildcard' => $this->domainRecord->allow_wildcard,
             'wwwRedirectType' => $this->domainRecord->www_redirect_type,
+            'primaryDomain' => $primaryDomain,
         ])->render();
     }
 
     protected function generateWwwRedirectConfig(): string
     {
+        if ($this->domainRecord->www_redirect_type === WwwRedirectType::ToPrimary) {
+            return '';
+        }
+
         return view('provisioning.scripts.partials.nginx-www-redirect', [
             'domain' => $this->domainRecord->name,
             'wwwRedirectType' => $this->domainRecord->www_redirect_type,

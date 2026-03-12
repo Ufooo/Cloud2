@@ -3,6 +3,12 @@
 # Site: {{ $site->domain }}
 # Generated: {{ now()->toISOString() }}
 
+@if($wwwRedirectType->value === 'to_primary')
+@include('provisioning.scripts.partials.nginx-redirect-to-primary', [
+    'domain' => $domain,
+    'primaryDomain' => $primaryDomain,
+])
+@else
 include /etc/nginx/netipar-conf/{{ $site->domain }}/before/*;
 include /etc/nginx/netipar-conf/{{ $site->domain }}/{{ $domain }}/before/*;
 
@@ -19,3 +25,4 @@ include /etc/nginx/netipar-conf/{{ $site->domain }}/{{ $domain }}/before/*;
 
 include /etc/nginx/netipar-conf/{{ $site->domain }}/after/*;
 include /etc/nginx/netipar-conf/{{ $site->domain }}/{{ $domain }}/after/*;
+@endif

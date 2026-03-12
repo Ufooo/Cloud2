@@ -56,9 +56,14 @@ interface Props {
     domain: DomainRecordData;
     site: Site;
     wwwRedirectTypes: WwwRedirectTypeOption[];
+    primaryDomain: string | null;
 }
 
 const props = defineProps<Props>();
+
+const redirectsToPrimary = computed(
+    () => props.domain.wwwRedirectType === 'to_primary',
+);
 
 const showEditModal = ref(false);
 const showDeleteConfirm = ref(false);
@@ -158,6 +163,13 @@ function handleDelete() {
                         Primary
                     </Badge>
                     <Badge
+                        v-if="redirectsToPrimary && primaryDomain"
+                        variant="outline"
+                        class="text-muted-foreground"
+                    >
+                        Redirects to {{ primaryDomain }}
+                    </Badge>
+                    <Badge
                         v-if="domain.status !== 'enabled'"
                         :variant="domain.statusBadgeVariant"
                     >
@@ -174,7 +186,10 @@ function handleDelete() {
         </div>
 
         <div class="flex items-center gap-4">
-            <span class="text-sm text-muted-foreground">
+            <span
+                v-if="!redirectsToPrimary"
+                class="text-sm text-muted-foreground"
+            >
                 {{ domain.wwwRedirectTypeLabel }}
             </span>
             <DropdownMenu>
@@ -232,6 +247,8 @@ function handleDelete() {
             :www-redirect-type="editForm.www_redirect_type"
             :www-redirect-types="wwwRedirectTypes"
             :allow-wildcard="editForm.allow_wildcard"
+            :is-primary="domain.isPrimary"
+            :primary-domain="primaryDomain"
             @update:open="showEditModal = $event"
             @update:www-redirect-type="editForm.www_redirect_type = $event"
             @update:allow-wildcard="editForm.allow_wildcard = $event"

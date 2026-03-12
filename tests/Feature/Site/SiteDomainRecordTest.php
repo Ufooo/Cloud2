@@ -84,3 +84,41 @@ it('primary domain has correct www redirect settings', function () {
     expect($primaryDomain->www_redirect_type)->toBe(WwwRedirectType::ToWww);
     expect($primaryDomain->allow_wildcard)->toBeTrue();
 });
+
+it('can create domain with to_primary redirect type', function () {
+    $server = Server::factory()->create();
+    $site = Site::factory()->for($server)->create([
+        'domain' => 'primary.com',
+    ]);
+
+    $site->domainRecords()->create([
+        'name' => 'primary.com',
+        'type' => DomainRecordType::Primary,
+        'status' => DomainRecordStatus::Enabled,
+        'www_redirect_type' => WwwRedirectType::FromWww,
+    ]);
+
+    $aliasDomain = $site->domainRecords()->create([
+        'name' => 'alias.com',
+        'type' => DomainRecordType::Alias,
+        'status' => DomainRecordStatus::Enabled,
+        'www_redirect_type' => WwwRedirectType::ToPrimary,
+    ]);
+
+    expect($aliasDomain->www_redirect_type)->toBe(WwwRedirectType::ToPrimary);
+    expect($aliasDomain->www_redirect_type->redirectsToPrimary())->toBeTrue();
+});
+
+it('to_primary redirect type has correct label and description', function () {
+    expect(WwwRedirectType::ToPrimary->label())->toBe('Redirect to primary domain');
+    expect(WwwRedirectType::ToPrimary->description())->toBe('Redirects all traffic to the primary domain');
+});
+
+it('options includes to_primary', function () {
+    $options = WwwRedirectType::options();
+    $toPrimaryOption = collect($options)->firstWhere('value', 'to_primary');
+
+    expect($toPrimaryOption)->not->toBeNull();
+    expect($toPrimaryOption['label'])->toBe('Redirect to primary domain');
+    expect($toPrimaryOption['isDefault'])->toBeFalse();
+});

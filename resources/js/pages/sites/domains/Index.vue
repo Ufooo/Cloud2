@@ -45,6 +45,7 @@ interface Props {
     wwwRedirectTypes: WwwRedirectTypeOption[];
     certificateTypes: CertificateTypeOption[];
     countries: CountryOption[];
+    primaryDomain: string | null;
     can: {
         domains: { create: boolean };
         certificates: { create: boolean };
@@ -157,6 +158,7 @@ function submitAddDomain() {
                                 :domain="domain"
                                 :site="site"
                                 :www-redirect-types="wwwRedirectTypes"
+                                :primary-domain="primaryDomain"
                             />
                         </div>
                         <div
@@ -229,6 +231,8 @@ function submitAddDomain() {
             :www-redirect-type="addDomainForm.www_redirect_type"
             :www-redirect-types="wwwRedirectTypes"
             :allow-wildcard="addDomainForm.allow_wildcard"
+            :is-primary="false"
+            :primary-domain="primaryDomain"
             @update:open="showConfigureDomainModal = $event"
             @update:www-redirect-type="addDomainForm.www_redirect_type = $event"
             @update:allow-wildcard="addDomainForm.allow_wildcard = $event"
