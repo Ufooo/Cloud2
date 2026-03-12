@@ -5,6 +5,7 @@ namespace Nip\Domain\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Nip\Domain\Enums\CertificateStatus;
+use Nip\Domain\Enums\CertificateType;
 use Nip\Domain\Models\Certificate;
 
 /**
@@ -58,6 +59,7 @@ class CertificateResource extends JsonResource
                 'activate' => $canUpdate && $isInstalled && ! $this->active,
                 'deactivate' => $canUpdate && $this->active,
                 'renew' => $canUpdate && $isInstalled && $this->active,
+                'update' => $canUpdate && $isInstalled && $this->type === CertificateType::Existing,
                 'obtain' => $canUpdate && $isPendingVerification,
             ],
         ];

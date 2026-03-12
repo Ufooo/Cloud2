@@ -20,6 +20,7 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
         Route::post('certificates/{certificate}/activate', [CertificateController::class, 'activate'])->name('sites.certificates.activate');
         Route::post('certificates/{certificate}/deactivate', [CertificateController::class, 'deactivate'])->name('sites.certificates.deactivate');
         Route::post('certificates/{certificate}/renew', [CertificateController::class, 'renew'])->name('sites.certificates.renew');
+        Route::patch('certificates/{certificate}', [CertificateController::class, 'update'])->name('sites.certificates.update');
         Route::get('certificates/{certificate}/verify-dns', [CertificateController::class, 'verifyDns'])->name('sites.certificates.verify-dns');
         Route::post('certificates/{certificate}/obtain', [CertificateController::class, 'obtainAfterVerification'])->name('sites.certificates.obtain');
     });

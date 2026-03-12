@@ -5,6 +5,7 @@ import {
     destroy,
     obtainAfterVerification,
     renew,
+    update,
     verifyDns,
 } from '@/actions/Nip/Domain/Http/Controllers/CertificateController';
 import { Badge } from '@/components/ui/badge';
@@ -25,11 +26,14 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import type { CertificateData, Site } from '@/types';
-import { router } from '@inertiajs/vue3';
+import { router, useForm } from '@inertiajs/vue3';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
     AlertTriangle,
     Check,
     Copy,
+    FileUp,
     Loader2,
     MoreVertical,
     RefreshCw,
@@ -47,7 +51,12 @@ interface Props {
 const props = defineProps<Props>();
 
 const showDeleteConfirm = ref(false);
+const showUpdateModal = ref(false);
 const dnsVerified = ref(false);
+
+const updateForm = useForm({
+    certificate: '',
+});
 const isCheckingDns = ref(false);
 let dnsCheckInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -90,6 +99,24 @@ function handleDelete() {
         {
             preserveScroll: true,
             onSuccess: () => (showDeleteConfirm.value = false),
+        },
+    );
+}
+
+function openUpdateModal() {
+    updateForm.certificate = '';
+    showUpdateModal.value = true;
+}
+
+function handleUpdate() {
+    updateForm.patch(
+        update.url({ site: props.site, certificate: props.certificate }),
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                showUpdateModal.value = false;
+                updateForm.reset();
+            },
         },
     );
 }
@@ -263,6 +290,13 @@ onUnmounted(() => {
                         <RefreshCw class="mr-2 size-4" />
                         Renew
                     </DropdownMenuItem>
+                    <DropdownMenuItem
+                        v-if="certificate.can.update"
+                        @click="openUpdateModal"
+                    >
+                        <FileUp class="mr-2 size-4" />
+                        Update Certificate
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator v-if="certificate.can.delete" />
                     <DropdownMenuItem
                         v-if="certificate.can.delete"
@@ -435,6 +469,61 @@ onUnmounted(() => {
                         Delete
                     </Button>
                 </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        <!-- Update Certificate Modal -->
+        <Dialog v-model:open="showUpdateModal">
+            <DialogContent class="sm:max-w-lg">
+                <DialogHeader>
+                    <DialogTitle>Update Certificate</DialogTitle>
+                    <DialogDescription>
+                        Paste the new certificate (including intermediate CA
+                        chain). The existing private key will be used.
+                    </DialogDescription>
+                </DialogHeader>
+                <form @submit.prevent="handleUpdate">
+                    <div class="space-y-4 py-4">
+                        <div class="space-y-2">
+                            <Label for="certificate">Certificate</Label>
+                            <Textarea
+                                id="certificate"
+                                v-model="updateForm.certificate"
+                                rows="10"
+                                placeholder="-----BEGIN CERTIFICATE-----
+...
+-----END CERTIFICATE-----"
+                                class="font-mono text-xs"
+                            />
+                            <p class="text-xs text-muted-foreground">
+                                Include the full chain: server certificate
+                                first, then intermediate CA.
+                            </p>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            @click="showUpdateModal = false"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="submit"
+                            :disabled="
+                                updateForm.processing ||
+                                !updateForm.certificate.trim()
+                            "
+                        >
+                            <Loader2
+                                v-if="updateForm.processing"
+                                class="mr-2 size-4 animate-spin"
+                            />
+                            Update Certificate
+                        </Button>
+                    </DialogFooter>
+                </form>
             </DialogContent>
         </Dialog>
     </div>

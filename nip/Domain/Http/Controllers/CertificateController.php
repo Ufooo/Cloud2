@@ -9,11 +9,13 @@ use Illuminate\Support\Facades\Gate;
 use Nip\Domain\Enums\CertificateStatus;
 use Nip\Domain\Enums\CertificateType;
 use Nip\Domain\Http\Requests\StoreCertificateRequest;
+use Nip\Domain\Http\Requests\UpdateCertificateRequest;
 use Nip\Domain\Jobs\DeleteCertificateJob;
 use Nip\Domain\Jobs\DisableSslJob;
 use Nip\Domain\Jobs\EnableSslJob;
 use Nip\Domain\Jobs\ObtainCertificateJob;
 use Nip\Domain\Jobs\RenewCertificateJob;
+use Nip\Domain\Jobs\UpdateCertificateJob;
 use Nip\Domain\Models\Certificate;
 use Nip\Domain\Services\CloudflareService;
 use Nip\Site\Models\Site;
@@ -110,6 +112,11 @@ class CertificateController extends Controller
             ObtainCertificateJob::dispatch($certificate);
         }
 
+        // Existing: install the provided certificate
+        if ($type === CertificateType::Existing) {
+            UpdateCertificateJob::dispatch($certificate);
+        }
+
         // Clone: enable SSL using source certificate's files
         if ($type === CertificateType::Clone) {
             EnableSslJob::dispatch($certificate);
@@ -191,6 +198,26 @@ class CertificateController extends Controller
         RenewCertificateJob::dispatch($certificate);
 
         return redirect()->route('sites.domains.index', $site)->with('success', 'Certificate is being renewed.');
+    }
+
+    public function update(UpdateCertificateRequest $request, Site $site, Certificate $certificate): RedirectResponse
+    {
+        Gate::authorize('update', $site->server);
+
+        abort_unless($certificate->site_id === $site->id, 403);
+
+        if ($certificate->type !== CertificateType::Existing) {
+            return redirect()->route('sites.domains.index', $site)->with('error', 'Only existing certificates can be updated this way.');
+        }
+
+        $certificate->update([
+            'certificate' => $request->validated('certificate'),
+            'status' => CertificateStatus::Installing,
+        ]);
+
+        UpdateCertificateJob::dispatch($certificate);
+
+        return redirect()->route('sites.domains.index', $site)->with('success', 'Certificate is being updated.');
     }
 
     public function verifyDns(Site $site, Certificate $certificate): JsonResponse
