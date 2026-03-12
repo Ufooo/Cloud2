@@ -61,10 +61,6 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const redirectsToPrimary = computed(
-    () => props.domain.wwwRedirectType === 'to_primary',
-);
-
 const showEditModal = ref(false);
 const showDeleteConfirm = ref(false);
 
@@ -163,13 +159,6 @@ function handleDelete() {
                         Primary
                     </Badge>
                     <Badge
-                        v-if="redirectsToPrimary && primaryDomain"
-                        variant="outline"
-                        class="text-muted-foreground"
-                    >
-                        Redirects to {{ primaryDomain }}
-                    </Badge>
-                    <Badge
                         v-if="domain.status !== 'enabled'"
                         :variant="domain.statusBadgeVariant"
                     >
@@ -186,10 +175,7 @@ function handleDelete() {
         </div>
 
         <div class="flex items-center gap-4">
-            <span
-                v-if="!redirectsToPrimary"
-                class="text-sm text-muted-foreground"
-            >
+            <span class="text-sm text-muted-foreground">
                 {{ domain.wwwRedirectTypeLabel }}
             </span>
             <DropdownMenu>
