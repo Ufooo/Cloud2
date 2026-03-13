@@ -36,6 +36,29 @@ class UpdateCertificateJob extends BaseProvisionJob
             'issued_at' => now(),
             'expires_at' => $expiresAt,
         ]);
+
+        // If certificate is active, link matching domain records
+        if ($this->certificate->active) {
+            $this->linkDomainRecords();
+        }
+    }
+
+    /**
+     * Link domain records to this certificate if it covers them (including wildcard matching).
+     */
+    protected function linkDomainRecords(): void
+    {
+        foreach ($this->certificate->site->domainRecords as $domainRecord) {
+            // Skip if already has a certificate
+            if ($domainRecord->certificate_id) {
+                continue;
+            }
+
+            // Link if this certificate covers the domain (exact or wildcard match)
+            if ($this->certificate->coversDomain($domainRecord->name)) {
+                $domainRecord->update(['certificate_id' => $this->certificate->id]);
+            }
+        }
     }
 
     protected function handleFailure(\Throwable $exception): void

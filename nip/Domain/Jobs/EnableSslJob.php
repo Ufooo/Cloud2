@@ -26,13 +26,22 @@ class EnableSslJob extends BaseProvisionJob
             'active' => true,
         ]);
 
-        // Update domain records with certificate_id for domains in this certificate
-        foreach ($this->certificate->domains as $domain) {
-            $domainRecord = $this->certificate->site->domainRecords()
-                ->where('name', $domain)
-                ->first();
+        $this->linkDomainRecords();
+    }
 
-            if ($domainRecord && ! $domainRecord->certificate_id) {
+    /**
+     * Link domain records to this certificate if it covers them (including wildcard matching).
+     */
+    protected function linkDomainRecords(): void
+    {
+        foreach ($this->certificate->site->domainRecords as $domainRecord) {
+            // Skip if already has a certificate
+            if ($domainRecord->certificate_id) {
+                continue;
+            }
+
+            // Link if this certificate covers the domain (exact or wildcard match)
+            if ($this->certificate->coversDomain($domainRecord->name)) {
                 $domainRecord->update(['certificate_id' => $this->certificate->id]);
             }
         }
