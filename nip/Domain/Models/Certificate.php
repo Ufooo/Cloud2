@@ -168,4 +168,47 @@ class Certificate extends Model
 
         return $this->domains[0] ?? null;
     }
+
+    /**
+     * Parse a PEM certificate and extract domains from Subject Alternative Names.
+     *
+     * @return array{domains: array<int, string>, issued_at: \Carbon\Carbon|null, expires_at: \Carbon\Carbon|null}|null
+     */
+    public static function parseCertificate(string $pemCertificate): ?array
+    {
+        $parsed = openssl_x509_parse($pemCertificate);
+
+        if ($parsed === false) {
+            return null;
+        }
+
+        $domains = [];
+
+        // Extract CN (Common Name) as fallback
+        if (isset($parsed['subject']['CN'])) {
+            $domains[] = $parsed['subject']['CN'];
+        }
+
+        // Extract SAN (Subject Alternative Names)
+        if (isset($parsed['extensions']['subjectAltName'])) {
+            $san = $parsed['extensions']['subjectAltName'];
+            // Format: "DNS:example.com, DNS:www.example.com"
+            $entries = array_map('trim', explode(',', $san));
+            foreach ($entries as $entry) {
+                if (str_starts_with($entry, 'DNS:')) {
+                    $domains[] = substr($entry, 4);
+                }
+            }
+        }
+
+        return [
+            'domains' => array_values(array_unique($domains)),
+            'issued_at' => isset($parsed['validFrom_time_t'])
+                ? \Carbon\Carbon::createFromTimestamp($parsed['validFrom_time_t'])
+                : null,
+            'expires_at' => isset($parsed['validTo_time_t'])
+                ? \Carbon\Carbon::createFromTimestamp($parsed['validTo_time_t'])
+                : null,
+        ];
+    }
 }

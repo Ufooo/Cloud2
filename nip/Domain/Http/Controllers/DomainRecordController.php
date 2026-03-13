@@ -63,7 +63,7 @@ class DomainRecordController extends Controller
         // Store in request for DomainRecordResource to access
         request()->attributes->set('allCertificateDomains', $allCertificateDomains);
 
-        // Cloneable certificates: wildcard certs on the same server (only wildcards make sense to clone)
+        // Cloneable certificates: existing certs always, Let's Encrypt only wildcards
         $cloneableCertificates = \Nip\Domain\Models\Certificate::query()
             ->with('site')
             ->whereHas('site', fn ($q) => $q->where('server_id', $site->server_id))
@@ -71,7 +71,15 @@ class DomainRecordController extends Controller
             ->where('active', true)
             ->orderBy('created_at', 'desc')
             ->get()
-            ->filter(fn ($cert) => $cert->isWildcard())
+            ->filter(function ($cert) {
+                // Existing certificates are always cloneable (multi-domain certs)
+                if ($cert->type === \Nip\Domain\Enums\CertificateType::Existing) {
+                    return true;
+                }
+
+                // Let's Encrypt: only wildcards make sense to clone
+                return $cert->isWildcard();
+            })
             ->values();
 
         $canUpdate = request()->user()?->can('update', $site->server);

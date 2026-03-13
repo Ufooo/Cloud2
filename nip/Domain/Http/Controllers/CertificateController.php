@@ -75,6 +75,14 @@ class CertificateController extends Controller
             $certificateData['private_key'] = $data['private_key'];
             $certificateData['status'] = CertificateStatus::Installing;
 
+            // Parse certificate to extract actual domains and dates
+            $parsed = Certificate::parseCertificate($data['certificate']);
+            if ($parsed) {
+                $certificateData['domains'] = $parsed['domains'];
+                $certificateData['issued_at'] = $parsed['issued_at'];
+                $certificateData['expires_at'] = $parsed['expires_at'];
+            }
+
             // Auto-activate if requested
             if ($data['auto_activate'] ?? true) {
                 $certificateData['active'] = true;
@@ -210,10 +218,20 @@ class CertificateController extends Controller
             return redirect()->route('sites.domains.index', $site)->with('error', 'Only existing certificates can be updated this way.');
         }
 
-        $certificate->update([
+        $updateData = [
             'certificate' => $request->validated('certificate'),
             'status' => CertificateStatus::Installing,
-        ]);
+        ];
+
+        // Parse certificate to extract actual domains and dates
+        $parsed = Certificate::parseCertificate($request->validated('certificate'));
+        if ($parsed) {
+            $updateData['domains'] = $parsed['domains'];
+            $updateData['issued_at'] = $parsed['issued_at'];
+            $updateData['expires_at'] = $parsed['expires_at'];
+        }
+
+        $certificate->update($updateData);
 
         UpdateCertificateJob::dispatch($certificate);
 
