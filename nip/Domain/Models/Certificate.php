@@ -158,6 +158,55 @@ class Certificate extends Model
         return collect($this->domains)->contains(fn ($d) => str_starts_with($d, '*.'));
     }
 
+    /**
+     * Check if this certificate covers the given domain.
+     * Handles wildcard matching: *.example.com covers sub.example.com
+     */
+    public function coversDomain(string $domain): bool
+    {
+        $domain = strtolower($domain);
+
+        foreach ($this->domains as $certDomain) {
+            $certDomain = strtolower($certDomain);
+
+            // Exact match
+            if ($certDomain === $domain) {
+                return true;
+            }
+
+            // Wildcard match: *.example.com covers sub.example.com
+            if (str_starts_with($certDomain, '*.')) {
+                $baseDomain = substr($certDomain, 2); // Remove *.
+                // Check if domain ends with .baseDomain (e.g., sub.example.com ends with .example.com)
+                if (str_ends_with($domain, '.'.$baseDomain)) {
+                    return true;
+                }
+                // Also match the base domain itself (*.example.com often covers example.com too)
+                if ($domain === $baseDomain) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if this certificate covers any of the given domains.
+     *
+     * @param  array<string>  $domains
+     */
+    public function coversAnyDomain(array $domains): bool
+    {
+        foreach ($domains as $domain) {
+            if ($this->coversDomain($domain)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function getBaseDomain(): ?string
     {
         $wildcardDomain = collect($this->domains)->first(fn ($d) => str_starts_with($d, '*.'));
