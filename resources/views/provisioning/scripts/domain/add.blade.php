@@ -5,6 +5,7 @@ set -e
 # Domain: {{ $domain }}
 # Site: {{ $site->domain }}
 # Type: {{ $domainRecord->type->value }}
+# SSL: {{ isset($certificate) && $certificate ? 'Yes (Certificate ID: '.$certificate->id.')' : 'No' }}
 
 echo "Adding domain {{ $domain }} to site {{ $site->domain }}..."
 
@@ -34,6 +35,17 @@ echo "Creating WWW redirect configuration..."
 cat > "$DOMAIN_CONF_DIR/before/redirect.conf" << 'REDIRECTEOF'
 {!! $wwwRedirectConfig !!}
 REDIRECTEOF
+@endif
+
+@if(isset($sslRedirectConfig) && $sslRedirectConfig)
+#
+# Create SSL Redirect Configuration (HTTP to HTTPS)
+#
+
+echo "Creating SSL redirect configuration..."
+cat > "$DOMAIN_CONF_DIR/before/ssl_redirect.conf" << 'SSLREDIRECTEOF'
+{!! $sslRedirectConfig !!}
+SSLREDIRECTEOF
 @endif
 
 #
@@ -67,4 +79,16 @@ nginx -t
 echo "Reloading Nginx..."
 service nginx reload
 
+@if(isset($subdomainExclusionConfig) && $subdomainExclusionConfig)
+#
+# Update Subdomain Redirect Exclusions
+#
+
+{!! $subdomainExclusionConfig !!}
+@endif
+
+@if(isset($certificate) && $certificate)
+echo "Domain {{ $domain }} added successfully with SSL!"
+@else
 echo "Domain {{ $domain }} added successfully!"
+@endif

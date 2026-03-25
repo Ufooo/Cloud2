@@ -1,6 +1,12 @@
 server {
+@if(isset($certificate) && $certificate)
+    listen 443 ssl;
+    http2 on;
+    listen [::]:443 ssl;
+@else
     listen 80;
     listen [::]:80;
+@endif
 
 @if($allowWildcard)
     server_name {{ $domain }} *.{{ $domain }};
@@ -28,9 +34,15 @@ server {
     server_tokens off;
     root {{ $documentRoot }};
 
+@if(isset($certificate) && $certificate)
+    # SSL Certificate
+    ssl_certificate {{ $certificate->getCertPath() }}/fullchain.crt;
+    ssl_certificate_key {{ $certificate->getCertPath() }}/private.key;
+@else
     # NETIPAR SSL (DO NOT REMOVE!)
     # ssl_certificate;
     # ssl_certificate_key;
+@endif
 
     # Site common configuration
     include /etc/nginx/netipar-conf/{{ $site->domain }}/site.conf;

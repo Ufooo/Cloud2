@@ -2,8 +2,10 @@
 
 namespace Nip\Domain\Jobs;
 
+use Nip\Domain\Enums\CertificateStatus;
 use Nip\Domain\Enums\DomainRecordStatus;
 use Nip\Domain\Enums\DomainRecordType;
+use Nip\Domain\Models\Certificate;
 use Nip\Domain\Models\DomainRecord;
 use Nip\Server\Jobs\BaseProvisionJob;
 use Nip\Server\Models\Server;
@@ -34,9 +36,12 @@ class AddDomainJob extends BaseProvisionJob
     protected function generateScript(): string
     {
         $site = $this->domainRecord->site;
+        $matchingCertificate = $this->findMatchingCertificate();
 
-        $nginxConfig = $this->generateNginxConfig($site);
+        $nginxConfig = $this->generateNginxConfig($site, $matchingCertificate);
         $wwwRedirectConfig = $this->generateWwwRedirectConfig();
+        $sslRedirectConfig = $matchingCertificate ? $this->generateSslRedirectConfig() : '';
+        $subdomainExclusionConfig = $matchingCertificate ? $this->generateSubdomainExclusionConfig() : '';
 
         return view('provisioning.scripts.domain.add', [
             'site' => $site,
@@ -44,10 +49,13 @@ class AddDomainJob extends BaseProvisionJob
             'domain' => $this->domainRecord->name,
             'nginxConfig' => $nginxConfig,
             'wwwRedirectConfig' => $wwwRedirectConfig,
+            'sslRedirectConfig' => $sslRedirectConfig,
+            'subdomainExclusionConfig' => $subdomainExclusionConfig,
+            'certificate' => $matchingCertificate,
         ])->render();
     }
 
-    protected function generateNginxConfig(\Nip\Site\Models\Site $site): string
+    protected function generateNginxConfig(\Nip\Site\Models\Site $site, ?Certificate $certificate = null): string
     {
         $primaryDomain = $site->domainRecords()
             ->where('type', DomainRecordType::Primary->value)
@@ -63,6 +71,42 @@ class AddDomainJob extends BaseProvisionJob
             'allowWildcard' => $this->domainRecord->allow_wildcard,
             'wwwRedirectType' => $this->domainRecord->www_redirect_type,
             'primaryDomain' => $primaryDomain,
+            'certificate' => $certificate,
+        ])->render();
+    }
+
+    /**
+     * Find an active, installed certificate that covers this domain.
+     */
+    protected function findMatchingCertificate(): ?Certificate
+    {
+        return $this->domainRecord->site->certificates()
+            ->where('active', true)
+            ->where('status', CertificateStatus::Installed)
+            ->get()
+            ->first(fn ($cert) => $cert->coversDomain($this->domainRecord->name));
+    }
+
+    /**
+     * Generate HTTP to HTTPS redirect config for SSL-enabled domains.
+     */
+    protected function generateSslRedirectConfig(): string
+    {
+        return view('provisioning.scripts.domain.partials.ssl-redirect', [
+            'domain' => $this->domainRecord->name,
+            'site' => $this->domainRecord->site,
+        ])->render();
+    }
+
+    /**
+     * Generate script to update subdomain redirect exclusions.
+     * This ensures new domains with SSL are excluded from any wildcard subdomain redirects.
+     */
+    protected function generateSubdomainExclusionConfig(): string
+    {
+        return view('provisioning.scripts.domain.partials.update-subdomain-exclusion', [
+            'domain' => $this->domainRecord->name,
+            'site' => $this->domainRecord->site,
         ])->render();
     }
 
@@ -84,6 +128,25 @@ class AddDomainJob extends BaseProvisionJob
         $this->domainRecord->update([
             'status' => DomainRecordStatus::Enabled,
         ]);
+
+        $this->linkToMatchingCertificate();
+    }
+
+    /**
+     * Link this domain record to an existing certificate that covers it (wildcard or exact match).
+     */
+    protected function linkToMatchingCertificate(): void
+    {
+        // Skip if already has a certificate
+        if ($this->domainRecord->certificate_id) {
+            return;
+        }
+
+        $matchingCertificate = $this->findMatchingCertificate();
+
+        if ($matchingCertificate) {
+            $this->domainRecord->update(['certificate_id' => $matchingCertificate->id]);
+        }
     }
 
     protected function handleFailure(\Throwable $exception): void
