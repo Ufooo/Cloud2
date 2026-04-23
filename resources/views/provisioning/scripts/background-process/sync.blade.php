@@ -16,8 +16,8 @@ chown {{ $user }}:{{ $user }} "${LOG_DIR}"
 # Create supervisor configuration
 cat > "${CONFIG_FILE}" <<'SUPERVISOR_CONFIG'
 [program:{{ 'netipar-'.$processId }}]
-command={{ $command }}
-directory={{ $directory }}
+command={!! $command !!}
+directory={!! $directory !!}
 process_name=%(program_name)s_%(process_num)02d
 user={{ $user }}
 numprocs={{ $processes }}
