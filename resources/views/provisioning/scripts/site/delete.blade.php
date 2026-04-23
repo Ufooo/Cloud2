@@ -114,9 +114,17 @@ echo "Removed scheduled job {{ $job['id'] }}"
 
 echo "Removing background process supervisor configs..."
 @foreach($backgroundProcesses as $processId)
-if [ -f "/etc/supervisor/conf.d/worker-{{ $processId }}.conf" ]; then
-    rm -f /etc/supervisor/conf.d/worker-{{ $processId }}.conf
-    echo "Removed supervisor config for worker {{ $processId }}"
+PROGRAM_NAME="netipar-{{ $processId }}"
+CONFIG_FILE="/etc/supervisor/conf.d/${PROGRAM_NAME}.conf"
+
+if supervisorctl status "${PROGRAM_NAME}:*" > /dev/null 2>&1; then
+    echo "Stopping ${PROGRAM_NAME}..."
+    supervisorctl stop "${PROGRAM_NAME}:*" || true
+fi
+
+if [ -f "${CONFIG_FILE}" ]; then
+    rm -f "${CONFIG_FILE}"
+    echo "Removed supervisor config ${PROGRAM_NAME}"
 fi
 @endforeach
 
