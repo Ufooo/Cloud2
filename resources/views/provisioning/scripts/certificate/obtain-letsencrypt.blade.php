@@ -11,9 +11,12 @@ echo "Obtaining Let's Encrypt certificate for {{ implode(', ', $domains) }}..."
 # Install dependencies
 #
 
-echo "Checking dependencies..."
-apt-get update -qq
-apt-get install -y -qq bsdmainutils dnsutils > /dev/null 2>&1 || true
+@include('provisioning.scripts.certificate.partials.dependency-check', [
+    'dependencies' => [
+        'column' => 'bsdmainutils',
+        'dig' => 'dnsutils',
+    ],
+])
 
 @include('provisioning.scripts.certificate.partials.dehydrated-setup')
 

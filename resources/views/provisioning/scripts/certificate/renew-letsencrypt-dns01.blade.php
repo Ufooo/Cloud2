@@ -13,9 +13,14 @@ echo "Renewing Let's Encrypt certificate via DNS-01 challenge for {{ implode(', 
 # Install dependencies
 #
 
-echo "Checking dependencies..."
-apt-get update -qq
-apt-get install -y -qq bsdmainutils dnsutils curl jq > /dev/null 2>&1 || true
+@include('provisioning.scripts.certificate.partials.dependency-check', [
+    'dependencies' => [
+        'column' => 'bsdmainutils',
+        'dig' => 'dnsutils',
+        'curl' => 'curl',
+        'jq' => 'jq',
+    ],
+])
 
 @include('provisioning.scripts.certificate.partials.dehydrated-setup')
 
