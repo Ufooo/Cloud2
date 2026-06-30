@@ -14,6 +14,7 @@ enum PhpVersion: string
     case Php83 = 'php83';
     case Php82 = 'php82';
     case Php81 = 'php81';
+    case Php80 = 'php80';
     case Php74 = 'php74';
 
     public function label(): string
@@ -48,6 +49,7 @@ enum PhpVersion: string
             self::Php83 => '8.3',
             self::Php82 => '8.2',
             self::Php81 => '8.1',
+            self::Php80 => '8.0',
             self::Php74 => '7.4',
         };
     }
