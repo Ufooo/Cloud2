@@ -28,6 +28,7 @@ use Nip\Server\Models\Server;
 use Nip\Site\Data\SiteProvisioningStepData;
 use Nip\Site\Database\Factories\SiteFactory;
 use Nip\Site\Enums\DeployStatus;
+use Nip\Site\Enums\DetectedPackage;
 use Nip\Site\Enums\PackageManager;
 use Nip\Site\Enums\SiteProvisioningStep;
 use Nip\Site\Enums\SiteStatus;
@@ -220,6 +221,20 @@ class Site extends Model
             : $this->primaryDomain()->with('certificate')->first();
 
         return $primaryDomain?->certificate?->expires_at;
+    }
+
+    /**
+     * Whether a package was detected on this site.
+     *
+     * Supports both the current associative format (package => version)
+     * and the legacy indexed format (list of package names).
+     */
+    public function hasDetectedPackage(DetectedPackage $package): bool
+    {
+        $detected = $this->detected_packages ?? [];
+
+        return array_key_exists($package->value, $detected)
+            || in_array($package->value, $detected, true);
     }
 
     /**

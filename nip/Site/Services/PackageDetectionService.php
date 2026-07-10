@@ -187,11 +187,7 @@ class PackageDetectionService
         $packages = [];
 
         foreach (DetectedPackage::cases() as $package) {
-            // Support both old format (indexed array) and new format (associative with versions)
-            $isInstalled = isset($detectedPackages[$package->value])
-                || in_array($package->value, $detectedPackages, true);
-
-            if ($isInstalled) {
+            if ($site->hasDetectedPackage($package)) {
                 $version = $detectedPackages[$package->value] ?? null;
 
                 $packages[] = [

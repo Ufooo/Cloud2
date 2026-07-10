@@ -42,6 +42,35 @@ it('can enable inertia ssr via api', function () {
     Queue::assertPushed(SyncBackgroundProcessJob::class);
 });
 
+it('can enable inertia ssr when detected_packages uses the associative version format', function () {
+    Queue::fake();
+
+    // Production stores detected_packages as an associative "package => version" map,
+    // not a flat list. Regression: the enable-ssr guard used in_array() (values only),
+    // so Inertia (a key) was never matched and every enable attempt returned 403.
+    $site = Site::factory()
+        ->for($this->server)
+        ->laravel()
+        ->installed()
+        ->create([
+            'detected_packages' => [
+                DetectedPackage::Laravel->value => 'v13.4.0',
+                DetectedPackage::Inertia->value => 'v3.0.6',
+            ],
+        ]);
+
+    $response = $this->actingAs($this->user)
+        ->postJson("/sites/{$site->slug}/enable-ssr");
+
+    $response->assertRedirect();
+
+    expect(BackgroundProcess::where('site_id', $site->id)
+        ->where('name', InertiaSSRService::SSR_DAEMON_NAME)
+        ->exists())->toBeTrue();
+
+    Queue::assertPushed(SyncBackgroundProcessJob::class);
+});
+
 it('creates background process with correct command', function () {
     Queue::fake();
 

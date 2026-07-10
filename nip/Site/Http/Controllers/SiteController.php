@@ -313,9 +313,8 @@ class SiteController extends Controller
 
         abort_unless($site->status === SiteStatus::Installed, 403, 'Site must be installed to enable SSR.');
 
-        $detectedPackages = $site->detected_packages ?? [];
         abort_unless(
-            in_array(DetectedPackage::Inertia->value, $detectedPackages, true),
+            $site->hasDetectedPackage(DetectedPackage::Inertia),
             403,
             'Inertia must be detected to enable SSR.'
         );
