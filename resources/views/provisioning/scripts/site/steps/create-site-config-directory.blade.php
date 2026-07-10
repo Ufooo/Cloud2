@@ -42,6 +42,20 @@ fastcgi_intercept_errors off;
 EOF
 
 #
+# Ensure combined_host log format exists (used by every site server block).
+# Normally added during server nginx provisioning, but guarantee it here so that
+# imported or legacy servers don't fail `nginx -t` when a site config references it.
+# Guarded so it never duplicates an existing definition in nginx.conf.
+#
+
+if ! grep -rqs "log_format combined_host" /etc/nginx/nginx.conf /etc/nginx/conf.d/ 2>/dev/null; then
+    echo "Creating combined_host log format..."
+    cat > /etc/nginx/conf.d/combined_host.conf << 'COMBINEDHOSTEOF'
+log_format combined_host '$remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent" $host';
+COMBINEDHOSTEOF
+fi
+
+#
 # Create Site Nginx Configuration Directory
 #
 

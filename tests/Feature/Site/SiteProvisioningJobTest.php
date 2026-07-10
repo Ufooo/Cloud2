@@ -113,6 +113,37 @@ it('generates nginx configuration script correctly', function () {
         ->and($script->content)->toContain('/etc/nginx/sites-available/example.com');
 });
 
+it('ensures the combined_host log format exists in the site config directory script', function () {
+    $server = Server::factory()->create();
+    $site = Site::factory()
+        ->for($server)
+        ->laravel()
+        ->create([
+            'domain' => 'example.com',
+            'user' => 'netipar',
+        ]);
+
+    $ssh = Mockery::mock(SSHService::class);
+    $ssh->shouldReceive('setTimeout')->once()->andReturnSelf();
+    $ssh->shouldReceive('connect')->once();
+    $ssh->shouldReceive('executeScript')->once()->andReturn(new ExecutionResult('Success', 0, 1.0));
+    $ssh->shouldReceive('disconnect')->once();
+
+    $job = new CreateSiteConfigDirectoryJob($site);
+    $job->handle($ssh);
+
+    $script = ProvisionScript::query()->where('resource_type', 'site')->first();
+
+    // The site server block references the combined_host log format, so the config
+    // directory step must guarantee it exists — otherwise imported/legacy servers
+    // fail `nginx -t` with "unknown log format combined_host".
+    expect($script->content)
+        ->toContain('log_format combined_host')
+        ->and($script->content)->toContain('/etc/nginx/conf.d/combined_host.conf')
+        // Guarded so it never duplicates an existing definition.
+        ->and($script->content)->toContain('grep -rqs "log_format combined_host"');
+});
+
 it('finalize job marks site as installed on success', function () {
     $server = Server::factory()->create();
     $site = Site::factory()
