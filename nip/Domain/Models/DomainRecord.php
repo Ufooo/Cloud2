@@ -123,6 +123,13 @@ class DomainRecord extends Model
             return $domains;
         }
 
+        // A www variant of a subdomain (www.backend.example.com) practically never
+        // resolves. Since from_www is the column default, subdomains carry it
+        // without anyone choosing it, and asking for it fails the whole ACME order.
+        if ($this->isSubdomainOfSite()) {
+            return $domains;
+        }
+
         // Non-wildcard: check www redirect settings
         if ($this->www_redirect_type === WwwRedirectType::ToWww ||
             $this->www_redirect_type === WwwRedirectType::FromWww) {
@@ -130,6 +137,14 @@ class DomainRecord extends Model
         }
 
         return $domains;
+    }
+
+    /**
+     * Whether this record is a subdomain of the site's primary domain.
+     */
+    public function isSubdomainOfSite(): bool
+    {
+        return str_ends_with($this->name, '.'.$this->site->domain);
     }
 
     /**

@@ -82,3 +82,36 @@ it('leaves the www domain out for wildcard records', function () {
 
     expect($site->certificates()->sole()->domains)->not->toContain('www.example.com');
 });
+
+it('leaves the www domain out for a subdomain of the site', function () {
+    $site = Site::factory()->create(['domain' => 'example.com']);
+
+    // from_www is the column default, so subdomains carry it without anyone
+    // choosing it. www.backend.example.com practically never resolves, and
+    // asking for it would fail the whole ACME order.
+    $site->domainRecords()->create([
+        'name' => 'backend.example.com',
+        'type' => DomainRecordType::Alias,
+        'www_redirect_type' => WwwRedirectType::FromWww,
+    ]);
+
+    storeHttpCertificate($site, 'backend.example.com');
+
+    expect($site->certificates()->sole()->domains)
+        ->toContain('backend.example.com')
+        ->not->toContain('www.backend.example.com');
+});
+
+it('still includes www for an alias domain that is not a subdomain', function () {
+    $site = Site::factory()->create(['domain' => 'example.com']);
+
+    $site->domainRecords()->create([
+        'name' => 'other-brand.com',
+        'type' => DomainRecordType::Alias,
+        'www_redirect_type' => WwwRedirectType::FromWww,
+    ]);
+
+    storeHttpCertificate($site, 'other-brand.com');
+
+    expect($site->certificates()->sole()->domains)->toContain('www.other-brand.com');
+});
