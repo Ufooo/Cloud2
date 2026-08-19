@@ -56,8 +56,12 @@ class CertificateController extends Controller
                 }
                 $certificateData['domains'] = array_unique($domains);
             } else {
-                // HTTP-01 only verifies the main domain
-                $certificateData['domains'] = [$data['domain']];
+                // HTTP-01 verifies the main domain plus its www variant when the
+                // domain record redirects between www and non-www.
+                $domainRecord = $site->domainRecords()->where('name', $data['domain'])->first();
+                $certificateData['domains'] = $domainRecord
+                    ? $domainRecord->getDomainsRequiringVerification()
+                    : [$data['domain']];
             }
         } else {
             // For other types, single domain (plus SANs for CSR)
