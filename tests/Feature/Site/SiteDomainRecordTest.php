@@ -80,9 +80,11 @@ it('primary domain has correct www redirect settings', function () {
 
     $primaryDomain = $site->primaryDomain;
 
+    // Wildcard and www redirect are mutually exclusive: a wildcard already
+    // serves every subdomain, www included, so the redirect is forced off.
     expect($primaryDomain)->not->toBeNull();
-    expect($primaryDomain->www_redirect_type)->toBe(WwwRedirectType::ToWww);
     expect($primaryDomain->allow_wildcard)->toBeTrue();
+    expect($primaryDomain->www_redirect_type)->toBe(WwwRedirectType::None);
 });
 
 it('can create domain with to_primary redirect type', function () {

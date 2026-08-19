@@ -9,18 +9,10 @@ server {
 @endif
 
 @if($allowWildcard)
+{{-- A www redirect is served by its own exact-match server block, which nginx
+     prefers over this wildcard. Redirecting every $host that is not the apex
+     would take down legitimate subdomains. --}}
     server_name {{ $domain }} *.{{ $domain }};
-@if($wwwRedirectType->value === 'from_www')
-
-    if ($host != {{ $domain }}) {
-        return 301 $scheme://{{ $domain }}$request_uri;
-    }
-@elseif($wwwRedirectType->value === 'to_www')
-
-    if ($host != www.{{ $domain }}) {
-        return 301 $scheme://www.{{ $domain }}$request_uri;
-    }
-@endif
 @else
 @if($wwwRedirectType->value === 'from_www')
     server_name {{ $domain }};

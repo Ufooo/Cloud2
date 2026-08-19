@@ -1,3 +1,5 @@
+{{-- A wildcard already serves every subdomain, www included, so a wildcard
+     domain never gets a www redirect. --}}
 @if($wwwRedirectType->value !== 'none' && !($allowWildcard ?? false))
 @php
     $isFromWww = $wwwRedirectType->value === 'from_www';

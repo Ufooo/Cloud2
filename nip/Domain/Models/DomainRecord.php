@@ -33,6 +33,19 @@ class DomainRecord extends Model
         'acme_subdomains',
     ];
 
+    protected static function booted(): void
+    {
+        static::saving(function (self $domainRecord): void {
+            // A wildcard already serves every subdomain, www included, so the
+            // two settings are mutually exclusive: if it is wildcard, it is
+            // wildcard. The UI enforces this too; this keeps every other write
+            // path (jobs, API, console) from reintroducing the contradiction.
+            if ($domainRecord->allow_wildcard) {
+                $domainRecord->www_redirect_type = WwwRedirectType::None;
+            }
+        });
+    }
+
     /**
      * @return array<string, mixed>
      */

@@ -7,6 +7,7 @@ use Nip\Domain\Enums\DomainRecordType;
 use Nip\Domain\Jobs\AddDomainJob;
 use Nip\Domain\Models\Certificate;
 use Nip\Server\Models\Server;
+use Nip\Site\Enums\SiteType;
 use Nip\Site\Enums\WwwRedirectType;
 use Nip\Site\Models\Site;
 
@@ -90,12 +91,35 @@ it('redirects the apex over https for to_www domains', function () {
         ->toContain('return 301 https://www.example.com$request_uri;');
 });
 
-it('emits nothing for wildcard domains', function () {
+it('never emits a www redirect for a wildcard domain', function () {
     $site = Site::factory()->create(['domain' => 'example.com']);
 
+    // A wildcard serves every subdomain, www included. Wildcard and www
+    // redirect are mutually exclusive: if it is wildcard, it is wildcard.
     $config = renderWwwRedirect($site, 'example.com', WwwRedirectType::FromWww, null, true);
 
     expect(trim($config))->toBe('');
+});
+
+it('never redirects every subdomain of a wildcard domain to the apex', function () {
+    $site = Site::factory()->create(['domain' => 'example.com']);
+
+    $config = view('provisioning.scripts.partials.nginx-server-block', [
+        'site' => $site,
+        'domain' => 'example.com',
+        'wwwRedirectType' => WwwRedirectType::FromWww,
+        'allowWildcard' => true,
+        'certificate' => null,
+        'documentRoot' => '/home/deploy/example.com/public',
+        'phpSocket' => '/var/run/php/php8.4-fpm-deploy.sock',
+        'siteType' => SiteType::Laravel,
+    ])->render();
+
+    // `if ($host != example.com)` would 301 ujbuda.example.com to the apex.
+    // thorgym.hu and thorlife.hu serve thousands of such requests a day.
+    expect($config)
+        ->toContain('server_name example.com *.example.com;')
+        ->not->toContain('if ($host !=');
 });
 
 it('wires the certificate through from the add domain job', function () {
@@ -120,4 +144,34 @@ it('wires the certificate through from the add domain job', function () {
     $script = (new ReflectionClass($job))->getMethod('generateScript')->invoke($job);
 
     expect($script)->toContain('return 301 https://example.com$request_uri;');
+});
+
+it('forces no www redirect when a domain is wildcard', function () {
+    $site = Site::factory()->create(['domain' => 'example.com']);
+
+    $record = $site->domainRecords()->create([
+        'name' => 'example.com',
+        'type' => DomainRecordType::Primary,
+        'status' => DomainRecordStatus::Creating,
+        'www_redirect_type' => WwwRedirectType::FromWww,
+        'allow_wildcard' => true,
+    ]);
+
+    expect($record->fresh()->www_redirect_type)->toBe(WwwRedirectType::None);
+});
+
+it('clears the www redirect when an existing domain becomes wildcard', function () {
+    $site = Site::factory()->create(['domain' => 'example.com']);
+
+    $record = $site->domainRecords()->create([
+        'name' => 'example.com',
+        'type' => DomainRecordType::Primary,
+        'status' => DomainRecordStatus::Creating,
+        'www_redirect_type' => WwwRedirectType::FromWww,
+        'allow_wildcard' => false,
+    ]);
+
+    $record->update(['allow_wildcard' => true]);
+
+    expect($record->fresh()->www_redirect_type)->toBe(WwwRedirectType::None);
 });
