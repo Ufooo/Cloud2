@@ -11,9 +11,8 @@ if [ ! -f "/etc/nginx/sites-available/{{ $domain }}" ]; then
     exit 1
 fi
 
-if [ ! -L "/etc/nginx/sites-enabled/{{ $domain }}" ]; then
-    ln -s /etc/nginx/sites-available/{{ $domain }} /etc/nginx/sites-enabled/{{ $domain }}
-    echo "Site enabled in Nginx"
-else
-    echo "Site already enabled in Nginx"
-fi
+# -f replaces whatever is in the way, including a stale plain copy of the
+# config, and -n stops the link being created inside an existing symlink.
+# Without this the site silently stops receiving generated nginx changes.
+ln -sfn /etc/nginx/sites-available/{{ $domain }} /etc/nginx/sites-enabled/{{ $domain }}
+echo "Site enabled in Nginx"
