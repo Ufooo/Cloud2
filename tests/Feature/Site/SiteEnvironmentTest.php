@@ -235,17 +235,36 @@ describe('update environment', function () {
             ->assertForbidden();
     });
 
-    it('validates environment content is required', function () {
+    it('saves switch preferences without uploading when no environment content is sent', function () {
         $site = Site::factory()
             ->for($this->server)
             ->laravel()
             ->installed()
-            ->create();
+            ->create([
+                'env_clear_config_cache' => false,
+                'env_restart_queue' => false,
+            ]);
+
+        $sshMock = Mockery::mock(SSHService::class);
+        $sshMock->shouldNotReceive('connect');
+        $sshMock->shouldNotReceive('uploadContent');
+
+        $this->app->instance(SSHService::class, $sshMock);
 
         $this->actingAs($this->user)
-            ->putJson("/sites/{$site->slug}/environment", [])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['environment']);
+            ->putJson("/sites/{$site->slug}/environment", [
+                'clear_config_cache' => true,
+                'restart_queue' => true,
+            ])
+            ->assertOk()
+            ->assertJson([
+                'success' => true,
+                'message' => 'Settings saved successfully.',
+            ]);
+
+        expect($site->fresh())
+            ->env_clear_config_cache->toBeTrue()
+            ->env_restart_queue->toBeTrue();
     });
 
     it('validates environment content max length', function () {

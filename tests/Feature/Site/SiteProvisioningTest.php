@@ -183,10 +183,11 @@ it('always includes system level jobs and finalize job', function () {
             && in_array(CreateNginxServerBlockJob::class, $jobTypes)
             && in_array(ConfigureWwwRedirectJob::class, $jobTypes)
             && in_array(EnableNginxSiteJob::class, $jobTypes)
-            && in_array(CreatePhpFpmPoolJob::class, $jobTypes)
             && in_array(RestartServicesJob::class, $jobTypes)
             && in_array(CreateLogrotateConfigJob::class, $jobTypes)
-            && in_array(FinalizeSiteJob::class, $jobTypes);
+            && in_array(FinalizeSiteJob::class, $jobTypes)
+            // PHP-FPM pool is PHP-only, so a static site must not get one
+            && ! in_array(CreatePhpFpmPoolJob::class, $jobTypes);
     });
 });
 
