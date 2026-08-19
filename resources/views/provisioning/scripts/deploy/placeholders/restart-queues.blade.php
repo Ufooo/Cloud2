@@ -5,5 +5,7 @@ fi
 if command -v supervisorctl &> /dev/null; then
     sudo supervisorctl reread 2>/dev/null || true
     sudo supervisorctl update 2>/dev/null || true
-    sudo supervisorctl restart all 2>/dev/null || true
+@if(! empty($supervisorGroups ?? []))
+    sudo supervisorctl restart {{ implode(' ', $supervisorGroups) }} 2>/dev/null || true
+@endif
 fi

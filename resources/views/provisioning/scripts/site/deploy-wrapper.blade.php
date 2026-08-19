@@ -10,7 +10,19 @@ $activateReleasePlaceholder = $useZeroDowntime
     : '';
 
 $restartFpmPlaceholder = view('provisioning.scripts.deploy.placeholders.restart-fpm')->render();
-$restartQueuesPlaceholder = view('provisioning.scripts.deploy.placeholders.restart-queues')->render();
+
+// Supervisor names every program after its background process id, and the
+// trailing colon addresses the group: process_name appends a _00 suffix, so the
+// bare name resolves to nothing. Restarting only this site's own groups keeps a
+// deploy from bouncing every other site's workers on the same server.
+$supervisorGroups = $site->backgroundProcesses
+    ->pluck('id')
+    ->map(fn (int $processId): string => "netipar-{$processId}:")
+    ->all();
+
+$restartQueuesPlaceholder = view('provisioning.scripts.deploy.placeholders.restart-queues', [
+    'supervisorGroups' => $supervisorGroups,
+])->render();
 
 $processedDeployScript = $deployScriptContent;
 
