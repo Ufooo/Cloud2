@@ -67,6 +67,7 @@ const showDeleteConfirm = ref(false);
 const editForm = useForm({
     allow_wildcard: props.domain.allowWildcard,
     www_redirect_type: props.domain.wwwRedirectType,
+    redirect_target: props.domain.redirectTarget ?? '',
 });
 
 const certificateTooltip = computed(() => {
@@ -79,6 +80,7 @@ const certificateTooltip = computed(() => {
 function openEditModal() {
     editForm.allow_wildcard = props.domain.allowWildcard;
     editForm.www_redirect_type = props.domain.wwwRedirectType;
+    editForm.redirect_target = props.domain.redirectTarget ?? '';
     showEditModal.value = true;
 }
 
@@ -158,6 +160,9 @@ function handleDelete() {
                     <Badge v-if="domain.isPrimary" variant="secondary">
                         Primary
                     </Badge>
+                    <Badge v-if="domain.isRedirect" variant="secondary">
+                        301 → {{ domain.redirectTarget }}
+                    </Badge>
                     <Badge
                         v-if="domain.status !== 'enabled'"
                         :variant="domain.statusBadgeVariant"
@@ -230,12 +235,15 @@ function handleDelete() {
         <ConfigureDomainModal
             :open="showEditModal"
             :domain="domain.name"
+            :type="domain.type"
+            :redirect-target="editForm.redirect_target"
             :www-redirect-type="editForm.www_redirect_type"
             :www-redirect-types="wwwRedirectTypes"
             :allow-wildcard="editForm.allow_wildcard"
             :is-primary="domain.isPrimary"
             :primary-domain="primaryDomain"
             @update:open="showEditModal = $event"
+            @update:redirect-target="editForm.redirect_target = $event"
             @update:www-redirect-type="editForm.www_redirect_type = $event"
             @update:allow-wildcard="editForm.allow_wildcard = $event"
             @save="saveEdit"

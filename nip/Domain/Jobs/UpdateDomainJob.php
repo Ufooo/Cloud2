@@ -33,6 +33,27 @@ class UpdateDomainJob extends BaseProvisionJob
     protected function generateScript(): string
     {
         $site = $this->domainRecord->site;
+        $isRedirect = $this->domainRecord->type === DomainRecordType::Redirect;
+
+        if ($isRedirect) {
+            $matchingCertificate = $this->findMatchingCertificate();
+
+            $nginxConfig = view('provisioning.scripts.domain.partials.nginx-config-redirect', [
+                'site' => $site,
+                'domain' => $this->domainRecord->name,
+                'redirectTarget' => $this->domainRecord->redirect_target,
+                'allowWildcard' => $this->domainRecord->allow_wildcard,
+                'certificate' => $matchingCertificate,
+            ])->render();
+
+            return view('provisioning.scripts.domain.update', [
+                'site' => $site,
+                'domainRecord' => $this->domainRecord,
+                'domain' => $this->domainRecord->name,
+                'nginxConfig' => $nginxConfig,
+                'wwwRedirectConfig' => '',
+            ])->render();
+        }
 
         $primaryDomain = $site->domainRecords()
             ->where('type', DomainRecordType::Primary->value)
@@ -66,6 +87,15 @@ class UpdateDomainJob extends BaseProvisionJob
             'nginxConfig' => $nginxConfig,
             'wwwRedirectConfig' => $wwwRedirectConfig,
         ])->render();
+    }
+
+    protected function findMatchingCertificate(): ?\Nip\Domain\Models\Certificate
+    {
+        return $this->domainRecord->site->certificates()
+            ->where('active', true)
+            ->where('status', \Nip\Domain\Enums\CertificateStatus::Installed)
+            ->get()
+            ->first(fn ($cert) => $cert->coversDomain($this->domainRecord->name));
     }
 
     protected function handleSuccess(ExecutionResult $result): void

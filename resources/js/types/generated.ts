@@ -90,7 +90,7 @@ delete: boolean;
 makePrimary: boolean;
 };
 export enum DomainRecordStatus { Pending = 'pending', Creating = 'creating', Enabled = 'enabled', Disabled = 'disabled', Updating = 'updating', Securing = 'securing', Removing = 'removing', Disabling = 'disabling', Enabling = 'enabling', Failed = 'failed' };
-export enum DomainRecordType { Primary = 'primary', Alias = 'alias', Reverb = 'reverb' };
+export enum DomainRecordType { Primary = 'primary', Alias = 'alias', Redirect = 'redirect', Reverb = 'reverb' };
 export type FirewallRuleData = {
 id: number;
 name: string;
@@ -112,7 +112,7 @@ maxUploadSize: number | null;
 maxExecutionTime: number | null;
 opcacheEnabled: boolean;
 };
-export enum PhpVersion { Php84 = 'php84', Php83 = 'php83', Php82 = 'php82', Php81 = 'php81', Php74 = 'php74' };
+export enum PhpVersion { Php84 = 'php84', Php83 = 'php83', Php82 = 'php82', Php81 = 'php81', Php80 = 'php80', Php74 = 'php74' };
 export type PhpVersionData = {
 id: number;
 version: string;

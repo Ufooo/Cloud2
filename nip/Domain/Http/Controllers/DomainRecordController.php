@@ -109,6 +109,9 @@ class DomainRecordController extends Controller
         $domainRecord = $site->domainRecords()->create([
             'name' => $data['name'],
             'type' => $data['type'],
+            'redirect_target' => $data['type'] === DomainRecordType::Redirect->value
+                ? ($data['redirect_target'] ?? null)
+                : null,
             'www_redirect_type' => $data['www_redirect_type'] ?? WwwRedirectType::FromWww,
             'allow_wildcard' => $data['allow_wildcard'] ?? false,
             'status' => DomainRecordStatus::Creating,
@@ -130,6 +133,9 @@ class DomainRecordController extends Controller
         $domainRecord->update([
             'www_redirect_type' => $data['www_redirect_type'] ?? $domainRecord->www_redirect_type,
             'allow_wildcard' => $data['allow_wildcard'] ?? $domainRecord->allow_wildcard,
+            'redirect_target' => $domainRecord->isRedirect()
+                ? ($data['redirect_target'] ?? $domainRecord->redirect_target)
+                : $domainRecord->redirect_target,
         ]);
 
         UpdateDomainJob::dispatch($domainRecord);

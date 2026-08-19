@@ -25,9 +25,19 @@ class UpdateDomainRecordRequest extends FormRequest
      */
     public function rules(): array
     {
+        $domainRecord = $this->route('domainRecord');
+
         return [
             'www_redirect_type' => ['nullable', Rule::enum(WwwRedirectType::class)],
             'allow_wildcard' => ['nullable', 'boolean'],
+            'redirect_target' => [
+                'nullable',
+                'string',
+                'min:1',
+                'max:255',
+                'regex:/^[a-zA-Z0-9][a-zA-Z0-9\-\.]*[a-zA-Z0-9]$/',
+                $domainRecord instanceof DomainRecord ? 'different:'.$domainRecord->name : 'string',
+            ],
         ];
     }
 

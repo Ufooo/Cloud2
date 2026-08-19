@@ -38,6 +38,15 @@ class StoreDomainRecordRequest extends FormRequest
                 }),
             ],
             'type' => ['required', Rule::enum(DomainRecordType::class)],
+            'redirect_target' => [
+                'required_if:type,'.DomainRecordType::Redirect->value,
+                'nullable',
+                'string',
+                'min:1',
+                'max:255',
+                'regex:/^[a-zA-Z0-9][a-zA-Z0-9\-\.]*[a-zA-Z0-9]$/',
+                'different:name',
+            ],
             'www_redirect_type' => ['nullable', Rule::enum(WwwRedirectType::class)],
             'allow_wildcard' => ['nullable', 'boolean'],
         ];
@@ -89,6 +98,9 @@ class StoreDomainRecordRequest extends FormRequest
             'name.regex' => 'The domain format is invalid.',
             'name.unique' => 'This domain is already configured for this site.',
             'type.required' => 'Please select a domain type.',
+            'redirect_target.required_if' => 'Please enter the target domain for the redirect.',
+            'redirect_target.regex' => 'The redirect target format is invalid.',
+            'redirect_target.different' => 'The redirect target must differ from the domain itself.',
         ];
     }
 }

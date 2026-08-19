@@ -9,6 +9,7 @@ enum DomainRecordType: string
 {
     case Primary = 'primary';
     case Alias = 'alias';
+    case Redirect = 'redirect';
     case Reverb = 'reverb';
 
     public function label(): string
@@ -16,6 +17,7 @@ enum DomainRecordType: string
         return match ($this) {
             self::Primary => 'Primary',
             self::Alias => 'Alias',
+            self::Redirect => 'Redirect',
             self::Reverb => 'Reverb',
         };
     }

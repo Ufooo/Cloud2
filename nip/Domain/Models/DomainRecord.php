@@ -25,6 +25,7 @@ class DomainRecord extends Model
         'site_id',
         'certificate_id',
         'name',
+        'redirect_target',
         'type',
         'status',
         'www_redirect_type',
@@ -70,6 +71,11 @@ class DomainRecord extends Model
     public function isPrimary(): bool
     {
         return $this->type === DomainRecordType::Primary;
+    }
+
+    public function isRedirect(): bool
+    {
+        return $this->type === DomainRecordType::Redirect;
     }
 
     /**

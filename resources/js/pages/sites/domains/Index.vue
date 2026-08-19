@@ -60,6 +60,7 @@ const showConfigureDomainModal = ref(false);
 const addDomainForm = useForm({
     name: '',
     type: 'alias',
+    redirect_target: '',
     allow_wildcard: false,
     www_redirect_type: 'from_www',
 });
@@ -71,6 +72,8 @@ function openConfigureDomainModal() {
     if (!addDomainForm.name.trim()) {
         return;
     }
+    addDomainForm.type = 'alias';
+    addDomainForm.redirect_target = '';
     addDomainForm.www_redirect_type = 'from_www';
     addDomainForm.allow_wildcard = false;
     showConfigureDomainModal.value = true;
@@ -228,12 +231,16 @@ function submitAddDomain() {
         <ConfigureDomainModal
             :open="showConfigureDomainModal"
             :domain="addDomainForm.name"
+            :type="addDomainForm.type"
+            :redirect-target="addDomainForm.redirect_target"
             :www-redirect-type="addDomainForm.www_redirect_type"
             :www-redirect-types="wwwRedirectTypes"
             :allow-wildcard="addDomainForm.allow_wildcard"
             :is-primary="false"
             :primary-domain="primaryDomain"
             @update:open="showConfigureDomainModal = $event"
+            @update:type="addDomainForm.type = $event"
+            @update:redirect-target="addDomainForm.redirect_target = $event"
             @update:www-redirect-type="addDomainForm.www_redirect_type = $event"
             @update:allow-wildcard="addDomainForm.allow_wildcard = $event"
             @save="submitAddDomain"

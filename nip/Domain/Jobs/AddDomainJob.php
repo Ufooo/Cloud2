@@ -37,11 +37,14 @@ class AddDomainJob extends BaseProvisionJob
     {
         $site = $this->domainRecord->site;
         $matchingCertificate = $this->findMatchingCertificate();
+        $isRedirect = $this->domainRecord->type === DomainRecordType::Redirect;
 
         $nginxConfig = $this->generateNginxConfig($site, $matchingCertificate);
-        $wwwRedirectConfig = $this->generateWwwRedirectConfig();
-        $sslRedirectConfig = $matchingCertificate ? $this->generateSslRedirectConfig() : '';
-        $subdomainExclusionConfig = $matchingCertificate ? $this->generateSubdomainExclusionConfig() : '';
+        // Redirect-type domains handle their own www/SSL logic in the server block,
+        // so we skip the standalone redirect snippets.
+        $wwwRedirectConfig = $isRedirect ? '' : $this->generateWwwRedirectConfig();
+        $sslRedirectConfig = (! $isRedirect && $matchingCertificate) ? $this->generateSslRedirectConfig() : '';
+        $subdomainExclusionConfig = (! $isRedirect && $matchingCertificate) ? $this->generateSubdomainExclusionConfig() : '';
 
         return view('provisioning.scripts.domain.add', [
             'site' => $site,
@@ -57,6 +60,16 @@ class AddDomainJob extends BaseProvisionJob
 
     protected function generateNginxConfig(\Nip\Site\Models\Site $site, ?Certificate $certificate = null): string
     {
+        if ($this->domainRecord->type === DomainRecordType::Redirect) {
+            return view('provisioning.scripts.domain.partials.nginx-config-redirect', [
+                'site' => $site,
+                'domain' => $this->domainRecord->name,
+                'redirectTarget' => $this->domainRecord->redirect_target,
+                'allowWildcard' => $this->domainRecord->allow_wildcard,
+                'certificate' => $certificate,
+            ])->render();
+        }
+
         $primaryDomain = $site->domainRecords()
             ->where('type', DomainRecordType::Primary->value)
             ->value('name');
