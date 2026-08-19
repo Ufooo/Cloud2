@@ -175,3 +175,54 @@ it('clears the www redirect when an existing domain becomes wildcard', function 
 
     expect($record->fresh()->www_redirect_type)->toBe(WwwRedirectType::None);
 });
+
+it('keeps serving the www name when no certificate can redirect it', function () {
+    $site = Site::factory()->create(['domain' => 'example.com']);
+
+    $apexOnly = Certificate::factory()->for($site)->create([
+        'type' => CertificateType::LetsEncrypt,
+        'status' => CertificateStatus::Installed,
+        'domains' => ['example.com'],
+        'active' => true,
+    ]);
+
+    $config = view('provisioning.scripts.partials.nginx-server-block', [
+        'site' => $site,
+        'domain' => 'example.com',
+        'wwwRedirectType' => WwwRedirectType::FromWww,
+        'allowWildcard' => false,
+        'certificate' => $apexOnly,
+        'documentRoot' => '/home/deploy/example.com/public',
+        'phpSocket' => '/var/run/php/php8.4-fpm-deploy.sock',
+        'siteType' => SiteType::Laravel,
+    ])->render();
+
+    // Narrowing to the apex while nothing can serve www on 443 leaves the name
+    // homeless: it falls through to the catch-all or a neighbouring wildcard
+    // site. Never drop a name until something else has taken it over.
+    expect($config)->toContain('server_name example.com www.example.com;');
+});
+
+it('narrows to the apex once the certificate covers the www name', function () {
+    $site = Site::factory()->create(['domain' => 'example.com']);
+
+    $withWww = Certificate::factory()->for($site)->create([
+        'type' => CertificateType::LetsEncrypt,
+        'status' => CertificateStatus::Installed,
+        'domains' => ['example.com', 'www.example.com'],
+        'active' => true,
+    ]);
+
+    $config = view('provisioning.scripts.partials.nginx-server-block', [
+        'site' => $site,
+        'domain' => 'example.com',
+        'wwwRedirectType' => WwwRedirectType::FromWww,
+        'allowWildcard' => false,
+        'certificate' => $withWww,
+        'documentRoot' => '/home/deploy/example.com/public',
+        'phpSocket' => '/var/run/php/php8.4-fpm-deploy.sock',
+        'siteType' => SiteType::Laravel,
+    ])->render();
+
+    expect($config)->toContain('server_name example.com;');
+});

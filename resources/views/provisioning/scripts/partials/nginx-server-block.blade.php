@@ -14,9 +14,19 @@ server {
      would take down legitimate subdomains. --}}
     server_name {{ $domain }} *.{{ $domain }};
 @else
-@if($wwwRedirectType->value === 'from_www')
+@php
+    // The redirected name only leaves this block once the www redirect can
+    // actually serve it on 443, which needs a certificate covering it. Dropping
+    // it earlier leaves the name homeless: it falls through to the catch-all or
+    // to a neighbouring wildcard site.
+    $redirectedName = $wwwRedirectType->value === 'to_www' ? $domain : 'www.'.$domain;
+    $redirectedNameHasHome = isset($certificate)
+        && $certificate
+        && $certificate->coversDomain($redirectedName);
+@endphp
+@if($wwwRedirectType->value === 'from_www' && $redirectedNameHasHome)
     server_name {{ $domain }};
-@elseif($wwwRedirectType->value === 'to_www')
+@elseif($wwwRedirectType->value === 'to_www' && $redirectedNameHasHome)
     server_name www.{{ $domain }};
 @else
     server_name {{ $domain }} www.{{ $domain }};
