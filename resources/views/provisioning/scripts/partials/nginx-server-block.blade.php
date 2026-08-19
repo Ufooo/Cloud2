@@ -9,10 +9,17 @@ server {
 @endif
 
 @if($allowWildcard)
+@if($wildcardRedirects ?? false)
+{{-- The wildcard moved to its own redirect block, which nginx reaches only for
+     names that have no server block of their own. Claiming it here as well
+     would be a conflicting server name and one of the two would be ignored. --}}
+    server_name {{ $domain }};
+@else
 {{-- A www redirect is served by its own exact-match server block, which nginx
      prefers over this wildcard. Redirecting every $host that is not the apex
      would take down legitimate subdomains. --}}
     server_name {{ $domain }} *.{{ $domain }};
+@endif
 @else
 @php
     // The redirected name only leaves this block once the www redirect can

@@ -19,6 +19,13 @@ interface WwwRedirectTypeOption {
     isDefault: boolean;
 }
 
+interface WildcardBehaviorOption {
+    value: string;
+    label: string;
+    description: string;
+    isDefault: boolean;
+}
+
 interface Props {
     open: boolean;
     domain: string;
@@ -27,6 +34,8 @@ interface Props {
     wwwRedirectType: string;
     wwwRedirectTypes: WwwRedirectTypeOption[];
     allowWildcard?: boolean;
+    wildcardBehavior?: string;
+    wildcardBehaviors?: WildcardBehaviorOption[];
     isPrimary?: boolean;
     primaryDomain?: string | null;
 }
@@ -35,6 +44,8 @@ const props = withDefaults(defineProps<Props>(), {
     type: 'alias',
     redirectTarget: '',
     allowWildcard: false,
+    wildcardBehavior: 'serve',
+    wildcardBehaviors: () => [],
     isPrimary: false,
     primaryDomain: null,
 });
@@ -45,6 +56,7 @@ const emit = defineEmits<{
     (e: 'update:redirectTarget', value: string): void;
     (e: 'update:wwwRedirectType', value: string): void;
     (e: 'update:allowWildcard', value: boolean): void;
+    (e: 'update:wildcardBehavior', value: string): void;
     (e: 'save'): void;
 }>();
 
@@ -52,6 +64,7 @@ const localType = ref(props.type);
 const localRedirectTarget = ref(props.redirectTarget);
 const localWwwRedirectType = ref(props.wwwRedirectType);
 const localAllowWildcard = ref(props.allowWildcard);
+const localWildcardBehavior = ref(props.wildcardBehavior);
 
 const isRedirect = computed(() => localType.value === 'redirect');
 
@@ -72,6 +85,7 @@ watch(
             localRedirectTarget.value = props.redirectTarget;
             localWwwRedirectType.value = props.wwwRedirectType;
             localAllowWildcard.value = props.allowWildcard;
+            localWildcardBehavior.value = props.wildcardBehavior;
         }
     },
 );
@@ -89,9 +103,13 @@ const canSave = computed(() => {
 function save() {
     if (!canSave.value) return;
     emit('update:type', localType.value);
-    emit('update:redirectTarget', isRedirect.value ? localRedirectTarget.value.trim() : '');
+    emit(
+        'update:redirectTarget',
+        isRedirect.value ? localRedirectTarget.value.trim() : '',
+    );
     emit('update:wwwRedirectType', localWwwRedirectType.value);
     emit('update:allowWildcard', localAllowWildcard.value);
+    emit('update:wildcardBehavior', localWildcardBehavior.value);
     emit('save');
     emit('update:open', false);
 }
@@ -172,8 +190,8 @@ function save() {
                             <div class="flex-1">
                                 <span class="font-medium">Redirect</span>
                                 <p class="text-sm text-muted-foreground">
-                                    301-redirect every request on this domain
-                                    to another domain.
+                                    301-redirect every request on this domain to
+                                    another domain.
                                 </p>
                             </div>
                         </button>
@@ -190,9 +208,16 @@ function save() {
                         placeholder="example.com"
                     />
                     <p class="text-sm text-muted-foreground">
-                        Requests to <span class="font-medium">{{ domain || 'this domain' }}</span>
+                        Requests to
+                        <span class="font-medium">{{
+                            domain || 'this domain'
+                        }}</span>
                         will be permanently redirected to
-                        <span class="font-medium">https://{{ localRedirectTarget || 'example.com' }}</span>.
+                        <span class="font-medium"
+                            >https://{{
+                                localRedirectTarget || 'example.com'
+                            }}</span
+                        >.
                     </p>
                 </div>
 
@@ -263,6 +288,61 @@ function save() {
                                     Support all subdomains, e.g. blog.{{
                                         domain || 'example.com'
                                     }}
+                                </p>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- What the wildcard does with names that have no site of their own -->
+                <div
+                    v-if="
+                        !isRedirect &&
+                        localAllowWildcard &&
+                        wildcardBehaviors.length
+                    "
+                    class="space-y-3"
+                >
+                    <Label>Unconfigured subdomains</Label>
+                    <p class="text-sm text-muted-foreground">
+                        Subdomains that have their own domain here always keep
+                        their own site. This only decides what happens to the
+                        rest.
+                    </p>
+                    <div class="space-y-2">
+                        <button
+                            v-for="behavior in wildcardBehaviors"
+                            :key="behavior.value"
+                            type="button"
+                            class="flex w-full items-start gap-3 rounded-md border p-3 text-left transition-colors"
+                            :class="
+                                localWildcardBehavior === behavior.value
+                                    ? 'border-primary bg-primary/5'
+                                    : 'border-border hover:bg-muted/50'
+                            "
+                            @click="localWildcardBehavior = behavior.value"
+                        >
+                            <div
+                                class="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border"
+                                :class="
+                                    localWildcardBehavior === behavior.value
+                                        ? 'border-primary'
+                                        : 'border-muted-foreground'
+                                "
+                            >
+                                <div
+                                    v-if="
+                                        localWildcardBehavior === behavior.value
+                                    "
+                                    class="size-2 rounded-full bg-primary"
+                                />
+                            </div>
+                            <div class="flex-1">
+                                <span class="font-medium">{{
+                                    behavior.label
+                                }}</span>
+                                <p class="text-sm text-muted-foreground">
+                                    {{ behavior.description }}
                                 </p>
                             </div>
                         </button>
@@ -351,7 +431,9 @@ function save() {
                     @click="$emit('update:open', false)"
                     >Cancel</Button
                 >
-                <Button type="button" :disabled="!canSave" @click="save">Save</Button>
+                <Button type="button" :disabled="!canSave" @click="save"
+                    >Save</Button
+                >
             </DialogFooter>
         </DialogContent>
     </Dialog>

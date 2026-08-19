@@ -90,6 +90,7 @@ class DomainRecordController extends Controller
             'certificates' => \Nip\Domain\Http\Resources\CertificateResource::collection($certificates),
             'cloneableCertificates' => $cloneableCertificates->map(fn ($cert) => (new \Nip\Domain\Http\Resources\CertificateResource($cert))->resolve()),
             'wwwRedirectTypes' => WwwRedirectType::options(),
+            'wildcardBehaviors' => \Nip\Domain\Enums\WildcardBehavior::options(),
             'certificateTypes' => \Nip\Domain\Enums\CertificateType::options(),
             'countries' => $this->getCountries(),
             'primaryDomain' => $primaryDomain,
@@ -114,6 +115,7 @@ class DomainRecordController extends Controller
                 : null,
             'www_redirect_type' => $data['www_redirect_type'] ?? WwwRedirectType::FromWww,
             'allow_wildcard' => $data['allow_wildcard'] ?? false,
+            'wildcard_behavior' => $data['wildcard_behavior'] ?? \Nip\Domain\Enums\WildcardBehavior::Serve,
             'status' => DomainRecordStatus::Creating,
         ]);
 
@@ -133,6 +135,7 @@ class DomainRecordController extends Controller
         $domainRecord->update([
             'www_redirect_type' => $data['www_redirect_type'] ?? $domainRecord->www_redirect_type,
             'allow_wildcard' => $data['allow_wildcard'] ?? $domainRecord->allow_wildcard,
+            'wildcard_behavior' => $data['wildcard_behavior'] ?? $domainRecord->wildcard_behavior,
             'redirect_target' => $domainRecord->isRedirect()
                 ? ($data['redirect_target'] ?? $domainRecord->redirect_target)
                 : $domainRecord->redirect_target,

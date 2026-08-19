@@ -7,6 +7,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Nip\Domain\Enums\DomainRecordType;
+use Nip\Domain\Enums\WildcardBehavior;
 use Nip\Domain\Models\DomainRecord;
 use Nip\Site\Enums\WwwRedirectType;
 use Nip\Site\Models\Site;
@@ -30,6 +31,7 @@ class UpdateDomainRecordRequest extends FormRequest
         return [
             'www_redirect_type' => ['nullable', Rule::enum(WwwRedirectType::class)],
             'allow_wildcard' => ['nullable', 'boolean'],
+            'wildcard_behavior' => ['nullable', Rule::enum(WildcardBehavior::class)],
             'redirect_target' => [
                 'nullable',
                 'string',

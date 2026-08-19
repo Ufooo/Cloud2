@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Nip\Domain\Database\Factories\DomainRecordFactory;
 use Nip\Domain\Enums\DomainRecordStatus;
 use Nip\Domain\Enums\DomainRecordType;
+use Nip\Domain\Enums\WildcardBehavior;
 use Nip\Site\Enums\WwwRedirectType;
 use Nip\Site\Models\Site;
 
@@ -30,6 +31,7 @@ class DomainRecord extends Model
         'status',
         'www_redirect_type',
         'allow_wildcard',
+        'wildcard_behavior',
         'acme_subdomains',
     ];
 
@@ -56,6 +58,7 @@ class DomainRecord extends Model
             'status' => DomainRecordStatus::class,
             'www_redirect_type' => WwwRedirectType::class,
             'allow_wildcard' => 'boolean',
+            'wildcard_behavior' => WildcardBehavior::class,
             'acme_subdomains' => 'array',
         ];
     }

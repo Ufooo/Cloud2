@@ -32,6 +32,13 @@ interface WwwRedirectTypeOption {
     isDefault: boolean;
 }
 
+interface WildcardBehaviorOption {
+    value: string;
+    label: string;
+    description: string;
+    isDefault: boolean;
+}
+
 interface CountryOption {
     code: string;
     name: string;
@@ -43,6 +50,7 @@ interface Props {
     certificates: PaginatedResponse<CertificateData>;
     cloneableCertificates: CertificateData[];
     wwwRedirectTypes: WwwRedirectTypeOption[];
+    wildcardBehaviors: WildcardBehaviorOption[];
     certificateTypes: CertificateTypeOption[];
     countries: CountryOption[];
     primaryDomain: string | null;
@@ -62,6 +70,7 @@ const addDomainForm = useForm({
     type: 'alias',
     redirect_target: '',
     allow_wildcard: false,
+    wildcard_behavior: 'serve',
     www_redirect_type: 'from_www',
 });
 
@@ -161,6 +170,7 @@ function submitAddDomain() {
                                 :domain="domain"
                                 :site="site"
                                 :www-redirect-types="wwwRedirectTypes"
+                                :wildcard-behaviors="wildcardBehaviors"
                                 :primary-domain="primaryDomain"
                             />
                         </div>
@@ -236,6 +246,8 @@ function submitAddDomain() {
             :www-redirect-type="addDomainForm.www_redirect_type"
             :www-redirect-types="wwwRedirectTypes"
             :allow-wildcard="addDomainForm.allow_wildcard"
+            :wildcard-behavior="addDomainForm.wildcard_behavior"
+            :wildcard-behaviors="wildcardBehaviors"
             :is-primary="false"
             :primary-domain="primaryDomain"
             @update:open="showConfigureDomainModal = $event"
@@ -243,6 +255,7 @@ function submitAddDomain() {
             @update:redirect-target="addDomainForm.redirect_target = $event"
             @update:www-redirect-type="addDomainForm.www_redirect_type = $event"
             @update:allow-wildcard="addDomainForm.allow_wildcard = $event"
+            @update:wildcard-behavior="addDomainForm.wildcard_behavior = $event"
             @save="submitAddDomain"
         />
     </SiteLayout>

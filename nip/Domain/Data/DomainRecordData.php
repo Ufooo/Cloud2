@@ -23,6 +23,8 @@ class DomainRecordData extends Data
         public string $wwwRedirectType,
         public string $wwwRedirectTypeLabel,
         public bool $allowWildcard,
+        public string $wildcardBehavior,
+        public string $wildcardBehaviorLabel,
         public bool $isPrimary,
         public string $url,
         public ?string $createdAt,

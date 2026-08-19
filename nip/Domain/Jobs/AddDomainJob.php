@@ -82,6 +82,7 @@ class AddDomainJob extends BaseProvisionJob
             'phpSocket' => $site->getPhpSocketPath(),
             'siteType' => $site->type,
             'allowWildcard' => $this->domainRecord->allow_wildcard,
+            'wildcardBehavior' => $this->domainRecord->wildcard_behavior,
             'wwwRedirectType' => $this->domainRecord->www_redirect_type,
             'primaryDomain' => $primaryDomain,
             'certificate' => $certificate,

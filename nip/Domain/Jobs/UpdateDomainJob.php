@@ -59,6 +59,8 @@ class UpdateDomainJob extends BaseProvisionJob
             ->where('type', DomainRecordType::Primary->value)
             ->value('name');
 
+        $matchingCertificate = $this->findMatchingCertificate();
+
         $nginxConfig = view('provisioning.scripts.domain.partials.nginx-config', [
             'site' => $site,
             'domain' => $this->domainRecord->name,
@@ -67,8 +69,10 @@ class UpdateDomainJob extends BaseProvisionJob
             'phpSocket' => $site->getPhpSocketPath(),
             'siteType' => $site->type,
             'allowWildcard' => $this->domainRecord->allow_wildcard,
+            'wildcardBehavior' => $this->domainRecord->wildcard_behavior,
             'wwwRedirectType' => $this->domainRecord->www_redirect_type,
             'primaryDomain' => $primaryDomain,
+            'certificate' => $matchingCertificate,
         ])->render();
 
         $wwwRedirectConfig = '';
@@ -78,7 +82,7 @@ class UpdateDomainJob extends BaseProvisionJob
                 'domain' => $this->domainRecord->name,
                 'wwwRedirectType' => $this->domainRecord->www_redirect_type,
                 'allowWildcard' => $this->domainRecord->allow_wildcard,
-                'certificate' => $this->findMatchingCertificate(),
+                'certificate' => $matchingCertificate,
             ])->render();
         }
 

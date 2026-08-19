@@ -52,10 +52,18 @@ interface WwwRedirectTypeOption {
     isDefault: boolean;
 }
 
+interface WildcardBehaviorOption {
+    value: string;
+    label: string;
+    description: string;
+    isDefault: boolean;
+}
+
 interface Props {
     domain: DomainRecordData;
     site: Site;
     wwwRedirectTypes: WwwRedirectTypeOption[];
+    wildcardBehaviors: WildcardBehaviorOption[];
     primaryDomain: string | null;
 }
 
@@ -66,6 +74,7 @@ const showDeleteConfirm = ref(false);
 
 const editForm = useForm({
     allow_wildcard: props.domain.allowWildcard,
+    wildcard_behavior: props.domain.wildcardBehavior,
     www_redirect_type: props.domain.wwwRedirectType,
     redirect_target: props.domain.redirectTarget ?? '',
 });
@@ -79,6 +88,7 @@ const certificateTooltip = computed(() => {
 
 function openEditModal() {
     editForm.allow_wildcard = props.domain.allowWildcard;
+    editForm.wildcard_behavior = props.domain.wildcardBehavior;
     editForm.www_redirect_type = props.domain.wwwRedirectType;
     editForm.redirect_target = props.domain.redirectTarget ?? '';
     showEditModal.value = true;
@@ -240,12 +250,15 @@ function handleDelete() {
             :www-redirect-type="editForm.www_redirect_type"
             :www-redirect-types="wwwRedirectTypes"
             :allow-wildcard="editForm.allow_wildcard"
+            :wildcard-behavior="editForm.wildcard_behavior"
+            :wildcard-behaviors="wildcardBehaviors"
             :is-primary="domain.isPrimary"
             :primary-domain="primaryDomain"
             @update:open="showEditModal = $event"
             @update:redirect-target="editForm.redirect_target = $event"
             @update:www-redirect-type="editForm.www_redirect_type = $event"
             @update:allow-wildcard="editForm.allow_wildcard = $event"
+            @update:wildcard-behavior="editForm.wildcard_behavior = $event"
             @save="saveEdit"
         />
 
