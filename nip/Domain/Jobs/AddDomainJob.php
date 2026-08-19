@@ -42,7 +42,7 @@ class AddDomainJob extends BaseProvisionJob
         $nginxConfig = $this->generateNginxConfig($site, $matchingCertificate);
         // Redirect-type domains handle their own www/SSL logic in the server block,
         // so we skip the standalone redirect snippets.
-        $wwwRedirectConfig = $isRedirect ? '' : $this->generateWwwRedirectConfig();
+        $wwwRedirectConfig = $isRedirect ? '' : $this->generateWwwRedirectConfig($matchingCertificate);
         $sslRedirectConfig = (! $isRedirect && $matchingCertificate) ? $this->generateSslRedirectConfig() : '';
         $subdomainExclusionConfig = (! $isRedirect && $matchingCertificate) ? $this->generateSubdomainExclusionConfig() : '';
 
@@ -123,16 +123,18 @@ class AddDomainJob extends BaseProvisionJob
         ])->render();
     }
 
-    protected function generateWwwRedirectConfig(): string
+    protected function generateWwwRedirectConfig(?Certificate $certificate = null): string
     {
         if ($this->domainRecord->www_redirect_type === WwwRedirectType::ToPrimary) {
             return '';
         }
 
         return view('provisioning.scripts.partials.nginx-www-redirect', [
+            'site' => $this->domainRecord->site,
             'domain' => $this->domainRecord->name,
             'wwwRedirectType' => $this->domainRecord->www_redirect_type,
             'allowWildcard' => $this->domainRecord->allow_wildcard,
+            'certificate' => $certificate,
         ])->render();
     }
 

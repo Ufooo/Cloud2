@@ -74,9 +74,11 @@ class UpdateDomainJob extends BaseProvisionJob
         $wwwRedirectConfig = '';
         if ($this->domainRecord->www_redirect_type !== WwwRedirectType::ToPrimary) {
             $wwwRedirectConfig = view('provisioning.scripts.partials.nginx-www-redirect', [
+                'site' => $site,
                 'domain' => $this->domainRecord->name,
                 'wwwRedirectType' => $this->domainRecord->www_redirect_type,
                 'allowWildcard' => $this->domainRecord->allow_wildcard,
+                'certificate' => $this->findMatchingCertificate(),
             ])->render();
         }
 
