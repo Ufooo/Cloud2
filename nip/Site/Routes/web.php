@@ -32,4 +32,6 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
     Route::post('/sites/{site}/detect-packages', [SiteController::class, 'detectPackages'])->name('sites.detectPackages');
     Route::post('/sites/{site}/enable-ssr', [SiteController::class, 'enableSSR'])->name('sites.enableSSR');
     Route::post('/sites/{site}/disable-ssr', [SiteController::class, 'disableSSR'])->name('sites.disableSSR');
+    Route::post('/sites/{site}/enable-reverb', [SiteController::class, 'enableReverb'])->name('sites.enableReverb');
+    Route::post('/sites/{site}/disable-reverb', [SiteController::class, 'disableReverb'])->name('sites.disableReverb');
 });

@@ -222,7 +222,9 @@ it('returns package details with metadata', function () {
     expect($horizon)
         ->toMatchArray([
             'label' => 'Horizon',
-            'hasEnableAction' => true,
+            // The label is kept for when Horizon gets a start action of its own,
+            // but no button is offered while none exists.
+            'hasEnableAction' => false,
             'enableActionLabel' => 'Start Horizon',
         ]);
 
@@ -242,8 +244,9 @@ it('enum provides correct composer package names', function () {
 });
 
 it('enum provides correct enable action info', function () {
-    expect(DetectedPackage::Horizon->hasEnableAction())->toBeTrue()
+    expect(DetectedPackage::Horizon->hasEnableAction())->toBeFalse()
         ->and(DetectedPackage::Horizon->enableActionLabel())->toBe('Start Horizon')
+        ->and(DetectedPackage::Reverb->hasEnableAction())->toBeTrue()
         ->and(DetectedPackage::Inertia->hasEnableAction())->toBeTrue()
         ->and(DetectedPackage::Inertia->enableActionLabel())->toBe('Enable SSR')
         ->and(DetectedPackage::Laravel->hasEnableAction())->toBeFalse()

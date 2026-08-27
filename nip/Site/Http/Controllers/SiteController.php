@@ -35,6 +35,7 @@ use Nip\Site\Jobs\DeploySiteJob;
 use Nip\Site\Models\Site;
 use Nip\Site\Services\InertiaSSRService;
 use Nip\Site\Services\PackageDetectionService;
+use Nip\Site\Services\ReverbService;
 use Nip\Site\Services\SitePhpVersionService;
 use Nip\SourceControl\Models\SourceControl;
 use Nip\SourceControl\Services\GitHubService;
@@ -338,5 +339,39 @@ class SiteController extends Controller
 
         return redirect()
             ->back()->with('success', 'Inertia SSR is being disabled...');
+    }
+
+    public function enableReverb(Site $site, ReverbService $reverbService): RedirectResponse
+    {
+        Gate::authorize('update', $site->server);
+
+        abort_unless($site->status === SiteStatus::Installed, 403, 'Site must be installed to start Reverb.');
+
+        abort_unless(
+            $site->hasDetectedPackage(DetectedPackage::Reverb),
+            403,
+            'Reverb must be detected to start it.'
+        );
+
+        abort_if($reverbService->isEnabled($site), 409, 'Reverb is already running.');
+
+        $process = $reverbService->enable($site);
+        $port = $reverbService->portOf($process);
+
+        return redirect()
+            ->back()->with('success', "Reverb is being started on port {$port}...");
+    }
+
+    public function disableReverb(Site $site, ReverbService $reverbService): RedirectResponse
+    {
+        Gate::authorize('update', $site->server);
+
+        abort_unless($site->status === SiteStatus::Installed, 403, 'Site must be installed to stop Reverb.');
+        abort_unless($reverbService->isEnabled($site), 409, 'Reverb is not running.');
+
+        $reverbService->disable($site);
+
+        return redirect()
+            ->back()->with('success', 'Reverb is being stopped...');
     }
 }

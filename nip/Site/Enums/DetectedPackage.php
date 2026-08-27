@@ -74,10 +74,15 @@ enum DetectedPackage: string
         };
     }
 
+    /**
+     * Only packages with a working start action. Horizon and Octane keep their
+     * labels but show no button until they get one: a button wired to nothing
+     * is worse than no button, and these used to trigger the SSR action.
+     */
     public function hasEnableAction(): bool
     {
         return match ($this) {
-            self::Horizon, self::Inertia, self::Octane, self::Reverb => true,
+            self::Inertia, self::Reverb => true,
             default => false,
         };
     }

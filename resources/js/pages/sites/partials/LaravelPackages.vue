@@ -2,7 +2,9 @@
 import { enableLaravelScheduler } from '@/actions/Nip/Scheduler/Http/Controllers/SiteScheduledJobController';
 import {
     detectPackages,
+    disableReverb,
     disableSSR,
+    enableReverb,
     enableSSR,
 } from '@/actions/Nip/Site/Http/Controllers/SiteController';
 import { Badge } from '@/components/ui/badge';
@@ -110,16 +112,32 @@ function handleEnableScheduler() {
     );
 }
 
+// Every package used to post to the SSR endpoint, so "Start Reverb" quietly
+// enabled Inertia SSR instead. Each package owns its own pair of routes.
+const packageActions: Record<
+    string,
+    { enable: typeof enableSSR; disable: typeof disableSSR }
+> = {
+    inertia: { enable: enableSSR, disable: disableSSR },
+    reverb: { enable: enableReverb, disable: disableReverb },
+};
+
 function handlePackageAction(pkg: DetectedPackageData) {
     if (!pkg.hasEnableAction) {
+        return;
+    }
+
+    const actions = packageActions[pkg.value];
+
+    if (!actions) {
         return;
     }
 
     processingPackage.value = pkg.value;
 
     const url = pkg.isEnabled
-        ? disableSSR.url(props.site)
-        : enableSSR.url(props.site);
+        ? actions.disable.url(props.site)
+        : actions.enable.url(props.site);
 
     router.post(
         url,

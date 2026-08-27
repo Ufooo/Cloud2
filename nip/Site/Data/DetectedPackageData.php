@@ -5,6 +5,7 @@ namespace Nip\Site\Data;
 use Nip\Site\Enums\DetectedPackage;
 use Nip\Site\Models\Site;
 use Nip\Site\Services\InertiaSSRService;
+use Nip\Site\Services\ReverbService;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
@@ -74,9 +75,7 @@ class DetectedPackageData extends Data
             DetectedPackage::Horizon => $site->backgroundProcesses()
                 ->where('command', 'like', '%horizon%')
                 ->exists(),
-            DetectedPackage::Reverb => $site->backgroundProcesses()
-                ->where('command', 'like', '%reverb%')
-                ->exists(),
+            DetectedPackage::Reverb => app(ReverbService::class)->isEnabled($site),
             DetectedPackage::Octane => $site->backgroundProcesses()
                 ->where('command', 'like', '%octane%')
                 ->exists(),
