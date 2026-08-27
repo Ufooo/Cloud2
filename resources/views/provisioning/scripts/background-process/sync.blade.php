@@ -13,6 +13,30 @@ LOG_DIR="/home/{{ $user }}/.netipar"
 mkdir -p "${LOG_DIR}"
 chown {{ $user }}:{{ $user }} "${LOG_DIR}"
 
+# A deploy restarts this program as {{ $user }}, which needs sudo rights for
+# supervisorctl. Those were only granted while creating a unix user, so older
+# and imported users never got them and their deploys skipped the restart in
+# silence. Granting it here covers every user that actually runs a daemon.
+#
+# The rule goes through a temporary file: an invalid sudoers file locks every
+# user out of sudo, so nothing is installed before visudo accepts it.
+SUDOERS_FILE="/etc/sudoers.d/supervisor"
+
+if ! grep -q "^{{ $user }} " "${SUDOERS_FILE}" 2>/dev/null; then
+    TMP_SUDOERS=$(mktemp)
+    [ -f "${SUDOERS_FILE}" ] && cat "${SUDOERS_FILE}" > "${TMP_SUDOERS}"
+    echo "{{ $user }} ALL=NOPASSWD: /usr/bin/supervisorctl *" >> "${TMP_SUDOERS}"
+
+    if visudo -c -f "${TMP_SUDOERS}" > /dev/null; then
+        install -o root -g root -m 0440 "${TMP_SUDOERS}" "${SUDOERS_FILE}"
+        echo "Granted supervisorctl permission to {{ $user }}"
+    else
+        echo "WARNING: refused to install an invalid sudoers file for {{ $user }}"
+    fi
+
+    rm -f "${TMP_SUDOERS}"
+fi
+
 # Create supervisor configuration
 cat > "${CONFIG_FILE}" <<'SUPERVISOR_CONFIG'
 [program:{{ 'netipar-'.$processId }}]
