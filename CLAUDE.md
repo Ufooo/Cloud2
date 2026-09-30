@@ -13,7 +13,8 @@ The production instance runs at **netipar.cloud** on a DigitalOcean droplet.
 | Detail | Value |
 |--------|-------|
 | IP | `68.183.218.216` |
-| SSH | `ssh root@68.183.218.216` (key-based, no password) |
+| SSH | `ssh -p 2222 root@68.183.218.216` (key-based, no password) |
+| SSH port | **2222** since 2026-09-25 (port 22 is closed). The port comes from the systemd drop-in `/etc/systemd/system/ssh.socket.d/override.conf`, **not** from `sshd_config` — with `ssh.socket` `Accept=no` the `Port` directive is ignored. |
 | OS | Ubuntu 24.04 LTS |
 | PHP | `php8.4` (default `php` is 8.2 — always use `php8.4` explicitly) |
 | Nginx | 1.28.1 |
@@ -29,7 +30,7 @@ The production instance runs at **netipar.cloud** on a DigitalOcean droplet.
 
 ```bash
 # Connect
-ssh root@68.183.218.216
+ssh -p 2222 root@68.183.218.216
 
 # Run artisan command
 cd /home/netipar/netipar.cloud/current && php8.4 artisan <command>
