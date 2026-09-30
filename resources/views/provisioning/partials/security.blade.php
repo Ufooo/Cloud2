@@ -12,7 +12,7 @@ cat > /etc/fail2ban/filter.d/nginx-probe-scanner.conf << 'EOF'
 failregex = ^<HOST> \- \S+ \[\] \"(GET|POST|HEAD) /\.env\b[^\"]*\" (400|403|404|444)
             ^<HOST> \- \S+ \[\] \"(GET|POST|HEAD) /[^\"]*\.env\b[^\"]*\" (400|403|404|444)
             ^<HOST> \- \S+ \[\] \"(GET|POST|HEAD) /wp-(admin|login|content|includes)/[^\"]*\.php[^\"]*\" (400|403|404|444)
-            ^<HOST> \- \S+ \[\] \"(GET|POST|HEAD) /[a-z0-9]{1,8}\.php\b[^\"]*\" (301|400|403|404|444)
+            ^<HOST> \- \S+ \[\] \"(GET|POST|HEAD) /[a-z0-9]{1,8}\.php\b[^\"]*\" (400|403|404|444)
             ^<HOST> \- \S+ \[\] \"(GET|POST|HEAD) /[^\"]*(?:phpinfo|setup-config|filemanager|wp_filemanager)[^\"]*\" (400|403|404|444)
 
 ignoreregex =
@@ -55,8 +55,17 @@ findtime = 1d
 maxretry = 3
 
 # Nginx: malformed/bad requests (400 errors)
+#
+# KIKAPCSOLVA (2026-09-16). A Debian gyári nginx-bad-request szűrője BÁRMILYEN HTTP 400-ra
+# illeszkedik, nem csak protokoll-szintű hibás kérésre. A mögöttünk futó Laravel appok jogos
+# 400-at adnak OAuth hibára, API validációra, hibás JSON-ra — ezeket a szűrő nem tudja
+# megkülönböztetni egy támadástól. Élesben kizárta a saját irodánkat (Codex MCP OAuth kliens
+# lejárt refresh tokennel: 3 × 400 / 13 mp → 24h ban a gép minden nem-Cloudflare-es site-járól).
+# Ráadásul mivel az nginx a valódi kliens IP-t logolja (real_ip), a tiltás a Cloudflare mögötti
+# site-okra hatástalan, a közvetlenekre viszont teljes — rossz helyen üt.
+# A tényleges fenyegetést a nginx-probe-scanner fogja, célzott saját szűrővel.
 [nginx-bad-request]
-enabled = true
+enabled = false
 port = http,https
 logpath = /var/log/nginx/access.log
 backend = auto
