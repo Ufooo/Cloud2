@@ -15,16 +15,74 @@ NGINX_CONF="/etc/nginx/sites-available/{{ $domain }}"
 SITE_CONF_DIR="/etc/nginx/netipar-conf/{{ $site->domain }}"
 DOMAIN_CONF_DIR="$SITE_CONF_DIR/{{ $domain }}"
 
+@include('provisioning.scripts.partials.nginx-http2-syntax')
+
 if [ ! -f "$NGINX_CONF" ]; then
     echo "ERROR: Nginx config not found at $NGINX_CONF"
     exit 1
 fi
 
 #
-# Backup current config
+# Back up everything this script writes or deletes
+#
+# A failed update has to leave the server exactly as it found it. The main config, both redirect
+# includes and the site-level include all change below, and a config that fails nginx -t but stays
+# on disk breaks every later reload of the server. A file that did not exist before is removed
+# again on rollback.
+#
+# The copies live outside /etc/nginx on purpose: nginx includes every file in a before/ directory,
+# so a backup kept there would be loaded as configuration.
 #
 
-cp "$NGINX_CONF" "$NGINX_CONF.bak"
+BACKUP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/netipar-domain-update.XXXXXX")
+ROLLBACK_ON_EXIT=false
+
+TOUCHED_FILES=(
+    "$NGINX_CONF"
+    "$DOMAIN_CONF_DIR/before/redirect.conf"
+    "$DOMAIN_CONF_DIR/before/ssl_redirect.conf"
+@if($domain === $site->domain)
+    "$SITE_CONF_DIR/before/redirect.conf"
+@endif
+)
+
+restore_touched_files() {
+    local touched_file
+
+    for touched_file in "${TOUCHED_FILES[@]}"; do
+        if [ -f "$BACKUP_DIR$touched_file" ]; then
+            cp -p "$BACKUP_DIR$touched_file" "$touched_file"
+        else
+            rm -f "$touched_file"
+        fi
+    done
+}
+
+# Whatever stops the script before nginx has accepted the new files puts the old ones back.
+#
+# SIGPIPE is ignored and the message cannot fail the handler: when the SSH channel has already
+# gone, writing the line would kill the shell a second time and nothing would be restored -
+# exactly the case the rollback exists for.
+finish() {
+    if [ "$ROLLBACK_ON_EXIT" = true ]; then
+        echo "Update did not complete, restoring backup..." || true
+        restore_touched_files
+    fi
+
+    rm -rf "$BACKUP_DIR"
+}
+trap '' PIPE
+trap finish EXIT
+
+for TOUCHED_FILE in "${TOUCHED_FILES[@]}"; do
+    if [ -f "$TOUCHED_FILE" ]; then
+        mkdir -p "$BACKUP_DIR$(dirname "$TOUCHED_FILE")"
+        cp -p "$TOUCHED_FILE" "$BACKUP_DIR$TOUCHED_FILE"
+    fi
+done
+
+# Only now can a missing copy mean "did not exist before", so only now does a failure roll back.
+ROLLBACK_ON_EXIT=true
 
 #
 # Preserve current SSL state (listen directives and certificate paths)
@@ -60,10 +118,6 @@ NGINXEOF
 if [ "$HAS_SSL" = true ]; then
     echo "Restoring SSL configuration..."
 
-    NGINX_VERSION=$(nginx -v 2>&1 | grep -o '[0-9.]\+')
-    VERSION_NUM=$(echo "$NGINX_VERSION" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }')
-    MIN_VERSION=$(echo "1.26.0" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }')
-
     if [ $VERSION_NUM -ge $MIN_VERSION ]; then
         sed -i 's/^    listen 80;$/    listen 443 ssl;\n    http2 on;/' "$NGINX_CONF"
         sed -i 's/^    listen \[::\]:80;$/    listen [::]:443 ssl;/' "$NGINX_CONF"
@@ -97,6 +151,24 @@ if [ -f "$DOMAIN_CONF_DIR/before/redirect.conf" ]; then
 fi
 @endif
 
+@if($domain === $site->domain)
+#
+# Retire the site-level WWW redirect
+#
+# Provisioning used to write a plain http redirect into the include shared by every domain of
+# the site, whatever the WWW redirect setting was. The Domain path owns the redirect now, and
+# two files serving one name conflict. That file serves www.<site domain>, so it belongs to the
+# record named after the site, whatever its type: marking another record as primary swaps the
+# types but never changes the site domain. Only that record's update retires it; every other
+# update has to leave it alone.
+#
+
+if [ -f "$SITE_CONF_DIR/before/redirect.conf" ]; then
+    echo "Removing site-level WWW redirect configuration..."
+    rm -f "$SITE_CONF_DIR/before/redirect.conf"
+fi
+
+@endif
 #
 # Update SSL redirect if active
 #
@@ -129,19 +201,29 @@ REDIRECTEOF
 fi
 
 #
+# Match the http2 syntax to the installed nginx
+#
+# The main config and the www redirect carry 443 blocks that the templates write with the
+# standalone "http2 on;" directive, which nginx only knows from 1.25.1.
+#
+
+nginx_http2_syntax "$NGINX_CONF" "$DOMAIN_CONF_DIR/before/redirect.conf"
+
+#
 # Test and Reload Nginx
 #
 
 echo "Testing Nginx configuration..."
 if ! nginx -t; then
     echo "ERROR: Nginx configuration test failed, restoring backup..."
-    cp "$NGINX_CONF.bak" "$NGINX_CONF"
+    restore_touched_files
+    ROLLBACK_ON_EXIT=false
     nginx -t
     echo "Backup restored"
     exit 1
 fi
 
-rm -f "$NGINX_CONF.bak"
+ROLLBACK_ON_EXIT=false
 
 echo "Reloading Nginx..."
 service nginx reload

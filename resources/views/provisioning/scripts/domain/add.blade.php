@@ -16,6 +16,10 @@ echo "Adding domain {{ $domain }} to site {{ $site->domain }}..."
 SITE_CONF_DIR="/etc/nginx/netipar-conf/{{ $site->domain }}"
 DOMAIN_CONF_DIR="$SITE_CONF_DIR/{{ $domain }}"
 
+@if(isset($certificate) && $certificate)
+@include('provisioning.scripts.partials.nginx-http2-syntax')
+
+@endif
 @include('provisioning.scripts.partials.ensure-fastcgi-defaults')
 
 #
@@ -69,6 +73,17 @@ fi
 
 @include('provisioning.scripts.site.partials.cors-config')
 
+@if(isset($certificate) && $certificate)
+#
+# Match the http2 syntax to the installed nginx
+#
+# Only a certificate puts a 443 block into the main config or the www redirect. The templates
+# write it with the standalone "http2 on;" directive, which nginx only knows from 1.25.1.
+#
+
+nginx_http2_syntax "/etc/nginx/sites-available/{{ $domain }}" "$DOMAIN_CONF_DIR/before/redirect.conf"
+
+@endif
 #
 # Test and Reload Nginx
 #
