@@ -23,6 +23,7 @@ function renderSyncScript(string $user = 'bconsulting'): string
         'startsecs' => 1,
         'stopwaitsecs' => 5,
         'stopsignal' => 'TERM',
+        'isInitialInstall' => false,
     ])->render();
 }
 

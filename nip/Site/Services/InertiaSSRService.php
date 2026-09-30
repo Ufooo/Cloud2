@@ -38,7 +38,7 @@ class InertiaSSRService
             'status' => ProcessStatus::Installing,
         ]);
 
-        SyncBackgroundProcessJob::dispatch($process);
+        SyncBackgroundProcessJob::dispatch($process, isInitialInstall: true);
 
         return $process;
     }

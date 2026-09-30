@@ -16,8 +16,15 @@ class SyncBackgroundProcessJob extends BaseProvisionJob
 
     public int $timeout = 120;
 
+    /**
+     * A supervisor program is named after the process id, so a config already
+     * sitting under that name was put there by something else. Overwriting it
+     * kills a running daemon, so the script refuses on a first install - only
+     * an update, where the platform already owns the program, may rewrite it.
+     */
     public function __construct(
-        public BackgroundProcess $process
+        public BackgroundProcess $process,
+        public bool $isInitialInstall = false
     ) {
         $this->onQueue('provisioning');
     }
@@ -50,6 +57,7 @@ class SyncBackgroundProcessJob extends BaseProvisionJob
             'startsecs' => $this->process->startsecs,
             'stopwaitsecs' => $this->process->stopwaitsecs,
             'stopsignal' => $this->process->stopsignal?->value ?? 'TERM',
+            'isInitialInstall' => $this->isInitialInstall,
         ])->render();
     }
 

@@ -68,7 +68,7 @@ class SiteBackgroundProcessController extends Controller
             'status' => ProcessStatus::Installing,
         ]);
 
-        SyncBackgroundProcessJob::dispatch($process);
+        SyncBackgroundProcessJob::dispatch($process, isInitialInstall: true);
 
         return redirect()
             ->route('sites.background-processes', $site)->with('success', 'Background process creation started.');

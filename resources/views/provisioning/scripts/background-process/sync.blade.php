@@ -8,6 +8,23 @@ set -e
 PROGRAM_NAME="netipar-{{ $processId }}"
 CONFIG_FILE="/etc/supervisor/conf.d/${PROGRAM_NAME}.conf"
 LOG_DIR="/home/{{ $user }}/.netipar"
+@if ($isInitialInstall)
+
+# A program is named after this process's database id, so a config already
+# sitting under that name belongs to something else: a daemon installed by
+# hand, or one from another Cloud instance whose id space overlaps ours.
+# Overwriting it replaces a running daemon without a trace, so a first install
+# refuses and leaves the machine untouched. The check comes before anything
+# else is written for exactly that reason.
+if [ -f "${CONFIG_FILE}" ]; then
+    echo "${CONFIG_FILE} already exists and was not written for this process."
+    echo "Remove or import the daemon running as ${PROGRAM_NAME}, then retry this installation."
+    # The bracketed form is what ProvisionScript::errorMessage() extracts for
+    # the failed-script alert, so this line is what the user actually reads.
+    echo "[ERROR] Refusing to overwrite supervisor program ${PROGRAM_NAME} - it belongs to another daemon."
+    exit 1
+fi
+@endif
 
 # Ensure log directory exists
 mkdir -p "${LOG_DIR}"
