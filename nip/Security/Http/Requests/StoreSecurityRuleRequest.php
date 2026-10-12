@@ -4,10 +4,13 @@ namespace Nip\Security\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
+use Nip\Security\Http\Requests\Concerns\HasSecurityRulePathRules;
 use Nip\Site\Models\Site;
 
 class StoreSecurityRuleRequest extends FormRequest
 {
+    use HasSecurityRulePathRules;
+
     public function authorize(): bool
     {
         /** @var Site $site */
@@ -23,9 +26,9 @@ class StoreSecurityRuleRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'min:1', 'max:255'],
-            'path' => ['nullable', 'string', 'max:255'],
+            'path' => $this->pathRules(),
             'credentials' => ['required', 'array', 'min:1'],
-            'credentials.*.username' => ['required', 'string', 'min:1', 'max:255'],
+            'credentials.*.username' => ['required', 'string', 'min:1', 'max:255', 'regex:/^[^:\s\p{Z}\p{Cc}]+$/uD'],
             'credentials.*.password' => ['required', 'string', 'min:1', 'max:255'],
         ];
     }
@@ -40,6 +43,8 @@ class StoreSecurityRuleRequest extends FormRequest
             'credentials.min' => 'At least one credential is required.',
             'credentials.*.username.required' => 'Username is required.',
             'credentials.*.password.required' => 'Password is required.',
+            'credentials.*.username.regex' => 'The username may not contain a colon, spaces or line breaks.',
+            ...$this->pathMessages(),
         ];
     }
 }

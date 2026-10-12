@@ -18,7 +18,10 @@ class SecurityRuleResource extends JsonResource
     public function toArray(Request $request): array
     {
         $canUpdate = $request->user()?->can('update', $this->site->server);
-        $isInstalled = $this->status === SecurityRuleStatus::Installed;
+        $isEditable = in_array($this->status, [
+            SecurityRuleStatus::Installed,
+            SecurityRuleStatus::Failed,
+        ], true);
 
         return [
             'id' => $this->id,
@@ -33,7 +36,7 @@ class SecurityRuleResource extends JsonResource
             ])),
             'createdAt' => $this->created_at?->toISOString(),
             'can' => [
-                'update' => $canUpdate && $isInstalled,
+                'update' => $canUpdate && $isEditable,
                 'delete' => $canUpdate && ! in_array($this->status, [
                     SecurityRuleStatus::Installing,
                     SecurityRuleStatus::Removing,

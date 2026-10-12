@@ -323,7 +323,12 @@ function formatCredentials(credentials: Credential[]): string {
                             placeholder="e.g., /admin"
                         />
                         <p class="text-xs text-muted-foreground">
-                            Leave empty to protect the entire site.
+                            Leave empty to protect the entire site &mdash; that
+                            is the only airtight option. A path rule guards that
+                            URL prefix only: on a PHP application the same
+                            content can still be reachable through the front
+                            controller (e.g.
+                            <code>/index.php/admin</code>).
                         </p>
                         <InputError :message="addForm.errors.path" />
                     </div>
@@ -434,6 +439,14 @@ function formatCredentials(credentials: Credential[]): string {
                             class="font-mono text-sm"
                             placeholder="e.g., /admin"
                         />
+                        <p class="text-xs text-muted-foreground">
+                            Leave empty to protect the entire site &mdash; that
+                            is the only airtight option. A path rule guards that
+                            URL prefix only: on a PHP application the same
+                            content can still be reachable through the front
+                            controller (e.g.
+                            <code>/index.php/admin</code>).
+                        </p>
                         <InputError :message="editForm.errors.path" />
                     </div>
 
